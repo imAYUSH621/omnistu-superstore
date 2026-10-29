@@ -194,3 +194,14 @@ export function calculateTieredPrice(wholesaleCost: number): {
     marginPercent,
   };
 }
+
+/**
+ * Detects whether a real remote database is configured (e.g. Supabase, Neon, RDS),
+ * preventing slow serverless TCP connection hangs against localhost:5432.
+ */
+export function isDatabaseAvailable(): boolean {
+  const url = process.env.DATABASE_URL;
+  if (!url) return false;
+  if (url.includes('localhost') || url.includes('127.0.0.1')) return false;
+  return true;
+}

@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { CartItem } from '@/types';
-import { convertToPlainObject, formatError, round2 } from '../utils';
+import { convertToPlainObject, formatError, round2, isDatabaseAvailable } from '../utils';
 import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
 import { cartItemSchema, insertCartSchema } from '../validators';
@@ -121,9 +121,13 @@ export async function addItemToCart(data: CartItem) {
 }
 
 export async function getMyCart() {
+  if (!isDatabaseAvailable()) {
+    return undefined;
+  }
+
   // Check for cart cookie
   const sessionCartId = (await cookies()).get('sessionCartId')?.value;
-  if (!sessionCartId) throw new Error('Cart session not found');
+  if (!sessionCartId) return undefined;
 
   // Get session and user ID
   const session = await auth();
