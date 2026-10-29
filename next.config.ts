@@ -28,6 +28,16 @@ const nextConfig: NextConfig = {
         hostname: '*.aliyuncs.com',
         port: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'm.media-amazon.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images-na.ssl-images-amazon.com',
+        port: '',
+      },
     ],
   },
 };
