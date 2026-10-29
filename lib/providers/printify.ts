@@ -82,7 +82,7 @@ export async function getPrintifyProducts(limit = 12): Promise<PrintifyProductRe
         .replace(/(^-|-$)+/g, '')
         .substring(0, 50) + `-${(item.id || '').substring(0, 8)}`;
 
-      const images = (item.images || []).map((img: PrintifyRawImage) => img.src).filter(Boolean);
+      const images = (item.images || []).map((img: PrintifyRawImage) => img.src).filter((src): src is string => Boolean(src));
 
       return {
         id: item.id,

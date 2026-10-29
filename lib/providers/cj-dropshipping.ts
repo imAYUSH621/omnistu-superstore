@@ -99,7 +99,7 @@ export async function searchCJProducts(keyword: string, limit = 12): Promise<JIT
         name: item.productNameEn,
         slug,
         category: item.categoryName || 'General',
-        images: [item.productImage, ...(item.productImageSet || [])].filter(Boolean),
+        images: [item.productImage, ...(item.productImageSet || [])].filter((img): img is string => Boolean(img)),
         brand: 'Omnistu Direct',
         description: item.description || `${item.productNameEn} — Verified high-quality supplier fulfillment with express USPS delivery.`,
         price: pricing.retailPrice.toFixed(2),
