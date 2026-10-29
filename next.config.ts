@@ -28,8 +28,16 @@ const nextConfig: NextConfig = {
         hostname: '*.aliyuncs.com',
         port: '',
       },
-      
-      
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+        port: '',
+      },
     ],
   },
 };

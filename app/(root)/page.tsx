@@ -8,6 +8,7 @@ import ViewAllProductsButton from '@/components/view-all-products-button';
 import IconBoxes from '@/components/icon-boxes';
 import DealCountdown from '@/components/deal-countdown';
 import CategoryQuads from '@/components/shared/home/category-quads';
+import DealsShelf from '@/components/shared/home/deals-shelf';
 import TrustRibbon from '@/components/shared/home/trust-ribbon';
 
 const Homepage = async () => {
@@ -15,32 +16,44 @@ const Homepage = async () => {
   const featuredProducts = await getFeaturedProducts();
 
   return (
-    <div className='space-y-8 pb-10'>
-      {/* Featured Carousel */}
+    <div className='space-y-6 pb-12 bg-[#eaeded] dark:bg-[#0f1111] min-h-screen'>
+      {/* 1. Amazon Hero Carousel with Bottom Fade */}
       {featuredProducts.length > 0 && (
         <ProductCarousel data={featuredProducts} />
       )}
 
-      {/* Trust & Guarantee Ribbon */}
-      <TrustRibbon />
-
-      {/* Amazon-Style Category Quads */}
+      {/* 2. 8 Authoritative Gateway Quads Overlapping Hero */}
       <CategoryQuads />
 
-      {/* Newest Arrivals & Best Sellers Grid */}
-      <ProductList
-        data={latestProducts}
-        title='Trending Best Sellers & New Arrivals'
-        limit={12}
-      />
+      {/* 3. Amazon "Today's Deals" Shelf */}
+      <DealsShelf />
 
-      <ViewAllProductsButton />
+      {/* 4. Trust & Direct Guarantee Ribbon */}
+      <div className='max-w-[1520px] mx-auto px-4 md:px-6'>
+        <TrustRibbon />
+      </div>
 
-      {/* Limited-Time Flash Deals */}
-      <DealCountdown />
+      {/* 5. Trending Best Sellers & New Arrivals Grid */}
+      <div className='max-w-[1520px] mx-auto px-4 md:px-6 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none'>
+        <ProductList
+          data={latestProducts}
+          title='Trending Best Sellers & New Arrivals'
+          limit={12}
+        />
+        <div className='mt-6'>
+          <ViewAllProductsButton />
+        </div>
+      </div>
 
-      {/* Enterprise Guarantees */}
-      <IconBoxes />
+      {/* 6. Limited-Time Flash Deals Countdown */}
+      <div className='max-w-[1520px] mx-auto px-4 md:px-6'>
+        <DealCountdown />
+      </div>
+
+      {/* 7. Enterprise Buyer Guarantees */}
+      <div className='max-w-[1520px] mx-auto px-4 md:px-6'>
+        <IconBoxes />
+      </div>
     </div>
   );
 };

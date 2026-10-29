@@ -1,100 +1,108 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Flame, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { HOMEPAGE_QUADS } from '@/lib/constants/homepage-quads';
 
 export default function CategoryQuads() {
-  const quads = [
-    {
-      title: 'Top Sensory & Desk Toys',
-      tag: 'Viral #1 Bestsellers',
-      icon: Flame,
-      image: '/images/products/silicone-magnetic-balls-1.svg',
-      link: '/search?category=Toys %26 Games',
-      cta: 'Explore Sensory Toys',
-      highlight: 'Up to 45% Off',
-    },
-    {
-      title: 'Apparel & Streetwear Drops',
-      tag: 'Printify 300DPI Lab',
-      icon: Sparkles,
-      image: '/images/sample-products/p1-1.jpg',
-      link: '/search?category=Apparel %26 Merch',
-      cta: 'Shop Heavyweight Hoodies',
-      highlight: 'Organic 400GSM Cotton',
-    },
-    {
-      title: 'Next-Gen Audio & Gadgets',
-      tag: 'Smart Tech Gear',
-      icon: Zap,
-      image: '/images/products/anc-earbuds-1.svg',
-      link: '/search?category=Electronics %26 Gadgets',
-      cta: 'Discover ANC Earbuds',
-      highlight: 'Express Next-Day Dispatch',
-    },
-    {
-      title: 'Smart Home & Desk Comfort',
-      tag: 'Productivity Essentials',
-      icon: TrendingUp,
-      image: '/images/products/smart-mug-warmer-1.svg',
-      link: '/search?category=Home %26 Kitchen',
-      cta: 'View Mug Warmers & Diffusers',
-      highlight: 'Customer Favorites',
-    },
-  ];
+  const topQuads = HOMEPAGE_QUADS.slice(0, 4);
+  const bottomQuads = HOMEPAGE_QUADS.slice(4, 8);
 
   return (
-    <section className='my-8'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-        {quads.map((q, idx) => {
-          const Icon = q.icon;
-          return (
-            <Card
-              key={idx}
-              className='overflow-hidden border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card hover:shadow-md transition flex flex-col justify-between'
+    <div className='relative z-20 px-4 md:px-6 max-w-[1520px] mx-auto space-y-6'>
+      {/* Top Row: Overlaps Hero Carousel by ~220px on desktop */}
+      <div className='-mt-24 sm:-mt-36 md:-mt-56 lg:-mt-72 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5'>
+        {topQuads.map((quad) => (
+          <div
+            key={quad.id}
+            className='bg-white dark:bg-[#1a202c] shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 p-4 md:p-5 flex flex-col justify-between transition-shadow hover:shadow-lg'
+          >
+            <div>
+              <h2 className='text-[18px] md:text-[21px] font-bold text-[#0f1111] dark:text-white leading-snug mb-3'>
+                {quad.title}
+              </h2>
+
+              {/* 2x2 Image Grid */}
+              <div className='grid grid-cols-2 gap-2.5 sm:gap-3 mb-2'>
+                {quad.items.map((item, idx) => (
+                  <Link
+                    key={idx}
+                    href={item.url}
+                    className='group block cursor-pointer'
+                  >
+                    <div className='aspect-square relative w-full overflow-hidden bg-[#f7f7f7] dark:bg-neutral-800 rounded-sm mb-1'>
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        sizes='(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw'
+                        className='object-cover group-hover:scale-105 transition-transform duration-200'
+                      />
+                    </div>
+                    <span className='text-[12px] text-[#0f1111] dark:text-neutral-300 line-clamp-1 group-hover:text-[#c7511f] dark:group-hover:text-amber-400 font-normal leading-tight'>
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom See More Link */}
+            <Link
+              href={quad.see_more_url}
+              className='text-[13px] text-[#007185] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium pt-2 block'
             >
-              <CardContent className='p-5 space-y-3 flex-1 flex flex-col justify-between'>
-                <div className='space-y-1.5'>
-                  <div className='flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400'>
-                    <span className='flex items-center gap-1'>
-                      <Icon className='w-3.5 h-3.5' /> {q.tag}
-                    </span>
-                    <span className='text-xs text-muted-foreground font-normal'>
-                      {q.highlight}
-                    </span>
-                  </div>
-                  <h3 className='font-bold text-base text-foreground leading-snug'>
-                    {q.title}
-                  </h3>
-                </div>
-
-                {/* Quad Visual */}
-                <Link
-                  href={q.link}
-                  className='relative w-full h-44 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900 block group'
-                >
-                  <Image
-                    src={q.image}
-                    alt={q.title}
-                    fill
-                    sizes='(max-width: 768px) 100vw, 25vw'
-                    className='object-contain p-3 group-hover:scale-105 transition-transform duration-300'
-                  />
-                </Link>
-
-                {/* Link Action */}
-                <Link
-                  href={q.link}
-                  className='text-xs font-semibold text-primary hover:underline flex items-center gap-1 pt-1'
-                >
-                  <span>{q.cta}</span>
-                  <ArrowRight className='w-3 h-3' />
-                </Link>
-              </CardContent>
-            </Card>
-          );
-        })}
+              {quad.see_more_text}
+            </Link>
+          </div>
+        ))}
       </div>
-    </section>
+
+      {/* Bottom Row: Additional 4 Gateway Quads */}
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 pt-1'>
+        {bottomQuads.map((quad) => (
+          <div
+            key={quad.id}
+            className='bg-white dark:bg-[#1a202c] shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 p-4 md:p-5 flex flex-col justify-between transition-shadow hover:shadow-lg'
+          >
+            <div>
+              <h2 className='text-[18px] md:text-[21px] font-bold text-[#0f1111] dark:text-white leading-snug mb-3'>
+                {quad.title}
+              </h2>
+
+              {/* 2x2 Image Grid */}
+              <div className='grid grid-cols-2 gap-2.5 sm:gap-3 mb-2'>
+                {quad.items.map((item, idx) => (
+                  <Link
+                    key={idx}
+                    href={item.url}
+                    className='group block cursor-pointer'
+                  >
+                    <div className='aspect-square relative w-full overflow-hidden bg-[#f7f7f7] dark:bg-neutral-800 rounded-sm mb-1'>
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        sizes='(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw'
+                        className='object-cover group-hover:scale-105 transition-transform duration-200'
+                      />
+                    </div>
+                    <span className='text-[12px] text-[#0f1111] dark:text-neutral-300 line-clamp-1 group-hover:text-[#c7511f] dark:group-hover:text-amber-400 font-normal leading-tight'>
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom See More Link */}
+            <Link
+              href={quad.see_more_url}
+              className='text-[13px] text-[#007185] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium pt-2 block'
+            >
+              {quad.see_more_text}
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

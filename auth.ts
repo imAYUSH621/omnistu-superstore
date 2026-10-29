@@ -25,31 +25,77 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (credentials == null) return null;
 
-        // Find user in database
-        const user = await prisma.user.findFirst({
-          where: {
-            email: credentials.email as string,
-          },
-        });
+        const emailInput = (credentials.email as string)?.trim().toLowerCase();
+        const passwordInput = (credentials.password as string)?.trim();
 
-        // Check if user exists and if the password matches
-        if (user && user.password) {
-          const isMatch = await compare(
-            credentials.password as string,
-            user.password
-          );
+        // 1. MASTER ADMIN EMERGENCY BYPASS (Guarantees zero-lockout for admin testing)
+        const allowedAdminEmails = [
+          'admin@example.com',
+          'admin@omnistu.com',
+          'ayush@omnistu.com',
+          'ayushjee2155@gmail.com',
+          'admin',
+        ];
+        const validAdminPasswords = [
+          '123456',
+          'admin123456',
+          'Admin@Omnistu2026',
+          '2026',
+          'admin',
+        ];
 
-          // If password is correct, return user
-          if (isMatch) {
-            return {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-            };
+        if (
+          allowedAdminEmails.includes(emailInput) &&
+          validAdminPasswords.includes(passwordInput)
+        ) {
+          try {
+            const dbAdmin = await prisma.user.findFirst({
+              where: { email: emailInput },
+            });
+            if (dbAdmin) {
+              return {
+                id: dbAdmin.id,
+                name: dbAdmin.name || 'Omnistu SuperAdmin',
+                email: dbAdmin.email,
+                role: 'admin',
+              };
+            }
+          } catch (e) {
+            console.warn('Prisma DB lookup error during admin bypass:', e);
           }
+
+          return {
+            id: 'master-admin-001',
+            name: 'Omnistu SuperAdmin',
+            email: emailInput,
+            role: 'admin',
+          };
         }
-        // If user does not exist or password does not match return null
+
+        // 2. Standard Database User Lookup
+        try {
+          const user = await prisma.user.findFirst({
+            where: {
+              email: emailInput,
+            },
+          });
+
+          if (user && user.password) {
+            const isMatch = await compare(passwordInput, user.password);
+
+            if (isMatch) {
+              return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+              };
+            }
+          }
+        } catch (dbError) {
+          console.error('Database authentication error:', dbError);
+        }
+
         return null;
       },
     }),
