@@ -27,7 +27,7 @@ import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function BuyBox({
-  product,
+  product,
   cart,
 }: {
   product: Product;
@@ -38,6 +38,7 @@ export default function BuyBox({
   const [qty, setQty] = useState(1);
   const [isPending, startTransition] = useTransition();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const itemInCart = cart?.items.find((x) => x.productId === product.id);
 
   const priceNum = Number(product.price);
   const msrpNum = Number((priceNum * 1.45).toFixed(2));
@@ -155,8 +156,9 @@ export default function BuyBox({
         {/* Quantity Selector */}
         {product.stock > 0 && (
           <div className='space-y-1.5'>
-            <label className='text-xs font-medium text-muted-foreground'>
-              Quantity:
+            <label className='text-xs font-medium text-muted-foreground flex items-center justify-between'>
+              <span>Quantity:</span>
+              {itemInCart && <span className='text-[11px] text-primary font-normal'>{itemInCart.qty} in cart</span>}
             </label>
             <Select
               value={String(qty)}

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="pen-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="25%" stop-color="#94a3b8"/>
+      <stop offset="50%" stop-color="#f1f5f9"/>
+      <stop offset="75%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <radialGradient id="ball" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </radialGradient>
+    <filter id="pen-shadow">
+      <feDropShadow dx="10" dy="25" stdDeviation="15" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#pen-bg)"/>
+  
+  <g transform="rotate(-35 300 300)" filter="url(#pen-shadow)">
+    <!-- Modular Pen Segments -->
+    <rect x="275" y="100" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="145" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="190" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="235" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="280" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="325" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <rect x="275" y="370" width="50" height="40" rx="4" fill="url(#metal)"/>
+    <!-- Stylus Tip -->
+    <polygon points="275,415 325,415 300,470" fill="#0f172a"/>
+    <circle cx="300" cy="470" r="6" fill="#38bdf8"/>
+    <!-- Top Cap -->
+    <circle cx="300" cy="85" r="22" fill="url(#ball)"/>
+    <!-- Floating Magnetic Balls -->
+    <circle cx="210" cy="200" r="24" fill="url(#ball)"/>
+    <circle cx="390" cy="260" r="24" fill="url(#ball)"/>
+    <circle cx="220" cy="340" r="24" fill="url(#ball)"/>
+  </g>
+  <rect x="180" y="500" width="240" height="40" rx="20" fill="#0f172a"/>
+  <text x="300" y="525" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">MODULAR MAGNETIC PEN</text>
+</svg>

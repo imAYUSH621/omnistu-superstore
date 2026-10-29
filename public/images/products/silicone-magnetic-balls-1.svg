@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </radialGradient>
+    <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+    <radialGradient id="sphere1" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="40%" stop-color="#06b6d4"/>
+      <stop offset="85%" stop-color="#0e7490"/>
+      <stop offset="100%" stop-color="#164e63"/>
+    </radialGradient>
+    <radialGradient id="sphere2" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f472b6"/>
+      <stop offset="45%" stop-color="#db2777"/>
+      <stop offset="85%" stop-color="#9d174d"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </radialGradient>
+    <radialGradient id="sphere3" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="45%" stop-color="#d97706"/>
+      <stop offset="85%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </radialGradient>
+    <radialGradient id="sphere4" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="45%" stop-color="#7c3aed"/>
+      <stop offset="85%" stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="25" stdDeviation="20" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  
+  <!-- Subtle Grid Pattern -->
+  <g opacity="0.15" stroke="#94a3b8" stroke-width="1">
+    <path d="M50 0v600M150 0v600M250 0v600M350 0v600M450 0v600M550 0v600M0 50h600M0 150h600M0 250h600M0 350h600M0 450h600M0 550h600"/>
+  </g>
+
+  <!-- Magnetic Field Lines -->
+  <g opacity="0.35" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="6,6" fill="none">
+    <ellipse cx="300" cy="300" rx="220" ry="140" transform="rotate(-25 300 300)"/>
+    <ellipse cx="300" cy="300" rx="180" ry="100" transform="rotate(35 300 300)"/>
+  </g>
+
+  <!-- Spheres Group -->
+  <g filter="url(#shadow)">
+    <!-- Sphere 4 (Purple) -->
+    <circle cx="210" cy="360" r="75" fill="url(#sphere4)"/>
+    <ellipse cx="190" cy="340" rx="35" ry="15" fill="#c4b5fd" opacity="0.4" transform="rotate(-30 190 340)"/>
+
+    <!-- Sphere 3 (Amber) -->
+    <circle cx="390" cy="350" r="75" fill="url(#sphere3)"/>
+    <ellipse cx="370" cy="330" rx="35" ry="15" fill="#fef08a" opacity="0.4" transform="rotate(-30 370 330)"/>
+
+    <!-- Sphere 2 (Rose/Pink) -->
+    <circle cx="240" cy="220" r="80" fill="url(#sphere2)"/>
+    <ellipse cx="220" cy="195" rx="40" ry="18" fill="#fbcfe8" opacity="0.45" transform="rotate(-30 220 195)"/>
+
+    <!-- Sphere 1 (Cyan/Teal) -->
+    <circle cx="360" cy="230" r="85" fill="url(#sphere1)"/>
+    <ellipse cx="335" cy="200" rx="42" ry="20" fill="#a5f3fc" opacity="0.5" transform="rotate(-30 335 200)"/>
+  </g>
+
+  <!-- Text / Badge -->
+  <rect x="200" y="490" width="200" height="42" rx="21" fill="#0f172a"/>
+  <text x="300" y="516" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#f8fafc" text-anchor="middle" letter-spacing="1">OMNISTU SENSORY</text>
+</svg>

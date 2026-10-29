@@ -21,7 +21,7 @@ export default function OrderTrackingStepper({
   const steps = [
     {
       title: 'Order Placed',
-      desc: isPaid ? 'Payment Confirmed' : 'Payment Pending',
+      desc: createdAt ? `Confirmed (${new Date(createdAt).toLocaleDateString()})` : isPaid ? 'Payment Confirmed' : 'Payment Pending',
       completed: true,
       icon: CheckCircle2,
     },
