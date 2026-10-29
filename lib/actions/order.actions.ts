@@ -274,7 +274,7 @@ export async function updateOrderToPaid({
     order_id: updatedOrder.id,
     customer_name: updatedOrder.user?.name || 'Customer',
     customer_email: updatedOrder.user?.email || 'customer@omnistu.com',
-    shipping_address: updatedOrder.shippingAddress as any,
+    shipping_address: (updatedOrder.shippingAddress || {}) as Record<string, unknown>,
     total_usd: Number(updatedOrder.totalPrice),
     status: 'PAID',
   }).catch((e) => console.error('Supabase sync background error:', e));

@@ -53,6 +53,17 @@ export interface JITProductResult {
   wholesaleCost: number;
 }
 
+interface CJRawItem {
+  pid: string;
+  productNameEn: string;
+  categoryName?: string;
+  productImage?: string;
+  productImageSet?: string[];
+  description?: string;
+  sellPrice?: string | number;
+  productWeight?: number;
+}
+
 export async function searchCJProducts(keyword: string, limit = 12): Promise<JITProductResult[]> {
   const token = await getCJAccessToken();
   if (!token) {
@@ -74,7 +85,7 @@ export async function searchCJProducts(keyword: string, limit = 12): Promise<JIT
       return [];
     }
 
-    return data.data.list.map((item: any) => {
+    return (data.data.list as CJRawItem[]).map((item: CJRawItem) => {
       const wholesale = parseFloat(item.sellPrice) || 5.0;
       const pricing = calculateTieredPrice(wholesale);
       const slug = (item.productNameEn || 'product')

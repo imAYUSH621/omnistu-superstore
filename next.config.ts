@@ -8,6 +8,26 @@ const nextConfig: NextConfig = {
         hostname: 'utfs.io',
         port: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.printify.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images-api.printify.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.cjdropshipping.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.aliyuncs.com',
+        port: '',
+      },
     ],
   },
 };

@@ -41,6 +41,22 @@ export async function getPrintifyShopId(apiKey: string): Promise<string | null> 
   return null;
 }
 
+interface PrintifyRawVariant {
+  cost?: number;
+}
+
+interface PrintifyRawImage {
+  src: string;
+}
+
+interface PrintifyRawProduct {
+  id: string;
+  title: string;
+  description?: string;
+  variants?: PrintifyRawVariant[];
+  images?: PrintifyRawImage[];
+}
+
 export async function getPrintifyProducts(limit = 12): Promise<PrintifyProductResult[]> {
   const apiKey = process.env.PRINTIFY_API;
   if (!apiKey) return [];
@@ -56,7 +72,7 @@ export async function getPrintifyProducts(limit = 12): Promise<PrintifyProductRe
     const data = await res.json();
     if (!data.data || !Array.isArray(data.data)) return [];
 
-    return data.data.map((item: any) => {
+    return (data.data as PrintifyRawProduct[]).map((item: PrintifyRawProduct) => {
       const defaultVariant = item.variants?.[0] || {};
       const wholesale = (defaultVariant.cost || 1200) / 100;
       const pricing = calculateTieredPrice(wholesale);
@@ -66,7 +82,7 @@ export async function getPrintifyProducts(limit = 12): Promise<PrintifyProductRe
         .replace(/(^-|-$)+/g, '')
         .substring(0, 50) + `-${(item.id || '').substring(0, 8)}`;
 
-      const images = (item.images || []).map((img: any) => img.src).filter(Boolean);
+      const images = (item.images || []).map((img: PrintifyRawImage) => img.src).filter(Boolean);
 
       return {
         id: item.id,
