@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from '@jest/globals';
 import sampleData from '../db/sample-data';
 import { getAllProducts, getAllCategories } from '../lib/actions/product.actions';
 
