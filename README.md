@@ -111,7 +111,7 @@ Create a PayPal developer account and create a new app to get the client ID and 
 
 ```
 PAYPAL_CLIENT_ID="AeFIdonfA_dW_ncys8G4LiECWBI9442IT_kRV15crlmMApC6zpb5Nsd7zlxj7UWJ5FRZtx"
-PAYPAL_APP_SECRET="REdG53DEeX_ShoPawzM4vQHCYy0a554G3xXmzSxFCDcSofBBTq9VRqjs6xsNVBcbjqz--HiiGoiV"
+PAYPAL_APP_SECRET="your-paypal-app-secret-here"
 ```
 
 #### Stripe Publishable and Secret Key

@@ -1,27 +1,11 @@
-import { redirect } from 'next/navigation';
+import AmazonPageRenderer from '@/components/shared/amazon/amazon-page-renderer';
+import { Metadata } from 'next';
 
-export default async function AmazonSPage(props: {
-  searchParams: Promise<{
-    k?: string;
-    q?: string;
-    category?: string;
-    price?: string;
-    price_max?: string;
-    rating?: string;
-    sort?: string;
-  }>;
-}) {
-  const searchParams = await props.searchParams;
-  const query = searchParams.k || searchParams.q || '';
-  const category = searchParams.category || '';
-  const priceMax = searchParams.price_max || '';
-  const sort = searchParams.sort || '';
+export const metadata: Metadata = {
+  title: 'Omnistu Superstore: Search Results',
+  description: 'Search products on Omnistu Superstore.',
+};
 
-  const params = new URLSearchParams();
-  if (query) params.set('q', query);
-  if (category) params.set('category', category);
-  if (priceMax) params.set('price', `0-${priceMax}`);
-  if (sort) params.set('sort', sort);
-
-  redirect(`/search?${params.toString()}`);
+export default function SearchResultsPage() {
+  return <AmazonPageRenderer pageFile="02_search_magnetic_balls.html" />;
 }

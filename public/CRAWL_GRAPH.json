@@ -1,0 +1,287 @@
+{
+  "version": "2.0.0",
+  "architecture": "Amazon Core E-Commerce Multi-Route Ecosystem",
+  "base_url": "http://localhost:8080",
+  "nodes": [
+    {
+      "id": "homepage",
+      "route": "/",
+      "title": "Amazon.com. Spend less. Smile more.",
+      "component": "01_homepage.html",
+      "type": "gateway",
+      "key_selectors": {
+        "logo": "#nav-logo-sprites",
+        "search_form": "#nav-search-bar-form",
+        "search_input": "#twotabsearchtextbox",
+        "search_button": "#nav-search-submit-button",
+        "cart_button": "#nav-cart",
+        "cart_count": "#nav-cart-count",
+        "hamburger_menu": "#nav-hamburger-menu",
+        "category_cards": ".feed-carousel-card, .quadrant-container, .a-cardui"
+      },
+      "outgoing_edges": [
+        {
+          "target": "search_results",
+          "trigger": "submit search form",
+          "url_pattern": "/s?k={query}"
+        },
+        {
+          "target": "bestsellers_category",
+          "trigger": "click toys/deals card",
+          "url_pattern": "/bestsellers/toys-and-games"
+        },
+        {
+          "target": "product_detail",
+          "trigger": "click product card",
+          "url_pattern": "/dp/{asin}"
+        },
+        {
+          "target": "cart_page",
+          "trigger": "click cart icon",
+          "url_pattern": "/cart"
+        },
+        {
+          "target": "department_drawer",
+          "trigger": "click hamburger menu",
+          "url_pattern": "#hmenu"
+        }
+      ]
+    },
+    {
+      "id": "search_results",
+      "route": "/s?k={query}",
+      "title": "Amazon.com: {query}",
+      "component": "02_search_magnetic_balls.html",
+      "type": "search_listing",
+      "key_selectors": {
+        "result_items": "div[data-component-type=\"s-search-result\"]",
+        "product_asin_attr": "data-asin",
+        "product_title_link": ".s-result-item h2 a, a[href*=\"/dp/\"]",
+        "product_image": ".s-image",
+        "price": ".a-price .a-offscreen",
+        "rating": "i.a-icon-star-small span",
+        "sidebar_filters": "#reviewsRefinements a, #brandsRefinements a, #priceRefinements a",
+        "sort_dropdown": "#s-result-sort-select"
+      },
+      "outgoing_edges": [
+        {
+          "target": "product_detail",
+          "trigger": "click any product card or title",
+          "url_pattern": "/dp/{asin}"
+        },
+        {
+          "target": "homepage",
+          "trigger": "click logo",
+          "url_pattern": "/"
+        },
+        {
+          "target": "cart_page",
+          "trigger": "click cart icon",
+          "url_pattern": "/cart"
+        },
+        {
+          "target": "search_results",
+          "trigger": "apply filter / sort",
+          "url_pattern": "/s?k={query}&filter={filter}"
+        }
+      ]
+    },
+    {
+      "id": "bestsellers_category",
+      "route": "/bestsellers/toys-and-games",
+      "title": "Amazon.com Best Sellers: Most popular items in Toys & Games",
+      "component": "03_category_toys_bestsellers.html",
+      "type": "category_ranking",
+      "key_selectors": {
+        "rank_cards": ".p13n-sc-uncoverable-faceout, .zg-grid-general-faceout",
+        "rank_badge": ".zg-bdg-text, #1, #2...",
+        "product_title_link": "a[href*=\"/dp/\"], .p13n-sc-uncoverable-faceout a",
+        "price": ".p13n-sc-price, .a-price .a-offscreen",
+        "department_tree": "#zg_browseRoot a"
+      },
+      "outgoing_edges": [
+        {
+          "target": "product_detail",
+          "trigger": "click ranked product",
+          "url_pattern": "/dp/{asin}"
+        },
+        {
+          "target": "homepage",
+          "trigger": "click logo",
+          "url_pattern": "/"
+        },
+        {
+          "target": "cart_page",
+          "trigger": "click cart icon",
+          "url_pattern": "/cart"
+        }
+      ]
+    },
+    {
+      "id": "product_detail",
+      "route": "/dp/{asin}",
+      "title": "Amazon.com: {product_title}",
+      "component": "04_product_detail_page.html",
+      "type": "pdp",
+      "key_selectors": {
+        "product_title": "#productTitle",
+        "main_image": "#landingImage, #main-image",
+        "thumbnails": "#altImages li img, .imageThumbnail img",
+        "variant_swatches": "#inline-twister-row-color_name li, .swatchAvailable, .inline-twister-dim-title-value-truncate-expanded",
+        "price": "#corePrice_feature_div .a-price .a-offscreen, .a-price-whole",
+        "quantity_select": "#quantity",
+        "add_to_cart_button": "#add-to-cart-button",
+        "buy_now_button": "#buy-now-button",
+        "cart_toast_modal": "#amazon-cart-toast",
+        "breadcrumbs": "#wayfinding-breadcrumbs_feature_div a"
+      },
+      "outgoing_edges": [
+        {
+          "target": "cart_page",
+          "trigger": "click Add to Cart -> Go to Cart",
+          "url_pattern": "/cart"
+        },
+        {
+          "target": "checkout_page",
+          "trigger": "click Buy Now",
+          "url_pattern": "/checkout"
+        },
+        {
+          "target": "bestsellers_category",
+          "trigger": "click Toys & Games breadcrumb",
+          "url_pattern": "/bestsellers/toys-and-games"
+        },
+        {
+          "target": "homepage",
+          "trigger": "click logo",
+          "url_pattern": "/"
+        }
+      ]
+    },
+    {
+      "id": "cart_page",
+      "route": "/cart",
+      "title": "Amazon.com Shopping Cart",
+      "component": "05_cart_page.html",
+      "type": "shopping_cart",
+      "key_selectors": {
+        "empty_cart_banner": ".sc-empty-cart",
+        "active_cart_container": "#amazon-dynamic-active-cart",
+        "cart_item_row": "#amazon-dynamic-active-cart .sc-list-item-content",
+        "item_title_link": "#amazon-dynamic-active-cart a[href*=\"/dp/\"]",
+        "qty_select": "#amazon-dynamic-active-cart select",
+        "delete_btn": "#amazon-dynamic-active-cart a[onclick*=\"deleteItem\"]",
+        "subtotal_amount": "#cart-subtotal-price",
+        "proceed_to_checkout_btn": "a[href=\"/checkout\"]"
+      },
+      "outgoing_edges": [
+        {
+          "target": "checkout_page",
+          "trigger": "click Proceed to checkout",
+          "url_pattern": "/checkout"
+        },
+        {
+          "target": "product_detail",
+          "trigger": "click item title",
+          "url_pattern": "/dp/{asin}"
+        },
+        {
+          "target": "homepage",
+          "trigger": "click continue shopping / logo",
+          "url_pattern": "/"
+        }
+      ]
+    },
+    {
+      "id": "checkout_page",
+      "route": "/checkout",
+      "title": "Amazon.com Checkout - Select a delivery address",
+      "component": "06_checkout_page.html",
+      "type": "checkout",
+      "key_selectors": {
+        "shipping_address": ".address-box",
+        "payment_options": ".payment-options input[type=\"radio\"]",
+        "review_items": "#checkout-items-list",
+        "order_summary": ".order-summary-sidebar",
+        "place_order_button": "#btn-submit-order"
+      },
+      "outgoing_edges": [
+        {
+          "target": "orders_tracking_page",
+          "trigger": "click Place your order",
+          "url_pattern": "/orders"
+        },
+        {
+          "target": "homepage",
+          "trigger": "click logo",
+          "url_pattern": "/"
+        }
+      ]
+    },
+    {
+      "id": "orders_tracking_page",
+      "route": "/orders",
+      "title": "Amazon.com - Order Placed Confirmation & Tracking",
+      "component": "07_orders_page.html",
+      "type": "order_confirmation_and_fulfillment",
+      "key_selectors": {
+        "order_id": "#order-id-label",
+        "order_total": "#order-total-label",
+        "tracking_stepper": ".tracking-timeline",
+        "eta_banner": ".delivery-eta-banner",
+        "ordered_items": "#ordered-items-list",
+        "continue_shopping_btn": ".btn-return-home"
+      },
+      "outgoing_edges": [
+        {
+          "target": "homepage",
+          "trigger": "click continue shopping",
+          "url_pattern": "/"
+        },
+        {
+          "target": "product_detail",
+          "trigger": "click item link",
+          "url_pattern": "/dp/{asin}"
+        }
+      ]
+    }
+  ],
+  "rest_api_contracts": [
+    {
+      "endpoint": "/api/cart",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "description": "Programmatic Cart Operations for Autonomous Agents",
+      "payload_example": {
+        "POST": {
+          "asin": "B0DSVTXFNW",
+          "qty": 1
+        }
+      },
+      "response_schema": {
+        "success": "boolean",
+        "count": "integer",
+        "subtotal": "number",
+        "cart": "array of items (alias: items)",
+        "items": "array of items"
+      }
+    },
+    {
+      "endpoint": "/api/catalog",
+      "methods": [
+        "GET"
+      ],
+      "description": "Unified 160-Product Catalog with ASINs, Prices, Ratings, and Images"
+    },
+    {
+      "endpoint": "/api/routes",
+      "methods": [
+        "GET"
+      ],
+      "description": "Machine-readable graph topology of the entire e-commerce store"
+    }
+  ]
+}
