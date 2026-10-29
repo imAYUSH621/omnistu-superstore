@@ -7,30 +7,78 @@ import { insertProductSchema, updateProductSchema } from '../validators';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 
+import sampleData from '@/db/sample-data';
+
 // Get latest products
 export async function getLatestProducts() {
-  const data = await prisma.product.findMany({
-    take: LATEST_PRODUCTS_LIMIT,
-    orderBy: { createdAt: 'desc' },
-  });
+  try {
+    const data = await prisma.product.findMany({
+      take: LATEST_PRODUCTS_LIMIT,
+      orderBy: { createdAt: 'desc' },
+    });
+    if (data && data.length > 0) {
+      return convertToPlainObject(data);
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('Prisma getLatestProducts fallback:', msg);
+  }
 
-  return convertToPlainObject(data);
+  return convertToPlainObject(
+    sampleData.products.slice(0, LATEST_PRODUCTS_LIMIT).map((p, idx) => ({
+      ...p,
+      id: `sample-${idx + 1}`,
+      createdAt: new Date(),
+    }))
+  );
 }
 
 // Get single product by it's slug
 export async function getProductBySlug(slug: string) {
-  return await prisma.product.findFirst({
-    where: { slug: slug },
-  });
+  try {
+    const item = await prisma.product.findFirst({
+      where: { slug: slug },
+    });
+    if (item) return convertToPlainObject(item);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('Prisma getProductBySlug fallback:', msg);
+  }
+
+  const sampleMatch = sampleData.products.find((p) => p.slug === slug);
+  if (sampleMatch) {
+    return convertToPlainObject({
+      ...sampleMatch,
+      id: `sample-${slug}`,
+      createdAt: new Date(),
+    });
+  }
+  return null;
 }
 
 // Get single product by it's ID
 export async function getProductById(productId: string) {
-  const data = await prisma.product.findFirst({
-    where: { id: productId },
-  });
+  try {
+    const data = await prisma.product.findFirst({
+      where: { id: productId },
+    });
+    if (data) return convertToPlainObject(data);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('Prisma getProductById fallback:', msg);
+  }
 
-  return convertToPlainObject(data);
+  const sampleMatch = sampleData.products.find(
+    (p, idx) => `sample-${idx + 1}` === productId || `sample-${p.slug}` === productId
+  );
+  if (sampleMatch) {
+    return convertToPlainObject({
+      ...sampleMatch,
+      id: productId,
+      createdAt: new Date(),
+    });
+  }
+  return null;
 }
 
 // Get all products
