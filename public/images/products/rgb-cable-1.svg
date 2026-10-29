@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="rgb-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="rgb-flow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="25%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="75%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="cable-glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#06b6d4" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#rgb-bg)"/>
+  
+  <!-- Coiled Braided Cable -->
+  <g filter="url(#cable-glow)">
+    <path d="M120 180 C280 120 480 180 480 300 C480 420 200 450 180 340 C160 230 400 240 420 350 C430 420 340 450 280 450" fill="none" stroke="url(#rgb-flow)" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  
+  <!-- USB-C Alloy Heads -->
+  <g transform="translate(90 150) rotate(-20)">
+    <rect x="0" y="0" width="70" height="40" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+    <rect x="-30" y="8" width="30" height="24" rx="4" fill="#94a3b8"/>
+    <circle cx="45" cy="20" r="5" fill="#38bdf8"/>
+  </g>
+  
+  <g transform="translate(250 430) rotate(10)">
+    <rect x="0" y="0" width="70" height="40" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+    <rect x="70" y="8" width="30" height="24" rx="4" fill="#94a3b8"/>
+    <circle cx="25" cy="20" r="5" fill="#ec4899"/>
+  </g>
+
+  <rect x="180" y="500" width="240" height="42" rx="21" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="300" y="526" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">100W FLOWING RGB PD</text>
+</svg>

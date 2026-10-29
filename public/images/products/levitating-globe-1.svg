@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lg-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <radialGradient id="globe-body" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#0284c7"/>
+      <stop offset="85%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#0c4a6e"/>
+    </radialGradient>
+    <filter id="c-glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="15" flood-color="#38bdf8" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#lg-bg)"/>
+  
+  <!-- C-Shape Electromagnetic Frame -->
+  <path d="M220 140 H380 C440 140 460 190 460 300 C460 410 440 460 380 460 H220" fill="none" stroke="#1e293b" stroke-width="48" stroke-linecap="round"/>
+  <!-- Inner Glow Strip -->
+  <path d="M250 160 H380 C425 160 435 200 435 300 C435 400 425 440 380 440 H250" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" filter="url(#c-glow)"/>
+
+  <!-- Levitating Floating Globe in Mid-Air -->
+  <g>
+    <circle cx="300" cy="300" r="95" fill="url(#globe-body)"/>
+    <!-- Continental Outlines in Gold/Cyan -->
+    <path d="M270 250 Q310 240 330 260 Q340 280 320 310 Q290 320 280 300 Z" fill="#22c55e" opacity="0.8"/>
+    <path d="M230 280 Q250 270 260 295 Q250 330 230 320 Z" fill="#22c55e" opacity="0.8"/>
+    <path d="M330 310 Q360 320 350 350 Q320 360 310 340 Z" fill="#22c55e" opacity="0.8"/>
+    <!-- Latitude Lines -->
+    <ellipse cx="300" cy="300" rx="95" ry="40" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+    <line x1="300" y1="205" x2="300" y2="395" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <rect x="180" y="500" width="240" height="42" rx="21" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="300" y="526" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">ANTI-GRAVITY LEVITATION</text>
+</svg>

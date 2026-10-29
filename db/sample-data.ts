@@ -21,9 +21,8 @@ const sampleData = {
       description:
         'Silicone Magnetic Balls 4PCS Stress Relief Sensory Toys for Autism ADHD Anxiety. Features premium non-toxic silicone coating over neodymium magnets for tactile sensory stimulation, silent desk fidgeting, and creative building.',
       images: [
-        'https://m.media-amazon.com/images/I/71q7u1V1F4L._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/61S4fH5F9mL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71C7u-P8tQL._AC_UL320_.jpg',
+        '/images/products/silicone-magnetic-balls-1.svg',
+        '/images/products/silicone-magnetic-balls-2.svg',
       ],
       price: 12.99,
       brand: 'Omnistu Sensory',
@@ -40,8 +39,8 @@ const sampleData = {
       description:
         'Multifunctional modular magnetic pen that transforms into geometric sculptures, spinning tops, and desk ornaments. Includes precision touch screen stylus tips and 12 steel balls for infinite desk relaxation.',
       images: [
-        'https://m.media-amazon.com/images/I/71DP0-k7sNL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/719hL3S-JNL._AC_UL320_.jpg',
+        '/images/products/magnetic-pen-1.svg',
+        '/images/products/silicone-magnetic-balls-1.svg',
       ],
       price: 18.95,
       brand: 'Omnistu DeskLab',
@@ -76,8 +75,8 @@ const sampleData = {
       description:
         'Hybrid 45dB Active Noise Cancellation with Transparency Mode, 12mm titanium diaphragm dynamic drivers, Bluetooth 5.4 ultra-low latency, and 38-hour battery life with wireless charging case.',
       images: [
-        'https://m.media-amazon.com/images/I/61y8vFkGgTL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/61CqYq+y0IL._AC_UL320_.jpg',
+        '/images/products/anc-earbuds-1.svg',
+        '/images/products/rgb-cable-1.svg',
       ],
       price: 49.99,
       brand: 'Omnistu Audio',
@@ -94,8 +93,8 @@ const sampleData = {
       description:
         'Slim 15W Qi-certified magnetic wireless power bank with 20W USB-C Power Delivery fast charging. Ultra-strong N52 neodymium magnetic ring locks firmly to iPhone and magnetic cases without slippage.',
       images: [
-        'https://m.media-amazon.com/images/I/61NqKvZ+P8L._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71x4xQ9q-YL._AC_UL320_.jpg',
+        '/images/products/magsafe-powerbank-1.svg',
+        '/images/products/rgb-cable-1.svg',
       ],
       price: 39.95,
       brand: 'Omnistu Power',
@@ -112,8 +111,8 @@ const sampleData = {
       description:
         'Intelligent desktop beverage warmer with auto shut-off, waterproof tempered glass surface, and 3 adjustable temperature settings (131°F / 149°F / 167°F) to keep coffee, tea, and milk perfectly warm all day.',
       images: [
-        'https://m.media-amazon.com/images/I/61jK-i+M1hL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71uV4l8tUML._AC_UL320_.jpg',
+        '/images/products/smart-mug-warmer-1.svg',
+        '/images/products/flame-diffuser-1.svg',
       ],
       price: 24.99,
       brand: 'Omnistu Living',
@@ -148,8 +147,8 @@ const sampleData = {
       description:
         'Fascinating C-shaped magnetic levitation globe with colorful circular LED illumination. The globe floats smoothly in mid-air and spins with a gentle touch, making it the ultimate office conversation piece.',
       images: [
-        'https://m.media-amazon.com/images/I/61N+VqX2pYL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71W8h0S-fML._AC_UL320_.jpg',
+        '/images/products/levitating-globe-1.svg',
+        '/images/products/smart-mug-warmer-1.svg',
       ],
       price: 42.50,
       brand: 'Omnistu DeskLab',
@@ -166,8 +165,8 @@ const sampleData = {
       description:
         'Soothing realistic flame simulation atmosphere light combined with high-frequency ultrasonic cool mist aromatherapy. 200ml capacity with waterless auto shut-off protection for bedroom and meditation.',
       images: [
-        'https://m.media-amazon.com/images/I/61b7b7kL8pL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71H2l3s1VNL._AC_UL320_.jpg',
+        '/images/products/flame-diffuser-1.svg',
+        '/images/products/smart-mug-warmer-1.svg',
       ],
       price: 29.99,
       brand: 'Omnistu Living',
@@ -220,8 +219,8 @@ const sampleData = {
       description:
         'Eye-catching dynamic gradient flowing LED illumination that visually indicates charging speed. Zinc alloy connectors with durable nylon braided sheath supporting up to 100W Power Delivery.',
       images: [
-        'https://m.media-amazon.com/images/I/61G+hY2QZLL._AC_UL320_.jpg',
-        'https://m.media-amazon.com/images/I/71K1j8s1vML._AC_UL320_.jpg',
+        '/images/products/rgb-cable-1.svg',
+        '/images/products/magsafe-powerbank-1.svg',
       ],
       price: 14.95,
       brand: 'Omnistu Power',

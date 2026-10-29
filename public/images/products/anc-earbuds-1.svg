@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="ear-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </radialGradient>
+    <linearGradient id="matte-black" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="case-shadow">
+      <feDropShadow dx="0" dy="25" stdDeviation="20" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#ear-bg)"/>
+  
+  <g filter="url(#case-shadow)">
+    <!-- Wireless Charging Case -->
+    <rect x="175" y="240" width="250" height="200" rx="60" fill="url(#matte-black)"/>
+    <!-- Case Lid Line -->
+    <path d="M175 300 Q300 320 425 300" stroke="#475569" stroke-width="3" fill="none"/>
+    <!-- LED Battery Indicator -->
+    <circle cx="300" cy="360" r="5" fill="#10b981"/>
+    <circle cx="300" cy="360" r="10" fill="#10b981" opacity="0.3"/>
+
+    <!-- Left Earbud floating -->
+    <g transform="rotate(-15 220 180)">
+      <rect x="205" y="140" width="25" height="90" rx="12" fill="#1e293b"/>
+      <circle cx="217" cy="130" r="32" fill="#0f172a"/>
+      <ellipse cx="235" cy="120" rx="20" ry="14" fill="#334155"/>
+      <circle cx="217" cy="130" r="6" fill="#06b6d4"/>
+    </g>
+
+    <!-- Right Earbud floating -->
+    <g transform="rotate(15 380 180)">
+      <rect x="370" y="140" width="25" height="90" rx="12" fill="#1e293b"/>
+      <circle cx="382" cy="130" r="32" fill="#0f172a"/>
+      <ellipse cx="365" cy="120" rx="20" ry="14" fill="#334155"/>
+      <circle cx="382" cy="130" r="6" fill="#06b6d4"/>
+    </g>
+  </g>
+  <rect x="180" y="490" width="240" height="42" rx="21" fill="#0f172a"/>
+  <text x="300" y="516" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#10b981" text-anchor="middle" letter-spacing="1.5">HYBRID 45dB ANC PRO</text>
+</svg>

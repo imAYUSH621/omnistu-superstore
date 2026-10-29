@@ -7,7 +7,7 @@ import ReviewList from './review-list';
 import { auth } from '@/auth';
 import Rating from '@/components/shared/product/rating';
 import Link from 'next/link';
-import { ChevronRight, Award, ShieldCheck, Check, Sparkles } from 'lucide-react';
+import { ChevronRight, Award, Check, Sparkles } from 'lucide-react';
 
 const ProductDetailsPage = async (props: {
   params: Promise<{ slug: string }>;

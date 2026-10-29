@@ -187,10 +187,18 @@ export async function getAllProducts({
     filtered = filtered.filter((p) => p.rating >= Number(rating));
   }
   if (price && price !== 'all') {
-    const [min, max] = price.split('-').map(Number);
-    if (!isNaN(min) && !isNaN(max)) {
-      filtered = filtered.filter((p) => p.price >= min && p.price <= max);
-    }
+    const parts = price.split('-');
+    const min = Number(parts[0]) || 0;
+    const max = parts[1] ? Number(parts[1]) : Infinity;
+    filtered = filtered.filter((p) => p.price >= min && p.price <= max);
+  }
+
+  if (sort === 'lowest') {
+    filtered.sort((a, b) => a.price - b.price);
+  } else if (sort === 'highest') {
+    filtered.sort((a, b) => b.price - a.price);
+  } else if (sort === 'rating') {
+    filtered.sort((a, b) => b.rating - a.rating);
   }
 
   const totalPages = Math.ceil(filtered.length / limit);
