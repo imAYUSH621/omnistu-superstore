@@ -13,6 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
 import { sendPurchaseReceipt } from '@/email';
+import { syncOrderToSupabase } from '../providers/supabase-sync';
 
 // Create order and create the order items
 export async function createOrder() {
@@ -267,6 +268,16 @@ export async function updateOrderToPaid({
       paymentResult: updatedOrder.paymentResult as PaymentResult,
     },
   });
+
+  // Mirror paid order into Supabase cloud persistence layer asynchronously
+  syncOrderToSupabase({
+    order_id: updatedOrder.id,
+    customer_name: updatedOrder.user?.name || 'Customer',
+    customer_email: updatedOrder.user?.email || 'customer@omnistu.com',
+    shipping_address: (updatedOrder.shippingAddress || {}) as Record<string, unknown>,
+    total_usd: Number(updatedOrder.totalPrice),
+    status: 'PAID',
+  }).catch((e) => console.error('Supabase sync background error:', e));
 }
 
 // Get user's orders
