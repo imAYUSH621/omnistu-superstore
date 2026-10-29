@@ -6,11 +6,12 @@ import { revalidatePath } from 'next/cache';
 import { insertProductSchema, updateProductSchema } from '../validators';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
+import { Product } from '@/types';
 
 import sampleData from '@/db/sample-data';
 
 // Get latest products
-export async function getLatestProducts() {
+export async function getLatestProducts(): Promise<Product[]> {
   try {
     const data = await prisma.product.findMany({
       take: LATEST_PRODUCTS_LIMIT,
@@ -28,13 +29,15 @@ export async function getLatestProducts() {
     sampleData.products.slice(0, LATEST_PRODUCTS_LIMIT).map((p, idx) => ({
       ...p,
       id: `sample-${idx + 1}`,
+      price: p.price.toString(),
+      rating: p.rating.toString(),
       createdAt: new Date(),
     }))
   );
 }
 
 // Get single product by it's slug
-export async function getProductBySlug(slug: string) {
+export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const item = await prisma.product.findFirst({
       where: { slug: slug },
@@ -50,14 +53,16 @@ export async function getProductBySlug(slug: string) {
     return convertToPlainObject({
       ...sampleMatch,
       id: `sample-${slug}`,
+      price: sampleMatch.price.toString(),
+      rating: sampleMatch.rating.toString(),
       createdAt: new Date(),
-    });
+    }) as Product;
   }
   return null;
 }
 
 // Get single product by it's ID
-export async function getProductById(productId: string) {
+export async function getProductById(productId: string): Promise<Product | null> {
   try {
     const data = await prisma.product.findFirst({
       where: { id: productId },
@@ -75,12 +80,13 @@ export async function getProductById(productId: string) {
     return convertToPlainObject({
       ...sampleMatch,
       id: productId,
+      price: sampleMatch.price.toString(),
+      rating: sampleMatch.rating.toString(),
       createdAt: new Date(),
-    });
+    }) as Product;
   }
   return null;
 }
-
 // Get all products
 export async function getAllProducts({
   query,
@@ -237,12 +243,28 @@ export async function getAllCategories() {
 }
 
 // Get featured products
-export async function getFeaturedProducts() {
-  const data = await prisma.product.findMany({
-    where: { isFeatured: true },
-    orderBy: { createdAt: 'desc' },
-    take: 4,
-  });
+export async function getFeaturedProducts(): Promise<Product[]> {
+  try {
+    const data = await prisma.product.findMany({
+      where: { isFeatured: true },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+    });
+    if (data && data.length > 0) {
+      return convertToPlainObject(data);
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('Prisma getFeaturedProducts fallback:', msg);
+  }
 
-  return convertToPlainObject(data);
+  return convertToPlainObject(
+    sampleData.products.filter(p => p.isFeatured).slice(0, 4).map((p, idx) => ({
+      ...p,
+      id: `featured-${idx + 1}`,
+      price: p.price.toString(),
+      rating: p.rating.toString(),
+      createdAt: new Date(),
+    }))
+  );
 }
