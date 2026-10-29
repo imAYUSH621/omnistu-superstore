@@ -1,4 +1,7 @@
-import AmazonPageRenderer from '@/components/shared/amazon/amazon-page-renderer';
+import AmazonHero from '@/components/shared/home/amazon-hero';
+import CategoryQuads from '@/components/shared/home/category-quads';
+import DealsShelf from '@/components/shared/home/deals-shelf';
+import BestSellersShelf from '@/components/shared/home/best-sellers-shelf';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,5 +10,19 @@ export const metadata: Metadata = {
 };
 
 export default function Homepage() {
-  return <AmazonPageRenderer pageFile="01_homepage.html" />;
+  return (
+    <div className='w-full pb-12'>
+      {/* 1. Authentic Amazon Hero Banner Carousel */}
+      <AmazonHero />
+
+      {/* 2. 8 Authoritative Gateway Quads Overlapping Hero */}
+      <CategoryQuads />
+
+      {/* 3. Amazon "Today's Deals" Shelf */}
+      <DealsShelf />
+
+      {/* 4. Amazon Top 100 Best Sellers with Dynamic Category Switcher */}
+      <BestSellersShelf />
+    </div>
+  );
 }

@@ -1,11 +1,18 @@
-import AmazonPageRenderer from '@/components/shared/amazon/amazon-page-renderer';
-import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Silicone Magnetic Balls Fidget Toys | Omnistu Superstore',
-  description: 'Stress relief sensory toy for adults and teens. Fast delivery.',
-};
+export default async function AmazonDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await props.params;
 
-export default function ProductDetailPage() {
-  return <AmazonPageRenderer pageFile="04_product_detail_page.html" />;
+  const knownMappings: Record<string, string> = {
+    'OMN-SENS-001': 'silicone-magnetic-balls-fidget-toys',
+    'OMN-GLOW-001': 'turmeric-kojic-glow-cleansing-pads-90ct',
+    'OMN-RING-001': 'smart-health-sleep-tracker-ring',
+    'OMN-AUDIO-001': 'active-noise-cancelling-wireless-earbuds-pro',
+    'B0DSVTXFNW': 'silicone-magnetic-balls-fidget-toys',
+  };
+
+  const targetSlug = knownMappings[id] || id;
+  redirect(`/product/${targetSlug}`);
 }

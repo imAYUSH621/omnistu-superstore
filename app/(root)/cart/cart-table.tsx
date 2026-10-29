@@ -22,43 +22,43 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 
-// Recommended fallback items for empty cart
+// Recommended fallback items for empty cart with verified local assets
 const RECOMMENDED_ITEMS = [
   {
     name: 'Silicone Magnetic Balls Fidget Toys (4-Pack)',
-    slug: 'silicone-magnetic-balls-fidget-toys-for-adults-teens',
+    slug: 'silicone-magnetic-balls-fidget-toys',
     category: 'Toys & Games',
-    image: 'https://images.unsplash.com/photo-1516981879613-9f5da904015f?w=500&auto=format&fit=crop&q=80',
-    price: '19.99',
+    image: '/images/products/silicone-magnetic-balls-1.svg',
+    price: '12.99',
     rating: '4.8',
-    numReviews: 1240,
+    numReviews: 2240,
   },
   {
-    name: 'Turmeric Kojic Glow Pads (90 Count)',
-    slug: 'turmeric-kojic-glow-cleansing-pads-90ct',
-    category: 'Beauty & Personal Care',
-    image: 'https://images.unsplash.com/photo-1608248597359-543160a0f5df?w=500&auto=format&fit=crop&q=80',
-    price: '24.95',
+    name: 'Omnistu Cyber Heavyweight Graphic Hoodie (300DPI)',
+    slug: 'omnistu-cyber-heavyweight-graphic-hoodie',
+    category: 'Apparel & Merch',
+    image: '/images/sample-products/p1-1.jpg',
+    price: '58.95',
     rating: '4.9',
-    numReviews: 890,
+    numReviews: 432,
   },
   {
-    name: 'Smart Health & Sleep Tracker Ring',
-    slug: 'smart-health-sleep-tracker-ring',
+    name: 'Active Noise-Cancelling Wireless Earbuds Pro',
+    slug: 'active-noise-cancelling-wireless-earbuds-pro',
     category: 'Electronics & Gadgets',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500&auto=format&fit=crop&q=80',
-    price: '89.00',
+    image: '/images/products/anc-earbuds-1.svg',
+    price: '49.99',
     rating: '4.7',
-    numReviews: 450,
+    numReviews: 3120,
   },
   {
-    name: 'Hi-Fi Noise Cancelling Wireless Earbuds',
-    slug: 'hi-fi-anc-wireless-earbuds-pro',
-    category: 'Electronics & Gadgets',
-    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=80',
-    price: '39.99',
+    name: 'Smart Gravity Induction Constant Temp Coffee Mug Warmer',
+    slug: 'smart-gravity-induction-coffee-mug-warmer',
+    category: 'Home & Kitchen',
+    image: '/images/products/smart-mug-warmer-1.svg',
+    price: '24.99',
     rating: '4.8',
-    numReviews: 610,
+    numReviews: 1670,
   },
 ];
 

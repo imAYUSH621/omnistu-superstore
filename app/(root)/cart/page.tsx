@@ -1,11 +1,18 @@
-import AmazonPageRenderer from '@/components/shared/amazon/amazon-page-renderer';
+import CartTable from './cart-table';
+import { getMyCart } from '@/lib/actions/cart.actions';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Omnistu Superstore Shopping Cart',
+  title: 'Shopping Cart',
   description: 'Review your items and proceed to checkout.',
 };
 
-export default function CartPage() {
-  return <AmazonPageRenderer pageFile="05_cart_page.html" />;
+export default async function CartPage() {
+  const cart = await getMyCart();
+
+  return (
+    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-6 font-["Amazon_Ember",Arial,sans-serif]'>
+      <CartTable cart={cart} />
+    </div>
+  );
 }
