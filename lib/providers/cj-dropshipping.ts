@@ -86,7 +86,7 @@ export async function searchCJProducts(keyword: string, limit = 12): Promise<JIT
     }
 
     return (data.data.list as CJRawItem[]).map((item: CJRawItem) => {
-      const wholesale = parseFloat(item.sellPrice) || 5.0;
+      const wholesale = parseFloat(String(item.sellPrice || '5.0')) || 5.0;
       const pricing = calculateTieredPrice(wholesale);
       const slug = (item.productNameEn || 'product')
         .toLowerCase()
