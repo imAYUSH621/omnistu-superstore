@@ -4,6 +4,10 @@ import { PrismaClient } from '@prisma/client';
 import ws from 'ws';
 
 // Dynamic database adapter: Neon Serverless WebSockets or standard PostgreSQL (Supabase/RDS/Railway)
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/omnistu?schema=public';
+}
+
 const connectionString = `${process.env.DATABASE_URL || ''}`;
 const isNeon = connectionString.includes('neon.tech');
 
