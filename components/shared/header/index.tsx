@@ -85,46 +85,46 @@ const Header = () => {
               <span className='text-[14px] leading-none'>All</span>
             </div>
             <Link
-              href='/s?k=prime+video'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Prime Video
-            </Link>
-            <Link
-              href='/search?sort=deals'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Coupons
-            </Link>
-            <Link
-              href='/search'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Customer Service
-            </Link>
-            <Link
               href='/search?sort=deals'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
               Today&apos;s Deals
             </Link>
             <Link
-              href='/search?sort=bestsellers'
+              href='/search?category=Electronics'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Registry
+              Tech &amp; Gadgets
             </Link>
             <Link
-              href='/s?k=gift+cards'
+              href='/search?category=Jewelry'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Gift Cards
+              Jewelry &amp; Watches
             </Link>
             <Link
-              href='/admin'
+              href='/search?sort=trending'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Sell
+              Trending Finds
+            </Link>
+            <Link
+              href='/search?category=Merch'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Custom Apparel
+            </Link>
+            <Link
+              href='/orders'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Customer Service
+            </Link>
+            <Link
+              href='/orders'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Track Order
             </Link>
           </div>
 

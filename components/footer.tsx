@@ -29,28 +29,28 @@ export default function Footer() {
           <h3 className='font-bold text-[15px] mb-3 text-white'>Get to Know Us</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/search' className='hover:underline hover:text-white'>
-                Careers
-              </Link>
-            </li>
-            <li>
-              <Link href='/search' className='hover:underline hover:text-white'>
-                Blog
-              </Link>
-            </li>
-            <li>
               <Link href='/' className='hover:underline hover:text-white'>
-                About {APP_NAME}
+                About {APP_NAME} Direct
               </Link>
             </li>
             <li>
-              <Link href='/search' className='hover:underline hover:text-white'>
-                Investor Relations
+              <Link href='/search?sort=trending' className='hover:underline hover:text-white'>
+                Direct Sourcing Advantage
               </Link>
             </li>
             <li>
-              <Link href='/search' className='hover:underline hover:text-white'>
-                Omnistu Science Devices
+              <Link href='/search?sort=deals' className='hover:underline hover:text-white'>
+                Price Undercut Guarantee
+              </Link>
+            </li>
+            <li>
+              <Link href='/admin' className='hover:underline hover:text-white'>
+                Verified Global Suppliers
+              </Link>
+            </li>
+            <li>
+              <Link href='/orders' className='hover:underline hover:text-white'>
+                24/7 AI Concierge Support
               </Link>
             </li>
           </ul>
@@ -90,26 +90,31 @@ export default function Footer() {
 
         {/* Column 3 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Payment Products</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'>Buyer Guarantees</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/cart' className='hover:underline hover:text-white'>
-                Omnistu Rewards Visa
+              <Link href='/orders' className='hover:underline hover:text-white'>
+                30-Day Money-Back Guarantee
+              </Link>
+            </li>
+            <li>
+              <Link href='/orders' className='hover:underline hover:text-white'>
+                Worldwide Tracked Shipping
               </Link>
             </li>
             <li>
               <Link href='/cart' className='hover:underline hover:text-white'>
-                Shop with Points
+                Encrypted Checkout (Stripe/PayPal)
               </Link>
             </li>
             <li>
-              <Link href='/cart' className='hover:underline hover:text-white'>
-                Reload Your Balance
+              <Link href='/search?sort=deals' className='hover:underline hover:text-white'>
+                Zero-Fee Direct Pricing
               </Link>
             </li>
             <li>
-              <Link href='/cart' className='hover:underline hover:text-white'>
-                Currency Converter
+              <Link href='/orders' className='hover:underline hover:text-white'>
+                Anti-Counterfeit Protection
               </Link>
             </li>
           </ul>

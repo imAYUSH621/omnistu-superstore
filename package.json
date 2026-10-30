@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "test": "jest",
     "test:watch": "jest --watch",
+    "ingest": "ts-node scripts/ingest_supplier_products.ts",
     "email": "cp .env ./node_modules/react-email && email dev --dir email --port 3001"
   },
   "dependencies": {
