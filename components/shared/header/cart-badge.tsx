@@ -3,13 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function CartBadge() {
   const [count, setCount] = useState<number>(0);
 
   useEffect(() => {
-    // Read count from cookies if available or listen to events
     const updateFromStorage = () => {
       if (typeof window !== 'undefined') {
         const cookies = document.cookie.split(';');
@@ -35,21 +33,24 @@ export default function CartBadge() {
   }, []);
 
   return (
-    <Button asChild variant='ghost' className='relative font-bold' id='nav-cart'>
-      <Link href='/cart' className='flex items-center gap-1.5'>
-        <div className='relative'>
-          <ShoppingCart className='w-5 h-5 text-foreground' />
-          {count > 0 && (
-            <span
-              id='nav-cart-count'
-              className='absolute -top-2 -right-2 bg-amber-400 text-neutral-900 text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-xs'
-            >
-              {count > 99 ? '99+' : count}
-            </span>
-          )}
-        </div>
-        <span className='text-sm font-semibold'>Cart</span>
-      </Link>
-    </Button>
+    <Link
+      href='/cart'
+      id='nav-cart'
+      className='flex items-end gap-1 px-2 py-1 border border-transparent hover:border-white rounded-xs text-white relative transition-colors cursor-pointer group'
+      aria-label={`${count} items in shopping cart`}
+    >
+      <div className='relative flex items-center justify-center w-9 h-7'>
+        <ShoppingCart className='w-7 h-7 text-white group-hover:scale-105 transition-transform' />
+        <span
+          id='nav-cart-count'
+          className='absolute -top-1.5 left-3.5 text-[#f08804] text-[15px] font-extrabold leading-none select-none tracking-tight'
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      </div>
+      <span className='text-[14px] font-bold text-white hidden sm:inline pb-0.5 leading-none'>
+        Cart
+      </span>
+    </Link>
   );
 }

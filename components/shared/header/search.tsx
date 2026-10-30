@@ -14,12 +14,12 @@ const Search = async () => {
   const categories = await getAllCategories();
 
   return (
-    <form action='/search' method='GET' className='w-full max-w-xl'>
-      <div className='flex items-center w-full rounded-full border border-neutral-300 dark:border-neutral-700 bg-background overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-amber-400'>
+    <form action='/search' method='GET' className='w-full max-w-3xl'>
+      <div className='flex items-center w-full rounded-[4px] bg-white overflow-hidden shadow-xs border border-transparent focus-within:ring-2 focus-within:ring-[#f3a847] focus-within:ring-offset-1 h-10'>
         {/* Category Picker */}
         <Select name='category' defaultValue='all'>
-          <SelectTrigger className='w-[140px] md:w-[160px] h-10 border-0 rounded-none bg-neutral-100/80 dark:bg-neutral-900 text-xs font-semibold focus:ring-0 border-r border-neutral-300 dark:border-neutral-700'>
-            <SelectValue placeholder='All Departments' />
+          <SelectTrigger className='w-[130px] md:w-[150px] h-10 border-0 rounded-none bg-[#f3f3f3] hover:bg-[#dadada] text-[#555] text-[12px] font-normal focus:ring-0 border-r border-[#cdcdcd] px-2.5 transition-colors cursor-pointer'>
+            <SelectValue placeholder='All' />
           </SelectTrigger>
           <SelectContent className='text-xs'>
             <SelectItem key='All' value='all'>
@@ -38,17 +38,17 @@ const Search = async () => {
           id='twotabsearchtextbox'
           name='q'
           type='text'
-          placeholder='Search Omnistu Superstore (e.g. magnetic balls, hoodies)...'
-          className='flex-1 border-0 h-10 text-xs md:text-sm focus-visible:ring-0 bg-transparent px-3'
+          placeholder='Search Omnistu Superstore'
+          className='flex-1 border-0 h-10 text-[14px] text-[#0f1111] placeholder:text-[#767676] focus-visible:ring-0 bg-white px-3 font-["Amazon_Ember",Arial,sans-serif]'
         />
 
         {/* Search Submit Button */}
         <Button
           type='submit'
-          className='h-10 px-4 rounded-none bg-amber-400 hover:bg-amber-500 text-neutral-900 transition font-bold'
+          className='h-10 px-4 rounded-none bg-[#febd69] hover:bg-[#f3a847] active:bg-[#e09838] text-[#111] border-0 transition-colors cursor-pointer'
           aria-label='Search'
         >
-          <SearchIcon className='w-4 h-4' />
+          <SearchIcon className='w-5 h-5 text-[#333]' />
         </Button>
       </div>
     </form>

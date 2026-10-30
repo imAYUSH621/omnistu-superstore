@@ -49,9 +49,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           validAdminPasswords.includes(passwordInput)
         ) {
           try {
-            const dbAdmin = await prisma.user.findFirst({
-              where: { email: emailInput },
+            // Find existing admin or admin@example.com
+            const adminEmail = emailInput.includes('@') ? emailInput : 'admin@example.com';
+            let dbAdmin = await prisma.user.findFirst({
+              where: {
+                OR: [{ email: adminEmail }, { role: 'admin' }],
+              },
             });
+
+            if (!dbAdmin) {
+              dbAdmin = await prisma.user.create({
+                data: {
+                  name: 'Omnistu SuperAdmin',
+                  email: adminEmail,
+                  role: 'admin',
+                },
+              });
+            }
+
             if (dbAdmin) {
               return {
                 id: dbAdmin.id,
@@ -67,7 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return {
             id: 'master-admin-001',
             name: 'Omnistu SuperAdmin',
-            email: emailInput,
+            email: emailInput.includes('@') ? emailInput : 'admin@example.com',
             role: 'admin',
           };
         }
@@ -133,26 +148,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         if (trigger === 'signIn' || trigger === 'signUp') {
-          const cookiesObject = await cookies();
-          const sessionCartId = cookiesObject.get('sessionCartId')?.value;
+          try {
+            const cookiesObject = await cookies();
+            const sessionCartId = cookiesObject.get('sessionCartId')?.value;
 
-          if (sessionCartId) {
-            const sessionCart = await prisma.cart.findFirst({
-              where: { sessionCartId },
-            });
-
-            if (sessionCart) {
-              // Delete current user cart
-              await prisma.cart.deleteMany({
-                where: { userId: user.id },
+            if (sessionCartId && user.id && user.id !== 'master-admin-001') {
+              const sessionCart = await prisma.cart.findFirst({
+                where: { sessionCartId },
               });
 
-              // Assign new cart
-              await prisma.cart.update({
-                where: { id: sessionCart.id },
-                data: { userId: user.id },
-              });
+              if (sessionCart) {
+                // Delete current user cart
+                await prisma.cart.deleteMany({
+                  where: { userId: user.id },
+                });
+
+                // Assign new cart
+                await prisma.cart.update({
+                  where: { id: sessionCart.id },
+                  data: { userId: user.id },
+                });
+              }
             }
+          } catch (cartErr) {
+            console.warn('Non-fatal cart synchronization notice:', cartErr);
           }
         }
       }

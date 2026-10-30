@@ -27,6 +27,7 @@ export default function RootLayout({
         <link rel='stylesheet' href='/assets/css/asset_3b5a397f7a5e.css' />
         <link rel='stylesheet' href='/assets/css/asset_e161a8ecc720.css' />
         <link rel='stylesheet' href='/assets/css/51Kn5IB9d7L.css' />
+        <link rel='stylesheet' href='/assets/css/amazon-homepage-injected.css' />
         <link rel='icon' href='/images/logo.svg' />
       </head>
       <body className='antialiased bg-[#eaeded] dark:bg-[#0f1111] text-[#0f1111] dark:text-neutral-100 font-["Amazon_Ember",Arial,sans-serif]'>
