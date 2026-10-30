@@ -1,19 +1,19 @@
-import AmazonHero from '@/components/shared/home/amazon-hero';
+import TopCategoryCards from '@/components/shared/home/top-category-cards';
 import CategoryQuads from '@/components/shared/home/category-quads';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Omnistu Superstore. Spend less. Smile more.',
-  description: 'Omnistu Superstore - Low Prices, Massive Catalog, Fast Dropship Delivery.',
+  title: 'Amazon.com. Spend less. Smile more.',
+  description: 'Omnistu Superstore - Authentic Amazon category gateway, high-volume dropship fulfillment, and direct manufacturer pricing.',
 };
 
 export default function Homepage() {
   return (
-    <div className='w-full pb-16'>
-      {/* 1. Authentic Amazon Wide Hero Banner Carousel */}
-      <AmazonHero />
+    <div className='w-full min-h-screen bg-[#eaeded] dark:bg-[#0f1111] pb-16 font-["Amazon_Ember",Arial,sans-serif]'>
+      {/* 1. Authentic Top Row: 6 Single-Creative Category Cards with Navigation Paddles */}
+      <TopCategoryCards />
 
-      {/* 2. 26 Authentic Amazon Gateway Category Quads & Department Discovery (100% Category Parity, Zero Product Buy Cards) */}
+      {/* 2. Authentic Continuous Category Quads (26 Multi-Category Quads with Chevron Headers) */}
       <CategoryQuads />
     </div>
   );

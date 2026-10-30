@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Menu from './menu';
 import CategoryDrawer from './category-drawer';
 import Search from './search';
-import { MapPin, ShieldCheck, Sparkles, Truck } from 'lucide-react';
+import { MapPin, Sparkles } from 'lucide-react';
 
 const Header = () => {
   return (
@@ -78,12 +78,30 @@ const Header = () => {
       {/* 2. Amazon-Style Subnav Belt (#232f3e) */}
       <div className='bg-[#232f3e] text-white text-[13px] font-medium border-t border-[#37475a]/50 shadow-inner'>
         <div className='max-w-[1520px] mx-auto px-3 sm:px-4 flex items-center justify-between overflow-x-auto py-1 scrollbar-none gap-2'>
-          {/* Left Category Quick Links */}
+          {/* Authentic Subnav Quick Links (Matching Image 2) */}
           <div className='flex items-center gap-1 shrink-0'>
             <div className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer font-bold transition-colors'>
               <CategoryDrawer />
               <span className='text-[14px] leading-none'>All</span>
             </div>
+            <Link
+              href='/s?k=prime+video'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Prime Video
+            </Link>
+            <Link
+              href='/search?sort=deals'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Coupons
+            </Link>
+            <Link
+              href='/search'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              Customer Service
+            </Link>
             <Link
               href='/search?sort=deals'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
@@ -94,47 +112,23 @@ const Header = () => {
               href='/search?sort=bestsellers'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Best Sellers
+              Registry
             </Link>
             <Link
-              href='/search?category=Electronics %26 Gadgets'
+              href='/s?k=gift+cards'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Electronics & Tech
+              Gift Cards
             </Link>
             <Link
-              href='/search?category=Apparel %26 Merch'
+              href='/admin'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Fashion & Streetwear
-            </Link>
-            <Link
-              href='/search?category=Toys %26 Games'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Sensory & Fidget Toys
-            </Link>
-            <Link
-              href='/search?category=Home %26 Kitchen'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Home & Workspace
-            </Link>
-            <Link
-              href='/s?k=beauty'
-              className='hidden xl:inline-block px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Beauty & Care
-            </Link>
-            <Link
-              href='/s?k=printify'
-              className='hidden 2xl:inline-block px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap text-[#febd69] font-bold transition-colors'
-            >
-              Printify Lab
+              Sell
             </Link>
           </div>
 
-          {/* Right Direct Seller Hub & Assurance */}
+          {/* Right Direct Seller Central / Admin Trigger */}
           <div className='flex items-center gap-2 shrink-0'>
             <Link
               href='/admin'
@@ -143,14 +137,6 @@ const Header = () => {
               <Sparkles className='w-3.5 h-3.5 text-[#131921]' />
               <span>Seller Central / Admin</span>
             </Link>
-            <div className='hidden 2xl:flex items-center gap-3 text-xs text-neutral-300 font-normal pl-2'>
-              <span className='flex items-center gap-1'>
-                <Truck className='w-3.5 h-3.5 text-amber-400' /> Free Express Shipping
-              </span>
-              <span className='flex items-center gap-1'>
-                <ShieldCheck className='w-3.5 h-3.5 text-emerald-400' /> 30-Day Money-Back
-              </span>
-            </div>
           </div>
         </div>
       </div>
