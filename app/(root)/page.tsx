@@ -1,7 +1,5 @@
 import AmazonHero from '@/components/shared/home/amazon-hero';
 import CategoryQuads from '@/components/shared/home/category-quads';
-import DealsShelf from '@/components/shared/home/deals-shelf';
-import BestSellersShelf from '@/components/shared/home/best-sellers-shelf';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -11,18 +9,12 @@ export const metadata: Metadata = {
 
 export default function Homepage() {
   return (
-    <div className='w-full pb-12'>
-      {/* 1. Authentic Amazon Hero Banner Carousel */}
+    <div className='w-full pb-16'>
+      {/* 1. Authentic Amazon Wide Hero Banner Carousel */}
       <AmazonHero />
 
-      {/* 2. 8 Authoritative Gateway Quads Overlapping Hero */}
+      {/* 2. 26 Authentic Amazon Gateway Category Quads & Department Discovery (100% Category Parity, Zero Product Buy Cards) */}
       <CategoryQuads />
-
-      {/* 3. Amazon "Today's Deals" Shelf */}
-      <DealsShelf />
-
-      {/* 4. Amazon Top 100 Best Sellers with Dynamic Category Switcher */}
-      <BestSellersShelf />
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { ShieldCheck, Truck } from 'lucide-react';
 
 const Header = () => {
   return (
-    <header className='w-full border-b border-neutral-800 bg-[#131921] text-white sticky top-0 z-40 shadow-sm'>
+    <header className='w-full border-b border-neutral-800 bg-[#131921] text-white relative z-40 shadow-sm'>
       {/* 1. Main Navbar */}
       <div className='wrapper flex items-center justify-between gap-3 py-2'>
         {/* Brand & Left Navigation */}

@@ -8,27 +8,39 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const HERO_SLIDES = [
   {
     id: 'hero-1',
-    image: '/assets/images/259f3bea-18e6-4716-b5d2-cd59d68d2f20.__CR0,0,2440,1000_PT0_SX1464_V1___.jpg',
-    title: 'Deals on Toys & Sensory Gadgets',
-    url: '/search?category=Toys %26 Games',
+    image: '/assets/images/asset_4f92ec0be5ff.jpg',
+    title: 'Plug in with Next-Gen Tech & Electronics',
+    url: '/s?k=electronics',
   },
   {
     id: 'hero-2',
-    image: '/assets/images/eb5e2247-3a75-469c-a20a-ee6ae67677f3.__CR0,0,2928,1250_PT0_SX1464_V1___.jpg',
-    title: 'Next-Gen Wireless Tech & Smart Devices',
-    url: '/search?category=Electronics %26 Gadgets',
+    image: '/assets/images/asset_8aa8fad952f0.jpg',
+    title: 'Discover Must-Haves for Home & Kitchen',
+    url: '/s?k=home%20and%20kitchen',
   },
   {
     id: 'hero-3',
-    image: '/assets/images/b1b5ae43-70ad-4242-bc93-2f77fa70e2f9.__CR0,0,2440,1000_PT0_SX1464_V1___.jpg',
-    title: 'Curated Streetwear & Organic Cotton Drops',
-    url: '/search?category=Apparel %26 Merch',
+    image: '/assets/images/asset_af098858a87f.jpg',
+    title: 'Explore Trending Streetwear & Fashion Finds',
+    url: '/s?k=clothing',
   },
   {
     id: 'hero-4',
-    image: '/assets/images/d96295b8-cf95-4931-ac68-3d58beb29658.__CR0,0,1464,600_PT0_SX1464_V1___.jpg',
-    title: 'Workspace Comfort & Smart Home Essentials',
-    url: '/search?category=Home %26 Kitchen',
+    image: '/assets/images/asset_cee3b5eaf85b.jpg',
+    title: 'Fun Finds for Family, Games & Sensory Play',
+    url: '/s?k=toys',
+  },
+  {
+    id: 'hero-5',
+    image: '/assets/images/asset_d18493beaa68.jpg',
+    title: 'Level Up Your Daily Self-Care & Radiance',
+    url: '/s?k=beauty',
+  },
+  {
+    id: 'hero-6',
+    image: '/assets/images/asset_fb60f94f7085.jpg',
+    title: 'Books You Can’t Put Down & Desk Essentials',
+    url: '/s?k=books',
   },
 ];
 
