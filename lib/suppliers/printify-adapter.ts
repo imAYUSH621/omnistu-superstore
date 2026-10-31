@@ -36,7 +36,7 @@ export class PrintifyAdapter implements SupplierAdapter {
   readonly supplier = 'PRINTIFY' as const;
 
   constructor(
-    private token: string | undefined = process.env.PRINTIFY_API_TOKEN,
+    private token: string | undefined = process.env.PRINTIFY_API_TOKEN || process.env.PRINTIFY_API,
     private shopId: string | undefined = process.env.PRINTIFY_SHOP_ID,
   ) {}
 

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronDown, EllipsisVertical } from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -10,16 +10,15 @@ import {
 import UserButton from './user-button';
 import CartBadge from './cart-badge';
 import ModeToggle from './mode-toggle';
+import GlobalSelector from './global-selector';
 
 const Menu = () => {
   return (
     <div className='flex justify-end gap-1.5 items-center font-["Amazon_Ember",Arial,sans-serif]'>
       <nav className='hidden md:flex items-center gap-1.5'>
-        {/* 1. Language Picker (Amazon Style) */}
-        <div className='hidden xl:flex items-center gap-1 px-2 py-2 border border-transparent hover:border-white rounded-xs cursor-pointer text-white text-[13px] font-bold transition-colors select-none'>
-          <span className='text-sm leading-none'>🇺🇸</span>
-          <span className='leading-none'>EN</span>
-          <ChevronDown className='w-3 h-3 text-[#a7acb2]' />
+        {/* 1. Global Language & Currency Picker */}
+        <div className='hidden lg:flex'>
+          <GlobalSelector />
         </div>
 
         {/* 2. Account & Lists */}
@@ -72,6 +71,10 @@ const Menu = () => {
             >
               Seller Central / Admin
             </Link>
+            <div className='flex items-center justify-between py-2 border-b border-neutral-700 w-full'>
+              <span className='text-xs text-neutral-300'>Language & Currency</span>
+              <GlobalSelector />
+            </div>
             <div className='flex items-center gap-3 pt-3 border-t border-neutral-700 w-full'>
               <ModeToggle />
               <span className='text-xs text-neutral-400'>Toggle Theme</span>

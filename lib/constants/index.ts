@@ -3,13 +3,13 @@ export const APP_DESCRIPTION =
   process.env.NEXT_PUBLIC_APP_DESCRIPTION ||
   'The Premier Autonomous AI-Native E-Commerce Superstore';
 export const SERVER_URL =
-  process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
+  process.env.NEXT_PUBLIC_SERVER_URL || 'https://omnistu-superstore.vercel.app';
 export const LATEST_PRODUCTS_LIMIT =
   Number(process.env.LATEST_PRODUCTS_LIMIT) || 4;
 
 export const signInDefaultValues = {
-  email: 'admin@example.com',
-  password: '123456',
+  email: '',
+  password: '',
 };
 
 export const signUpDefaultValues = {
@@ -60,4 +60,4 @@ export const reviewFormDefaultValues = {
   rating: 0,
 };
 
-export const SENDER_EMAIL = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
+export const SENDER_EMAIL = process.env.SENDER_EMAIL || 'support@omnistu.com';

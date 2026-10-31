@@ -13,7 +13,9 @@ import { revalidatePath } from 'next/cache';
 import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
 import { sendPurchaseReceipt } from '@/email';
+import { sendOrderConfirmationEmail } from '../mailer';
 import { syncOrderToSupabase } from '../providers/supabase-sync';
+import { dispatchOrderFulfillment } from '../fulfillment-dispatcher';
 
 // Create order and create the order items
 export async function createOrder() {
@@ -261,6 +263,23 @@ export async function updateOrderToPaid({
 
   if (!updatedOrder) throw new Error('Order not found');
 
+  if (updatedOrder.user?.email) {
+    sendOrderConfirmationEmail({
+      customerName: updatedOrder.user.name || 'Valued Customer',
+      customerEmail: updatedOrder.user.email,
+      orderId: updatedOrder.id,
+      orderDate: new Date().toLocaleDateString('en-US', { dateStyle: 'long' }),
+      items: updatedOrder.orderitems.map((oi) => ({
+        name: oi.name,
+        quantity: oi.qty,
+        price: String(oi.price),
+      })),
+      subtotal: String(updatedOrder.itemsPrice),
+      shipping: String(updatedOrder.shippingPrice),
+      total: String(updatedOrder.totalPrice),
+    }).catch((e) => console.error('Order confirmation email error:', e));
+  }
+
   sendPurchaseReceipt({
     order: {
       ...updatedOrder,
@@ -278,6 +297,21 @@ export async function updateOrderToPaid({
     total_usd: Number(updatedOrder.totalPrice),
     status: 'PAID',
   }).catch((e) => console.error('Supabase sync background error:', e));
+
+  // Auto-dispatch order items to CJ Dropshipping and Printify supplier fulfillment pipelines
+  dispatchOrderFulfillment({
+    id: updatedOrder.id,
+    orderitems: updatedOrder.orderitems.map((oi) => ({
+      name: oi.name,
+      slug: oi.slug,
+      qty: oi.qty,
+      price: String(oi.price),
+      productId: oi.productId,
+    })),
+    shippingAddress: (updatedOrder.shippingAddress || {}) as Record<string, unknown>,
+    user: updatedOrder.user ? { name: updatedOrder.user.name, email: updatedOrder.user.email } : undefined,
+    totalPrice: String(updatedOrder.totalPrice),
+  }).catch((e) => console.error('Supplier auto-fulfillment background error:', e));
 }
 
 // Get user's orders

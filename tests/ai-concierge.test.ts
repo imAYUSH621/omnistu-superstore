@@ -14,12 +14,20 @@ describe('AI Concierge Assistant Edge Cases', () => {
   });
 
   test('findProducts parses catalog correctly and returns matched product links', async () => {
-    const matched = await findProducts('magnetic balls fidget');
+    const matched = await findProducts('wireless earbuds');
     expect(typeof matched).toBe('string');
-    if (matched) {
-      expect(matched).toContain('price:');
-      expect(matched).toContain('/product/');
-    }
+    expect(matched).toContain('price:');
+    expect(matched).toContain('/product/OMN-TECH-EARBUDS-01');
+  });
+
+  test('findProducts grounds Indian Food queries like saffron and chai with catalog items', async () => {
+    const saffronMatched = await findProducts('Kashmiri saffron');
+    expect(saffronMatched).toContain('Saffron');
+    expect(saffronMatched).toContain('/product/OMN-IN-SAFFRON-01');
+
+    const chaiMatched = await findProducts('Masala chai tea');
+    expect(chaiMatched).toContain('Chai');
+    expect(chaiMatched).toContain('/product/OMN-IN-CHAI-02');
   });
 
   test('findProducts returns empty string safely on gibberish or empty query', async () => {

@@ -1,4 +1,4 @@
-export type SupplierId = 'CJ' | 'PRINTIFY' | 'BRANDSGATEWAY' | 'SUNSKY';
+export type SupplierId = 'CJ' | 'PRINTIFY' | 'BRANDSGATEWAY' | 'SUNSKY' | 'BLANKA' | 'TRENDSI';
 
 export interface NormalizedProduct {
   id: string; // internal id, e.g. "CJ-<supplier id>"

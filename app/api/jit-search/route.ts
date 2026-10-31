@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-
-const CJ_BASE_URL = 'https://developers.cjdropshipping.com/api2.0/v1';
-
-let cachedToken: string | null = null;
-let tokenExpiry = 0;
+import { searchAllSuppliers } from '@/lib/suppliers/router';
+import { convertUsdToInr } from '@/lib/shipping';
+import { priceFor } from '@/lib/pricing';
 
 interface CatalogRawItem {
   asin?: string;
@@ -28,6 +26,7 @@ interface JITProduct {
   title: string;
   wholesale_cost: number;
   retail_price: number;
+  retail_price_inr?: number;
   msrp_price: number;
   savings_usd: number;
   gross_margin_usd: number;
@@ -40,84 +39,21 @@ interface JITProduct {
   shipping_estimate: string;
 }
 
-interface CJRawProduct {
-  id?: string | number;
-  pid?: string | number;
-  sku?: string;
-  nameEn?: string;
-  productNameEn?: string;
-  bigImage?: string;
-  productImage?: string;
-  sellPrice?: string | number;
-  oneCategoryName?: string;
-  categoryName?: string;
-  listedNum?: number;
-}
-
-async function getCJToken(apiKey?: string): Promise<string | null> {
-  if (!apiKey) return null;
-  const now = Date.now();
-  if (cachedToken && now < tokenExpiry) {
-    return cachedToken;
-  }
-
-  try {
-    const resp = await fetch(`${CJ_BASE_URL}/authentication/getAccessToken`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey }),
-    });
-    const data = await resp.json();
-    if (data.result && data.data?.accessToken) {
-      cachedToken = data.data.accessToken;
-      tokenExpiry = now + 14 * 86400 * 1000;
-      return cachedToken;
-    }
-  } catch (err: unknown) {
-    console.error('CJ Token Fetch Error:', err instanceof Error ? err.message : String(err));
-  }
-  return null;
-}
-
 /**
  * Intelligent tiered pricing:
- * Produces competitive retail prices that beat Amazon while maintaining healthy margins.
+ * Combines priceFor margin safety with retail discount anchoring.
  */
-function calculateCompetitivePricing(wholesaleCost: number) {
-  let retail: number;
-  let msrp: number;
-
-  if (wholesaleCost <= 3.0) {
-    retail = wholesaleCost * 2.2 + 3.99;
-    retail = Math.min(Math.max(retail, 6.99), 11.99);
-    msrp = retail * 1.55;
-  } else if (wholesaleCost <= 8.0) {
-    retail = wholesaleCost * 1.75 + 4.99;
-    msrp = retail * 1.45;
-  } else if (wholesaleCost <= 20.0) {
-    retail = wholesaleCost * 1.5 + 5.99;
-    msrp = retail * 1.35;
-  } else if (wholesaleCost <= 50.0) {
-    retail = wholesaleCost * 1.35 + 7.99;
-    msrp = retail * 1.3;
-  } else {
-    retail = wholesaleCost * 1.25 + 9.99;
-    msrp = retail * 1.25;
-  }
-
-  retail = Math.floor(retail) + 0.99;
-  msrp = Math.floor(msrp) + 0.99;
-  if (msrp <= retail) msrp = retail + 5.0;
-
-  const grossSpread = Math.max(0, retail - wholesaleCost);
-  const marginPct = Math.round((grossSpread / retail) * 100);
+function calculateCompetitivePricing(wholesaleCost: number, shippingCost = 4.0) {
+  const pricing = priceFor(wholesaleCost, shippingCost);
+  let msrp = Math.floor(pricing.retailPrice * 1.35) + 0.99;
+  if (msrp <= pricing.retailPrice) msrp = pricing.retailPrice + 5.0;
 
   return {
-    retailPrice: parseFloat(retail.toFixed(2)),
+    retailPrice: pricing.retailPrice,
     msrpPrice: parseFloat(msrp.toFixed(2)),
     wholesaleCost: parseFloat(wholesaleCost.toFixed(2)),
-    grossMarginUsd: parseFloat(grossSpread.toFixed(2)),
-    grossMarginPct: marginPct,
+    grossMarginUsd: pricing.profit,
+    grossMarginPct: Math.round(pricing.marginPct),
   };
 }
 
@@ -128,8 +64,8 @@ export async function GET(req: Request) {
   const limit = Math.min(32, Math.max(8, parseInt(searchParams.get('limit') || '16') || 16));
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || '';
+  const country = (searchParams.get('country') || 'US').trim().toUpperCase();
 
-  const cjApiKey = process.env.FULFILLMENT_API_KEY || process.env.CJ_API_KEY;
   let results: JITProduct[] = [];
   let totalCount = 0;
 
@@ -167,6 +103,7 @@ export async function GET(req: Request) {
             title: it.title || it.name || 'Curated Product',
             wholesale_cost: pricing.wholesaleCost,
             retail_price: rawPrice,
+            retail_price_inr: convertUsdToInr(rawPrice),
             msrp_price: pricing.msrpPrice,
             savings_usd: parseFloat((pricing.msrpPrice - rawPrice).toFixed(2)),
             gross_margin_usd: pricing.grossMarginUsd,
@@ -176,7 +113,9 @@ export async function GET(req: Request) {
             rating: parseFloat(String(it.rating || '4.8').split(' ')[0]) || 4.8,
             reviews_count: parseInt(String(it.reviews || '240').replace(/[^0-9]/g, '')) || 240,
             in_stock: true,
-            shipping_estimate: '2-5 Business Days (Express Direct)',
+            shipping_estimate: country === 'IN'
+              ? '6-10 Business Days (CJ Packet Fast / India Post EMS)'
+              : '2-5 Business Days (Express Direct)',
           };
         });
         totalCount = results.length;
@@ -186,74 +125,46 @@ export async function GET(req: Request) {
     console.warn('Local catalog read error:', err instanceof Error ? err.message : String(err));
   }
 
-  // 2. If results are few or external supplier search requested, query CJ Dropshipping v2.0
-  if (results.length < limit && cjApiKey) {
-    const token = await getCJToken(cjApiKey);
-    if (token) {
-      try {
-        let searchUrl = `${CJ_BASE_URL}/product/listV2?keyWord=${encodeURIComponent(query)}&page=${page}&size=${limit}`;
-        if (category && category !== 'all') {
-          searchUrl += `&categoryId=${encodeURIComponent(category)}`;
-        }
+  // 2. If results are few or external supplier search requested, query suppliers router (CJ + Printify)
+  if (results.length < limit) {
+    try {
+      const supplierRes = await searchAllSuppliers(query, { page, limit });
+      if (supplierRes.products && supplierRes.products.length > 0) {
+        const existingIds = new Set(results.map((r) => r.id));
+        for (const sp of supplierRes.products) {
+          const internalId = `OMN-${sp.supplier}-${sp.supplierProductId}`;
+          if (existingIds.has(internalId)) continue;
 
-        const sResp = await fetch(searchUrl, {
-          headers: {
-            'CJ-Access-Token': token,
-            'Content-Type': 'application/json',
-          },
-        });
-        const sData = await sResp.json();
+          const pricing = calculateCompetitivePricing(sp.wholesaleCost);
+          const retail = sp.retailPrice || pricing.retailPrice;
 
-        let rawItems: CJRawProduct[] = [];
-        if (sData.data?.content && Array.isArray(sData.data.content) && sData.data.content[0]?.productList) {
-          rawItems = sData.data.content[0].productList as CJRawProduct[];
-          totalCount = Math.max(totalCount, sData.data.content[0]?.total || rawItems.length);
-        } else if (Array.isArray(sData.data?.list)) {
-          rawItems = sData.data.list as CJRawProduct[];
-          totalCount = Math.max(totalCount, sData.data?.total || rawItems.length);
-        }
-
-        const externalMapped: JITProduct[] = rawItems.map((it) => {
-          const rawPriceStr = String(it.sellPrice || '1.0').split('--')[0].trim();
-          const cost = parseFloat(rawPriceStr) || 1.0;
-          const pricing = calculateCompetitivePricing(cost);
-          const rawId = String(it.id || it.pid || it.sku);
-          const internalId = `OMN-CJ-${rawId}`;
-          const title = it.nameEn || it.productNameEn || `Trending Sourced (${it.sku})`;
-          const img = it.bigImage || it.productImage || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
-
-          return {
+          results.push({
             id: internalId,
-            raw_id: rawId,
-            vendor: 'CJ_DROPSHIPPING',
-            sku: it.sku || `SKU-${rawId}`,
-            title: title,
-            wholesale_cost: pricing.wholesaleCost,
-            retail_price: pricing.retailPrice,
+            raw_id: sp.supplierProductId,
+            vendor: sp.supplier,
+            sku: sp.sku || `SKU-${sp.supplierProductId}`,
+            title: sp.title,
+            wholesale_cost: sp.wholesaleCost,
+            retail_price: retail,
+            retail_price_inr: convertUsdToInr(retail),
             msrp_price: pricing.msrpPrice,
-            savings_usd: parseFloat((pricing.msrpPrice - pricing.retailPrice).toFixed(2)),
+            savings_usd: parseFloat((pricing.msrpPrice - retail).toFixed(2)),
             gross_margin_usd: pricing.grossMarginUsd,
             gross_margin_pct: pricing.grossMarginPct,
-            category: it.oneCategoryName || it.categoryName || 'Direct Electronics & Gadgets',
-            images: [img],
+            category: sp.supplier === 'PRINTIFY' ? 'Custom Apparel' : 'Direct Sourced',
+            images: sp.images && sp.images.length ? sp.images : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'],
             rating: 4.8,
-            reviews_count: it.listedNum ? Math.min(it.listedNum, 500) : 128,
+            reviews_count: 140,
             in_stock: true,
-            shipping_estimate: '4-7 Business Days (USPS Direct)',
-          };
-        });
-
-        // Deduplicate and append
-        const existingIds = new Set(results.map((r) => r.id));
-        for (const item of externalMapped) {
-          if (!existingIds.has(item.id)) {
-            results.push(item);
-            existingIds.add(item.id);
-          }
+            shipping_estimate: country === 'IN'
+              ? '6-10 Business Days (CJ Packet Fast / India Post EMS)'
+              : '3-6 Business Days (Supplier Direct)',
+          });
+          existingIds.add(internalId);
         }
-      } catch (err: unknown) {
-        console.error('CJ Live JIT search exception:', err instanceof Error ? err.message : String(err));
       }
+    } catch (err: unknown) {
+      console.warn('Supplier router search failed:', err instanceof Error ? err.message : String(err));
     }
   }
 

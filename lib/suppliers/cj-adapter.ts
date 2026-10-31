@@ -56,7 +56,7 @@ export class CjAdapter implements SupplierAdapter {
   private token: { value: string; expiresAt: number } | null = null;
 
   constructor(
-    private apiKey: string | undefined = process.env.CJ_API_KEY,
+    private apiKey: string | undefined = process.env.CJ_API_KEY || process.env.FULFILLMENT_API_KEY,
     private shippingEstimateUsd = 4,
   ) {}
 

@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Globe } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import GlobalSelector from '@/components/shared/header/global-selector';
 
 export default function Footer() {
   const scrollToTop = () => {
@@ -44,12 +44,12 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
+              <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 Verified Global Suppliers
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/refund-policy' className='hover:underline hover:text-white'>
                 24/7 AI Concierge Support
               </Link>
             </li>
@@ -93,18 +93,18 @@ export default function Footer() {
           <h3 className='font-bold text-[15px] mb-3 text-white'>Buyer Guarantees</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/refund-policy' className='hover:underline hover:text-white'>
                 30-Day Money-Back Guarantee
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 Worldwide Tracked Shipping
               </Link>
             </li>
             <li>
               <Link href='/cart' className='hover:underline hover:text-white'>
-                Encrypted Checkout (Stripe/PayPal)
+                Encrypted Checkout (Stripe/PayPal/UPI)
               </Link>
             </li>
             <li>
@@ -113,7 +113,7 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/terms' className='hover:underline hover:text-white'>
                 Anti-Counterfeit Protection
               </Link>
             </li>
@@ -125,77 +125,69 @@ export default function Footer() {
           <h3 className='font-bold text-[15px] mb-3 text-white'>Let Us Help You</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/user/profile' className='hover:underline hover:text-white'>
                 Your Account
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/user/orders' className='hover:underline hover:text-white'>
                 Your Orders & Tracking
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 Shipping Rates & Policies
               </Link>
             </li>
             <li>
-              <Link href='/orders' className='hover:underline hover:text-white'>
+              <Link href='/refund-policy' className='hover:underline hover:text-white'>
                 Returns & Replacements
               </Link>
             </li>
             <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
-                Help & Support Center
+              <Link href='/privacy' className='hover:underline hover:text-white'>
+                Help & Privacy Center
               </Link>
             </li>
           </ul>
         </div>
       </div>
 
-      {/* 3. Mid Footer: Logo & Region */}
+      {/* 3. Mid Footer: Logo & Interactive Global Selector */}
       <div className='border-t border-[#3a4553] py-6'>
-        <div className='max-w-[1000px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-6'>
+        <div className='max-w-[1000px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4'>
           <Link href='/' className='flex items-center gap-1.5'>
             <span className='font-extrabold text-[22px] tracking-tight text-white'>
               omnistu<span className='text-[#ff9900] text-[16px] font-black'>.us</span>
             </span>
           </Link>
 
-          <div className='flex items-center gap-3 text-[12px]'>
-            <div className='border border-[#848688] rounded px-2.5 py-1 flex items-center gap-1.5 text-[#ccc] cursor-pointer hover:border-white'>
-              <Globe className='w-3.5 h-3.5' />
-              <span>English</span>
-            </div>
-            <div className='border border-[#848688] rounded px-2.5 py-1 text-[#ccc] cursor-pointer hover:border-white'>
-              <span>$ USD - U.S. Dollar</span>
-            </div>
-            <div className='border border-[#848688] rounded px-2.5 py-1 text-[#ccc] cursor-pointer hover:border-white'>
-              <span>United States</span>
-            </div>
+          {/* Interactive Global Currency & Language Selector */}
+          <div className='flex items-center gap-3'>
+            <GlobalSelector />
           </div>
         </div>
       </div>
 
-      {/* 4. Sub-Footer Legal & Trademark Notice */}
+      {/* 4. Sub-Footer Legal & Compliance Notice */}
       <div className='bg-[#131a22] py-8 text-[11px] text-[#999] text-center'>
         <div className='max-w-[1000px] mx-auto px-6 space-y-2'>
           <div className='flex flex-wrap items-center justify-center gap-4 text-[#ddd]'>
-            <Link href='/orders' className='hover:underline'>
+            <Link href='/terms' className='hover:underline'>
               Conditions of Use
             </Link>
-            <Link href='/orders' className='hover:underline'>
+            <Link href='/privacy' className='hover:underline'>
               Privacy Notice
             </Link>
-            <Link href='/orders' className='hover:underline'>
-              Consumer Health Data Privacy
+            <Link href='/shipping-policy' className='hover:underline'>
+              Shipping & Carrier Policy
             </Link>
-            <Link href='/orders' className='hover:underline'>
-              Your Ads Privacy Choices
+            <Link href='/refund-policy' className='hover:underline'>
+              Returns & Refund Policy
             </Link>
           </div>
           <p className='text-[#999] pt-1'>
-            © 1996–{new Date().getFullYear()}, Omnistu Superstore, Inc. or its affiliates. All rights reserved.
+            © 1996–{new Date().getFullYear()}, Omnistu Superstore, Inc. or its affiliates. Direct Sourcing & Automated Fulfillment.
           </p>
         </div>
       </div>

@@ -21,6 +21,11 @@ export const authConfig = {
       // Check if user is not authenticated and accessing a protected path
       if (!auth && protectedPaths.some((p) => p.test(pathname))) return false;
 
+      // Strict admin role verification
+      if (pathname.startsWith('/admin') && (auth?.user as { role?: string } | undefined)?.role !== 'admin') {
+        return false;
+      }
+
       // Check for session cart cookie
       if (!request.cookies.get('sessionCartId')) {
         // Generate new session cart id cookie

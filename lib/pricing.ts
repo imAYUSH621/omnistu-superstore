@@ -1,10 +1,14 @@
+import { quoteShipping, convertUsdToInr, type ShippingQuote } from './shipping';
+
 export interface PricingConfig {
   feePct: number; // payment processor percentage, e.g. 2.9
   feeFixed: number; // payment processor fixed fee in USD, e.g. 0.30
   minMarginPct: number; // minimum margin you accept, e.g. 30
 }
 
-export function pricingConfigFromEnv(env: NodeJS.ProcessEnv = process.env): PricingConfig {
+export function pricingConfigFromEnv(
+  env: Partial<NodeJS.ProcessEnv> | Record<string, string | undefined> = process.env,
+): PricingConfig {
   const num = (v: string | undefined, fallback: number) => {
     const n = Number(v);
     return Number.isFinite(n) && v !== undefined && v !== '' ? n : fallback;
@@ -47,5 +51,23 @@ export function priceFor(
     retailPrice: Number(retailPrice.toFixed(2)),
     marginPct: Number(((profit / retailPrice) * 100).toFixed(1)),
     profit: Number(profit.toFixed(2)),
+  };
+}
+
+/**
+ * Calculates retail price, profit margin, destination shipping, and INR conversion.
+ */
+export function priceForDestination(
+  wholesaleCost: number,
+  destinationCountry = 'US',
+  serviceLevel: 'standard' | 'express' = 'standard',
+  cfg: PricingConfig = pricingConfigFromEnv(),
+): PriceResult & { shippingQuote: ShippingQuote; inrPrice: number } {
+  const quote = quoteShipping(destinationCountry, serviceLevel);
+  const result = priceFor(wholesaleCost, quote.shippingCostUsd, cfg);
+  return {
+    ...result,
+    shippingQuote: quote,
+    inrPrice: convertUsdToInr(result.retailPrice),
   };
 }

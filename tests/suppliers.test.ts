@@ -1,5 +1,8 @@
 import { CjAdapter, parseCost } from '../lib/suppliers/cj-adapter';
 import { PrintifyAdapter } from '../lib/suppliers/printify-adapter';
+import { BlankaAdapter } from '../lib/suppliers/blanka-adapter';
+import { TrendsiAdapter } from '../lib/suppliers/trendsi-adapter';
+import { BrandsGatewayAdapter } from '../lib/suppliers/brandsgateway-adapter';
 import { searchAllSuppliers, defaultAdapters } from '../lib/suppliers/router';
 import { SupplierError, type SupplierAdapter, type NormalizedProduct } from '../lib/suppliers/types';
 
@@ -80,6 +83,79 @@ describe('Printify Adapter Normalization', () => {
     const adapter = new PrintifyAdapter(undefined, undefined);
     await expect(adapter.searchProducts('hoodie', { page: 1, limit: 10 })).rejects.toThrow(SupplierError);
     await expect(adapter.getProduct('some-id')).rejects.toThrow(SupplierError);
+  });
+});
+
+describe('Blanka Private-Label Skincare & Soap Adapter Normalization', () => {
+  test('BlankaAdapter normalizes private-label turmeric soaps and skincare products', () => {
+    const adapter = new BlankaAdapter('mock-blanka-token');
+    const normalized = adapter.normalize({
+      id: 'blanka-soap-101',
+      title: 'Organic Turmeric & Kojic Acid Cleansing Bar',
+      description: 'Handcrafted cold-pressed botanical soap for radiant skin.',
+      wholesale_price: 6.5,
+      product_type: 'Botanical Skincare',
+      images: [{ src: 'https://images.example.com/soap.jpg' }],
+      variants: [{ id: 'var-1', sku: 'BLANKA-TURMERIC-BAR' }],
+    });
+
+    expect(normalized.id).toBe('BLANKA-blanka-soap-101');
+    expect(normalized.supplier).toBe('BLANKA');
+    expect(normalized.sku).toBe('BLANKA-TURMERIC-BAR');
+    expect(normalized.wholesaleCost).toBe(6.5);
+    expect(normalized.retailPrice).toBeGreaterThan(normalized.wholesaleCost);
+    expect(normalized.shippingNote).toContain('Omnistu Botanics');
+  });
+
+  test('BlankaAdapter returns empty array on search when API key is missing', async () => {
+    const adapter = new BlankaAdapter(undefined);
+    const results = await adapter.searchProducts('soap', { page: 1, limit: 10 });
+    expect(results).toEqual([]);
+  });
+});
+
+describe('Trendsi US-Warehoused Fashion Adapter Normalization', () => {
+  test('TrendsiAdapter normalizes US apparel and calculates retail pricing', () => {
+    const adapter = new TrendsiAdapter('mock-trendsi-key');
+    const normalized = adapter.normalize({
+      id: 'trendsi-jacket-55',
+      title: 'Heavyweight Utility Bomber Jacket',
+      description: 'Windproof technical utility outerwear.',
+      wholesale_price: 28.0,
+      category: "Men's Outerwear",
+      sku: 'TR-JACKET-55',
+      images: [{ url: 'https://images.example.com/jacket.jpg' }],
+    });
+
+    expect(normalized.id).toBe('TRENDSI-trendsi-jacket-55');
+    expect(normalized.supplier).toBe('TRENDSI');
+    expect(normalized.sku).toBe('TR-JACKET-55');
+    expect(normalized.wholesaleCost).toBe(28.0);
+    expect(normalized.retailPrice).toBeGreaterThan(28.0);
+    expect(normalized.shippingNote).toContain('US-warehoused');
+  });
+});
+
+describe('BrandsGateway Luxury Designer Adapter Normalization', () => {
+  test('BrandsGatewayAdapter preserves designer retail price and brand prefix', () => {
+    const adapter = new BrandsGatewayAdapter('mock-bg-token');
+    const normalized = adapter.normalize({
+      id: 'bg-watch-77',
+      name: 'Chronograph Titanium Timepiece',
+      brand: 'Versace',
+      wholesale_price: 350.0,
+      retail_price: 795.0,
+      description: 'Swiss precision quartz movement with sapphire crystal.',
+      sku: 'BG-VERSACE-77',
+      images: ['https://images.example.com/watch.jpg'],
+    });
+
+    expect(normalized.id).toBe('BG-bg-watch-77');
+    expect(normalized.supplier).toBe('BRANDSGATEWAY');
+    expect(normalized.title).toBe('VERSACE - Chronograph Titanium Timepiece');
+    expect(normalized.wholesaleCost).toBe(350.0);
+    expect(normalized.retailPrice).toBe(795.0);
+    expect(normalized.shippingNote).toContain('certificate of authenticity');
   });
 });
 

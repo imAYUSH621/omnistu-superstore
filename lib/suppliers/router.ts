@@ -1,5 +1,8 @@
 import { CjAdapter } from './cj-adapter';
 import { PrintifyAdapter } from './printify-adapter';
+import { BlankaAdapter } from './blanka-adapter';
+import { TrendsiAdapter } from './trendsi-adapter';
+import { BrandsGatewayAdapter } from './brandsgateway-adapter';
 import type { NormalizedProduct, SearchOptions, SupplierAdapter } from './types';
 
 export interface SupplierSearchResult {
@@ -9,10 +12,36 @@ export interface SupplierSearchResult {
 
 export function defaultAdapters(): SupplierAdapter[] {
   const adapters: SupplierAdapter[] = [];
-  if (process.env.CJ_API_KEY) adapters.push(new CjAdapter());
-  if (process.env.PRINTIFY_API_TOKEN && process.env.PRINTIFY_SHOP_ID) {
-    adapters.push(new PrintifyAdapter());
+
+  // 1. CJ Dropshipping (General Catalog, Tech, Home, Sensory Gadgets)
+  const cjKey = process.env.CJ_API_KEY || process.env.FULFILLMENT_API_KEY;
+  if (cjKey) adapters.push(new CjAdapter(cjKey));
+
+  // 2. Printify (Print-On-Demand Streetwear & Merch)
+  const printifyToken = process.env.PRINTIFY_API_TOKEN || process.env.PRINTIFY_API;
+  const printifyShop = process.env.PRINTIFY_SHOP_ID;
+  if (printifyToken && printifyShop) {
+    adapters.push(new PrintifyAdapter(printifyToken, printifyShop));
   }
+
+  // 3. Blanka (Private-Label Face Wash, Organic Soaps, Serums)
+  const blankaKey = process.env.BLANKA_API_KEY;
+  if (blankaKey) {
+    adapters.push(new BlankaAdapter(blankaKey));
+  }
+
+  // 4. Trendsi (US Warehoused Fast Fashion & Women's Apparel)
+  const trendsiKey = process.env.TRENDSI_API_KEY;
+  if (trendsiKey) {
+    adapters.push(new TrendsiAdapter(trendsiKey));
+  }
+
+  // 5. BrandsGateway (Authentic Luxury Jewelry & Watches)
+  const brandsgatewayKey = process.env.BRANDSGATEWAY_API_KEY;
+  if (brandsgatewayKey) {
+    adapters.push(new BrandsGatewayAdapter(brandsgatewayKey));
+  }
+
   return adapters;
 }
 
