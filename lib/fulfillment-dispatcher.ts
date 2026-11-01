@@ -171,11 +171,11 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
             first_name: customerName.split(' ')[0] || 'Valued',
             last_name: customerName.split(' ').slice(1).join(' ') || 'Customer',
             email: customerEmail,
-            phone: shipping.phone || '5551234567',
-            country: shipping.country || 'US',
-            address1: shipping.streetAddress || '123 Main St',
-            city: shipping.city || 'San Francisco',
-            zip: shipping.postalCode || '94105',
+            phone: shipping.phone,
+            country: shipping.country,
+            address1: shipping.streetAddress,
+            city: shipping.city,
+            zip: shipping.postalCode,
           },
         };
 
