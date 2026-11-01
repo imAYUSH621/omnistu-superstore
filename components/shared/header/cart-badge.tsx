@@ -5,23 +5,12 @@ import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import T from '@/components/shared/i18n-text';
 
-export default function CartBadge() {
-  const [count, setCount] = useState<number>(0);
+export default function CartBadge({ initialCount = 0 }: { initialCount?: number }) {
+  // Server provides the real cart count; a cookie-based seed was never
+  // written anywhere, so the badge silently reset to 0 on navigation.
+  const [count, setCount] = useState<number>(initialCount);
 
   useEffect(() => {
-    const updateFromStorage = () => {
-      if (typeof window !== 'undefined') {
-        const cookies = document.cookie.split(';');
-        const cartCookie = cookies.find((c) => c.trim().startsWith('sessionCartCount='));
-        if (cartCookie) {
-          const val = parseInt(cartCookie.split('=')[1], 10);
-          if (!isNaN(val)) setCount(val);
-        }
-      }
-    };
-
-    updateFromStorage();
-
     const handleCartUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ qty: number }>;
       setCount((prev) => prev + (customEvent.detail?.qty || 1));

@@ -10,10 +10,13 @@ import {
 } from '@/components/ui/sheet';
 import UserButton from './user-button';
 import CartBadge from './cart-badge';
+import { getMyCart } from '@/lib/actions/cart.actions';
 import ModeToggle from './mode-toggle';
 import GlobalSelector from './global-selector';
 
-const Menu = () => {
+const Menu = async () => {
+  const cart = await getMyCart();
+  const cartCount = cart?.items?.reduce((sum, item) => sum + item.qty, 0) ?? 0;
   return (
     <div className='flex justify-end gap-1.5 items-center font-sans'>
       <nav className='hidden md:flex items-center gap-1.5'>
@@ -34,12 +37,12 @@ const Menu = () => {
         </Link>
 
         {/* 4. Cart */}
-        <CartBadge />
+        <CartBadge initialCount={cartCount} />
       </nav>
 
       {/* Mobile Right Bar */}
       <nav className='md:hidden flex items-center gap-1'>
-        <CartBadge />
+        <CartBadge initialCount={cartCount} />
         <Sheet>
           <SheetTrigger className='p-1.5 align-middle rounded-xs text-white hover:border hover:border-white transition'>
             <EllipsisVertical className='w-5 h-5' />
