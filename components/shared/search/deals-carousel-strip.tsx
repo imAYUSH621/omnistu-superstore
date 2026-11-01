@@ -48,7 +48,7 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
             >
               <div className='relative w-full h-32 bg-neutral-50 dark:bg-neutral-900 rounded-md overflow-hidden p-2 flex items-center justify-center mb-2'>
                 <Image
-                  src={deal.images[0] || '/images/products/silicone-magnetic-balls-1.svg'}
+                  src={deal.images[0] || '/images/products/placeholder.svg'}
                   alt={deal.name}
                   fill
                   sizes='192px'

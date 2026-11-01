@@ -31,7 +31,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         slug: product.slug,
         price: product.price,
         qty: 1,
-        image: product.images[0] || '/images/sample-products/p1-1.jpg',
+        image: product.images[0] || '/images/products/placeholder.svg',
       });
 
       if (!res.success) {
@@ -96,7 +96,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       <CardHeader className='p-0 overflow-hidden bg-neutral-50 dark:bg-neutral-900/50 aspect-square flex items-center justify-center relative'>
         <Link href={`/product/${product.slug}`} className='w-full h-full relative'>
           <ProductImage
-            src={product.images[0] || '/images/sample-products/p1-1.jpg'}
+            src={product.images[0] || '/images/products/placeholder.svg'}
             alt={product.name}
             sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
             className='object-contain p-4 group-hover:scale-105 transition-transform duration-300'
