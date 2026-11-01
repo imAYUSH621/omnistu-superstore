@@ -99,11 +99,19 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
 
 // Get user by the ID
 export async function getUserById(userId: string) {
+  // A server action is callable from the network: only the signed-in owner or
+  // an admin may read a user record, and the password hash is never returned.
+  const session = await auth();
+  if (!session?.user?.id || (session.user.id !== userId && session.user.role !== 'admin')) {
+    throw new Error('User not found');
+  }
   const user = await prisma.user.findFirst({
     where: { id: userId },
   });
   if (!user) throw new Error('User not found');
-  return user;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _password, ...safe } = user;
+  return safe;
 }
 
 // Update the user's address
