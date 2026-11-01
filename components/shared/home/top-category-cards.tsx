@@ -5,34 +5,44 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductImage } from '@/components/shared/product/product-image';
 
+// Category tiles use the store's own generated artwork (public/images/categories),
+// not marketplace product photos. Illustrative imagery, not a specific product.
 const TOP_CARDS = [
   {
     id: 'card-1',
     title: 'Royal Gourmet & Indian Food',
-    image: '/images/sample-products/artisan-indian-spice-box-kit-7-whole-organic-spices-green-cardamom-sta-1.jpg',
+    image: '/images/categories/gourmet-indian-food.jpg',
     url: '/search?category=Gourmet%20%26%20Indian%20Food',
   },
   {
     id: 'card-2',
     title: 'Tech & Gadgets',
-    image: '/images/sample-products/pro-anc-active-noise-cancelling-wireless-earbuds-spatial-audio-bluetoo-1.jpg',
+    image: '/images/categories/tech-gadgets.jpg',
     url: '/search?category=Tech%20%26%20Gadgets',
   },
   {
     id: 'card-3',
     title: 'Jewelry & Watches',
-    image: '/images/sample-products/2-0-carat-d-color-vvs1-moissanite-solitaire-engagement-ring-in-18k-whi-1.jpg',
+    image: '/images/categories/jewelry-watches.jpg',
     url: '/search?category=Jewelry%20%26%20Watches',
   },
   {
-    // Custom Apparel has no verified-matching photo (all 3 product images
-    // are on the D21 unavailable list), so it would render a blank tile in
-    // this visual slot. Home & Lifestyle is the next real department with
-    // verified imagery.
     id: 'card-4',
     title: 'Home & Lifestyle',
-    image: '/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg',
+    image: '/images/categories/home-lifestyle.jpg',
     url: '/search?category=Home%20%26%20Lifestyle',
+  },
+  {
+    id: 'card-5',
+    title: 'Custom Apparel',
+    image: '/images/categories/custom-apparel.jpg',
+    url: '/search?category=Custom%20Apparel',
+  },
+  {
+    id: 'card-6',
+    title: 'Toys & Games',
+    image: '/images/categories/toys-games.jpg',
+    url: '/search?category=Toys%20%26%20Games',
   },
 ];
 
