@@ -53,7 +53,15 @@ export default function CategoryQuads() {
   return (
     <div className='relative z-20 px-3 sm:px-4 md:px-6 max-w-[1520px] mx-auto pt-2 pb-12 font-sans'>
       {/* Continuous 4-Column Category Grid Matching Authentic Amazon (26 Quads) */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5'>
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 ${
+          // No empty desktop column: the column count follows the real
+          // quad count instead of a hard-coded 4.
+          ['lg:grid-cols-1', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-cols-4'][
+            Math.min(AMAZON_GATEWAY_QUADS.length, 4)
+          ]
+        }`}
+      >
         {AMAZON_GATEWAY_QUADS.map((quad) => (
           <QuadCard key={quad.id} quad={quad} />
         ))}
