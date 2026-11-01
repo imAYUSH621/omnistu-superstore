@@ -93,6 +93,32 @@ describe('CJ adapter HTTP edge cases (mocked)', () => {
       .mockResolvedValueOnce({ ok: false, status: 500, statusText: 'err', json: async () => ({ result: false, message: 'boom' }) } as unknown as Response);
     await expect(a.getProduct('x')).rejects.toBeInstanceOf(SupplierError);
   });
+
+  it('pins the CJ wire contract: apiKey only in auth body, productName param, token header', async () => {
+    fetchMock
+      .mockResolvedValueOnce(tokenRes('tok-abc'))
+      .mockResolvedValueOnce(listRes([{ pid: 'P9', productNameEn: 'Widget', sellPrice: '2.00' }]));
+    const a = new CjAdapter('secret-api-key');
+    await a.searchProducts('wooden puzzle', { page: 2, limit: 7 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [authUrl, authInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    // Auth: apiKey travels ONLY in the POST body to getAccessToken, never as a bearer/CJ-Access-Token.
+    expect(String(authUrl)).toContain('/authentication/getAccessToken');
+    expect(authInit?.method).toBe('POST');
+    expect(JSON.parse(String(authInit?.body))).toEqual({ apiKey: 'secret-api-key' });
+    expect((authInit?.headers as Record<string, string>)?.['CJ-Access-Token']).toBeUndefined();
+
+    const [listUrl, listInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    // Search: CJ silently ignores `keyWord` (returns the whole catalog); `productName` is the honored param.
+    expect(String(listUrl)).toContain('/product/list?');
+    expect(String(listUrl)).toContain('productName=wooden+puzzle');
+    expect(String(listUrl)).not.toContain('keyWord=');
+    expect(String(listUrl)).toContain('pageNum=2');
+    expect(String(listUrl)).toContain('pageSize=7');
+    // The raw apiKey must never be sent as the access token.
+    expect((listInit?.headers as Record<string, string>)?.['CJ-Access-Token']).toBe('tok-abc');
+  });
 });
 
 describe('parseCost adversarial inputs', () => {
