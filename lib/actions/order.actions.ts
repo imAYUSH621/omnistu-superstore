@@ -548,6 +548,20 @@ export async function deleteOrder(id: string) {
 // Update COD order to paid
 export async function updateOrderToPaidCOD(orderId: string) {
   try {
+    // Server actions are callable outside the UI: the admin-only button is not
+    // an authorization check. Require an admin session and a COD order.
+    const session = await auth();
+    if (session?.user?.role !== 'admin') throw new Error('User is not authorized');
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId },
+      select: { paymentMethod: true },
+    });
+    if (!order) throw new Error('Order not found');
+    if (order.paymentMethod !== 'CashOnDelivery') {
+      throw new Error('Only Cash on Delivery orders can be marked paid manually');
+    }
+
     await updateOrderToPaid({ orderId });
 
     revalidatePath(`/order/${orderId}`);
@@ -561,6 +575,9 @@ export async function updateOrderToPaidCOD(orderId: string) {
 // Update COD order to delivered
 export async function deliverOrder(orderId: string) {
   try {
+    const session = await auth();
+    if (session?.user?.role !== 'admin') throw new Error('User is not authorized');
+
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,

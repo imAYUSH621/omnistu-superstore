@@ -1,0 +1,135 @@
+/**
+ * Server actions are reachable outside the UI, so authorization must live in
+ * the action. Also pins the chat order-lookup query shape and throttle.
+ */
+const mockFindFirst = jest.fn();
+const mockUpdate = jest.fn();
+const mockTransaction = jest.fn();
+const mockAuth = jest.fn();
+
+jest.mock('@/db/prisma', () => ({
+  prisma: {
+    order: {
+      findFirst: (...a: unknown[]) => mockFindFirst(...a),
+      findUnique: jest.fn(),
+      update: (...a: unknown[]) => mockUpdate(...a),
+    },
+    $transaction: (...a: unknown[]) => mockTransaction(...a),
+  },
+}));
+jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
+jest.mock('@/lib/actions/cart.actions', () => ({ getMyCart: jest.fn() }));
+jest.mock('@/lib/actions/user.actions', () => ({ getUserById: jest.fn() }));
+jest.mock('@/email', () => ({ sendPurchaseReceipt: jest.fn() }));
+jest.mock('@/lib/mailer', () => ({ sendOrderConfirmationEmail: jest.fn(async () => ({})) }));
+jest.mock('@/lib/providers/supabase-sync', () => ({ syncOrderToSupabase: jest.fn(async () => ({})) }));
+jest.mock('@/lib/fulfillment-dispatcher', () => ({ dispatchOrderFulfillment: jest.fn(async () => ({ dispatches: [] })) }));
+jest.mock('@/lib/fulfillment-persistence', () => ({ persistDispatchSummary: jest.fn() }));
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
+
+import { updateOrderToPaidCOD, deliverOrder } from '@/lib/actions/order.actions';
+import { buildOrderLookupQuery, lookupThrottled, lookupOrder, LOOKUP_ATTEMPTS } from '@/lib/chat';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe('updateOrderToPaidCOD authorization', () => {
+  it('rejects an anonymous caller without touching the order', async () => {
+    mockAuth.mockResolvedValue(null);
+    const r = await updateOrderToPaidCOD('o1');
+    expect(r.success).toBe(false);
+    expect(mockFindFirst).not.toHaveBeenCalled();
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+  it('rejects a signed-in non-admin', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'u1', role: 'user' } });
+    const r = await updateOrderToPaidCOD('o1');
+    expect(r.success).toBe(false);
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+  it('rejects an admin on a non-COD order', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
+    mockFindFirst.mockResolvedValue({ paymentMethod: 'PayPal' });
+    const r = await updateOrderToPaidCOD('o1');
+    expect(r.success).toBe(false);
+    expect(r.message).toMatch(/Cash on Delivery/);
+    expect(mockTransaction).not.toHaveBeenCalled();
+  });
+  it('lets an admin through on a COD order (reaches the paid flow)', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
+    mockFindFirst
+      .mockResolvedValueOnce({ paymentMethod: 'CashOnDelivery' })
+      .mockResolvedValueOnce(null); // updateOrderToPaid's own lookup -> "Order not found"
+    const r = await updateOrderToPaidCOD('o1');
+    expect(mockFindFirst).toHaveBeenCalledTimes(2);
+    expect(r.success).toBe(false);
+    expect(r.message).toMatch(/Order not found/);
+  });
+});
+
+describe('deliverOrder authorization', () => {
+  it('rejects non-admin without reading or updating', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'u1', role: 'user' } });
+    const r = await deliverOrder('o1');
+    expect(r.success).toBe(false);
+    expect(mockFindFirst).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+  it('lets an admin mark a paid order delivered', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
+    mockFindFirst.mockResolvedValue({ isPaid: true });
+    const r = await deliverOrder('o1');
+    expect(r.success).toBe(true);
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('chat order lookup', () => {
+  it('builds an exact-match query with a fixed column list and no or/ilike', () => {
+    const q = buildOrderLookupQuery('OMN-884920', 'a@b.co');
+    expect(q.get('order_id')).toBe('eq.OMN-884920');
+    expect(q.get('customer_email')).toBe('eq.a@b.co');
+    expect(q.get('select')).toBe('order_id,customer_email,status,tracking_number,carrier,created_at');
+    expect(q.get('limit')).toBe('1');
+    expect(q.has('or')).toBe(false);
+    expect(q.toString()).not.toMatch(/ilike/);
+  });
+  it('encodes hostile email characters as one parameter value, not extra params', () => {
+    const q = buildOrderLookupQuery('OMN-12345', 'x@y.co&or=(id.gt.0)');
+    expect([...q.keys()].sort()).toEqual(['customer_email', 'limit', 'order_id', 'select']);
+  });
+  it('throttles repeated attempts per order+email and not other pairs', () => {
+    const t0 = 1_000_000;
+    for (let i = 0; i < LOOKUP_ATTEMPTS; i++) expect(lookupThrottled('OMN-THR-1', 't@x.co', t0 + i)).toBe(false);
+    expect(lookupThrottled('OMN-THR-1', 't@x.co', t0 + 10)).toBe(true);
+    expect(lookupThrottled('OMN-THR-2', 't@x.co', t0 + 10)).toBe(false);
+    expect(lookupThrottled('OMN-THR-1', 't@x.co', t0 + 16 * 60_000)).toBe(false);
+  });
+  it('never sends the service-role key and uses the anon key', async () => {
+    const saved = { ...process.env };
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-secret';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    const f = jest.fn(async () => ({ ok: true, json: async () => [] }));
+    (global as unknown as { fetch: unknown }).fetch = f;
+    await lookupOrder('order OMN-NOKEY-1 for k@z.co');
+    const [, init] = f.mock.calls[0] as unknown as [string, { headers: Record<string, string> }];
+    expect(init.headers.apikey).toBe('anon-key');
+    expect(JSON.stringify(init.headers)).not.toMatch(/service-secret/);
+    process.env = saved;
+  });
+  it('does not query when only the anon-less environment exists but a service key is set', async () => {
+    const saved = { ...process.env };
+    delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-secret';
+    const f = jest.fn();
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const r = await lookupOrder('order OMN-NOKEY-2 for k@z.co');
+    expect(f).not.toHaveBeenCalled();
+    expect(r).toMatch(/unavailable/);
+    process.env = saved;
+  });
+});
