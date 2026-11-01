@@ -15,6 +15,7 @@ const mockQueryRaw = jest.fn();
 jest.mock('@/db/prisma', () => {
   const tx = {
     $queryRaw: (...a: unknown[]) => mockQueryRaw(...a),
+    $executeRaw: (...a: unknown[]) => mockQueryRaw(...a),
     returnRequest: {
       findFirst: (...a: unknown[]) => mockReturnFindFirst(...a),
       findUnique: (...a: unknown[]) => mockReturnFindUnique(...a),
@@ -29,6 +30,7 @@ jest.mock('@/db/prisma', () => {
       order: { findUnique: (...a: unknown[]) => mockOrderFindUnique(...a) },
       returnRequest: tx.returnRequest,
       $queryRaw: (...a: unknown[]) => mockQueryRaw(...a),
+      $executeRaw: (...a: unknown[]) => mockQueryRaw(...a),
       // run the interactive-transaction callback against the same mocked
       // delegates; the advisory lock is a no-op in unit tests
       $transaction: (fn: (t: typeof tx) => unknown) => fn(tx),

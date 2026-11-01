@@ -57,7 +57,7 @@ async function paypalRefund(captureId: string, amount: number, idempotencyKey: s
   const res = await fetch(`${paypalBase()}/v2/payments/captures/${captureId}/refund`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access_token}`, 'PayPal-Request-Id': idempotencyKey },
-    body: JSON.stringify({ amount: { value: amount.toFixed(2), currency_code: 'USD' } }),
+    body: JSON.stringify({ amount: { value: toMajorString(amount, 'USD'), currency_code: 'USD' } }),
   });
   if (!res.ok) return { status: 'FAILED', note: `PayPal refund failed (HTTP ${res.status}): ${(await res.text()).slice(0, 200)}` };
   const data = await res.json();
@@ -74,7 +74,7 @@ async function stripeRefund(paymentIntentId: string, amount: number, idempotency
     },
     body: new URLSearchParams({
       payment_intent: paymentIntentId,
-      amount: String(Math.round(amount * 100)),
+      amount: String(toMinorUnits(amount, 'USD')),
     }),
   });
   const data = await res.json();
@@ -82,10 +82,39 @@ async function stripeRefund(paymentIntentId: string, amount: number, idempotency
   return { status: 'EXECUTED', providerRef: data.id, note: `Stripe refund ${data.id} executed.` };
 }
 
+// Currencies this store actually accepts at checkout, with their ISO
+// 4217 minor-unit exponents. Refund minor-unit conversion follows THIS
+// table, never a blanket two-decimal assumption (JPY has 0 decimals).
+// Any currency not listed fails closed before provider contact.
+export const SUPPORTED_REFUND_CURRENCIES: Record<string, { exponent: number }> = {
+  USD: { exponent: 2 },
+};
+
+function toMinorUnits(amount: number, currency: string): number {
+  const c = SUPPORTED_REFUND_CURRENCIES[currency.toUpperCase()];
+  if (!c) throw new SupplierRefusal(currency);
+  return Math.round(amount * 10 ** c.exponent);
+}
+
+function toMajorString(amount: number, currency: string): string {
+  const c = SUPPORTED_REFUND_CURRENCIES[currency.toUpperCase()];
+  if (!c) throw new SupplierRefusal(currency);
+  return amount.toFixed(c.exponent);
+}
+
+class SupplierRefusal extends Error {
+  constructor(currency: string) {
+    super(`Unsupported refund currency ${currency}`);
+  }
+}
+
 export async function executeRefund({ paymentMethod, paymentResult, amount, orderTotal, alreadyRefunded, idempotencyKey }: RefundInput): Promise<RefundResult> {
   const method = (paymentMethod || '').toLowerCase();
   const live = process.env.REFUNDS_LIVE_ENABLED === 'true';
   const ORDER_CURRENCY = 'USD';
+  if (!SUPPORTED_REFUND_CURRENCIES[ORDER_CURRENCY]) {
+    return { status: 'FAILED', note: `Order currency ${ORDER_CURRENCY} is not a supported refund currency - refusing to refund.` };
+  }
 
   // Amount validation before any provider contact: refunds must be
   // positive and the order's cumulative refunds must never exceed its
