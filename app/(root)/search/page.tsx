@@ -8,6 +8,7 @@ import SearchNarrowChips from '@/components/shared/search/search-narrow-chips';
 import SearchFacetedSidebar from '@/components/shared/search/search-faceted-sidebar';
 import SearchFiltersCollapsible from '@/components/shared/search/search-filters-collapsible';
 import { catalogSource } from '@/lib/utils';
+import { redirect } from 'next/navigation';
 import Pagination from '@/components/shared/pagination';
 import SearchResultsClient from '@/components/shared/search/search-results-client';
 
@@ -75,6 +76,19 @@ const SearchPage = async (props: {
     page: Number(page),
     limit: 24,
   });
+
+  // A page past the end goes to the last real page (keeps the other filters).
+  const requestedPage = Math.max(1, Number(page) || 1);
+  if (productsResult.totalPages > 0 && requestedPage > productsResult.totalPages) {
+    const params = new URLSearchParams();
+    if (q && q !== 'all') params.set('q', q);
+    if (category && category !== 'all') params.set('category', category);
+    if (price && price !== 'all') params.set('price', price);
+    if (rating && rating !== 'all') params.set('rating', rating);
+    if (sort && sort !== 'newest') params.set('sort', sort);
+    if (productsResult.totalPages > 1) params.set('page', String(productsResult.totalPages));
+    redirect(`/search${params.toString() ? `?${params}` : ''}`);
+  }
 
   const categories = await getAllCategories();
   const facetCounts = await getFacetCounts({ query: q, category });

@@ -156,6 +156,9 @@ export async function createOrder(idempotencyKey?: string) {
 
     if (!insertedOrderId) throw new Error('Order not created');
 
+    // The cart was just emptied: refresh the layout so the header badge resets.
+    revalidatePath('/', 'layout');
+
     return {
       success: true,
       message: 'Order created',
