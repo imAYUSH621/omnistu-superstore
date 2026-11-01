@@ -1,4 +1,4 @@
-import { getPaidOrderReconciliation } from '@/lib/actions/reconcile.actions';
+import { getPaidOrderReconciliation, getOversoldProducts } from '@/lib/actions/reconcile.actions';
 import { requireAdmin } from '@/lib/auth-guard';
 
 export const metadata = { title: 'Paid order reconciliation' };
@@ -11,6 +11,7 @@ const reasonText = (r: string) =>
 export default async function ReconciliationPage() {
   await requireAdmin(); // same guard as the other admin pages (non-admins go to /unauthorized)
   const res = await getPaidOrderReconciliation();
+  const oversold = await getOversoldProducts();
   if (!res.success) {
     return (
       <div className="space-y-2">
@@ -66,6 +67,22 @@ export default async function ReconciliationPage() {
             </tbody>
           </table>
         </>
+      )}
+      {oversold.success && oversold.items.length > 0 && (
+        <section className="space-y-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm" aria-label="Oversold products">
+          <h2 className="font-semibold">Oversold products (stock below zero)</h2>
+          <p>
+            More units were paid for than were in stock. This list is read-only and changes nothing: decide per product
+            whether to refund, backorder or re-source.
+          </p>
+          <ul className="space-y-1">
+            {oversold.items.map((p) => (
+              <li key={p.slug} className="break-words">
+                {p.name} <span className="text-muted-foreground">({p.slug})</span>: <strong>{p.stock}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

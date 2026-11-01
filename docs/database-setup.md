@@ -19,3 +19,15 @@ To bring up a real database (needs an owner decision on provider and account; no
 4. Optional demo data: `npm run db:seed` style script in `db/seed.ts` (check it first; it creates sample users).
 5. On Supabase, run docs/db/supabase-lockdown.sql. Redeploy, then check `/api/health` returns `db: ok`.
 6. Do not enable the fulfillment outbox or any supplier retry as part of this step.
+
+## Putting products into a database (safe options)
+
+How the store reads products: `getLatestProducts` / `getAllProducts` / `getProductBySlug` read the Product table first and fall back to the bundled demo sample data only when there is no database or it has no products. The demo data is not a real catalog.
+
+- `npx tsx scripts/import-catalog.ts --file reviewed-products.json` is a dry run: it prints create/update/skip/invalid counts and writes nothing.
+- Add `--apply` to create products for NEW slugs only. Existing products are left alone. Rows must already be Product-shaped (name, slug, category, brand, description, stock, price, images); stock and brand are never invented.
+- Add `--update-existing` to also refresh name, description, images, brand, category and banner of existing slugs. Stock, price, rating and isFeatured are never overwritten. Nothing is ever deleted. Invalid rows block `--apply`.
+- `--from-sample` imports the demo products (for a development database).
+- `db/seed.ts` DELETES products, users, sessions and accounts. It now refuses unless the database host is local (or `ALLOW_DESTRUCTIVE_SEED=1` is set) and refuses in production.
+
+Stock semantics today: the cart checks stock when an item is added; stock is decremented only when an order is marked paid, with no floor, so two paid orders can take the last unit and stock can go below zero. `/admin/reconciliation` lists such products read-only. Whether to refund, backorder or reserve at checkout is an owner policy decision and is not implemented.
