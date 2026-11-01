@@ -58,3 +58,16 @@ describe('source hygiene', () => {
     expect(src).not.toMatch(/password:\s*'[^']+'/);
   });
 });
+
+import { signUpFormSchema } from '@/lib/validators';
+
+describe('sign-up email normalisation', () => {
+  const base = { name: 'Asha Rao', password: 'secret123', confirmPassword: 'secret123' };
+  it('trims and lowercases so sign-in (which lowercases) can find the account', () => {
+    const r = signUpFormSchema.parse({ ...base, email: '  Asha@Example.COM ' });
+    expect(r.email).toBe('asha@example.com');
+  });
+  it('still rejects invalid emails', () => {
+    expect(signUpFormSchema.safeParse({ ...base, email: 'nope' }).success).toBe(false);
+  });
+});

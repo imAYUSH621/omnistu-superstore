@@ -1,4 +1,12 @@
-import { limited, findProducts, lookupOrder } from '../lib/chat';
+const mockProducts = [
+  { name: 'Pro ANC Active Noise Cancelling Wireless Earbuds', slug: 'pro-anc-earbuds', price: '39.99', category: 'Tech & Gadgets', brand: 'Omnistu', description: 'Wireless earbuds.', stock: 5, rating: '4.9', numReviews: 1480 },
+  { name: 'Royal Kashmiri Mongra Saffron (2g)', slug: 'royal-kashmiri-mongra-saffron', price: '24.99', category: 'Gourmet & Indian Food', brand: 'Omnistu', description: 'Saffron threads.', stock: 0, rating: '4.9', numReviews: 1480 },
+  { name: 'Authentic Masala Chai Tea Blend', slug: 'masala-chai', price: '16.99', category: 'Gourmet & Indian Food', brand: 'Omnistu', description: 'Chai tea.', stock: 9, rating: '5', numReviews: 9999 },
+];
+jest.mock('@/lib/actions/product.actions', () => ({
+  getAllProducts: jest.fn(async () => ({ data: mockProducts, totalPages: 1 })),
+}));
+import { limited, findProducts, lookupOrder, SYSTEM_PROMPT } from '../lib/chat';
 
 describe('AI Concierge Assistant Edge Cases', () => {
   test('rate limiter tracks hits and throttles abusive IP addresses', () => {
@@ -17,17 +25,29 @@ describe('AI Concierge Assistant Edge Cases', () => {
     const matched = await findProducts('wireless earbuds');
     expect(typeof matched).toBe('string');
     expect(matched).toContain('price:');
-    expect(matched).toContain('/product/OMN-TECH-EARBUDS-01');
+    expect(matched).toContain('/product/pro-anc-earbuds');
+    expect(matched).toContain('$39.99');
   });
 
   test('findProducts grounds Indian Food queries like saffron and chai with catalog items', async () => {
     const saffronMatched = await findProducts('Kashmiri saffron');
     expect(saffronMatched).toContain('Saffron');
-    expect(saffronMatched).toContain('/product/OMN-IN-SAFFRON-01');
+    expect(saffronMatched).toContain('/product/royal-kashmiri-mongra-saffron');
+    expect(saffronMatched).toContain('currently out of stock');
 
     const chaiMatched = await findProducts('Masala chai tea');
     expect(chaiMatched).toContain('Chai');
-    expect(chaiMatched).toContain('/product/OMN-IN-CHAI-02');
+    expect(chaiMatched).toContain('/product/masala-chai');
+  });
+
+  test('assistant never surfaces or ranks by unverified ratings, review counts or badges', async () => {
+    for (const q of ['best seller', 'top rated products', '4.9 stars', '1480 reviews', 'trending']) {
+      const r = await findProducts(q);
+      expect(r).not.toMatch(/4\.9|1480|1,480|9999|best seller|top rated|stars|reviews/i);
+    }
+    const r = await findProducts('masala chai');
+    expect(r).not.toMatch(/rating|review|star/i);
+    expect(SYSTEM_PROMPT).toMatch(/Never say a product is a best seller/);
   });
 
   test('findProducts returns empty string safely on gibberish or empty query', async () => {
