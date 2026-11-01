@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/db/prisma';
+import { bumpSessionVersion } from '@/lib/session-version';
 import { hashPassword } from '@/lib/password';
 import { devOutboxEnabled, writeDevOutbox } from '@/lib/dev-outbox';
 
@@ -60,5 +61,8 @@ export async function consumePasswordReset(rawToken: string, newPassword: string
     where: { email },
     data: { password: await hashPassword(newPassword) },
   });
-  return updated.count === 1 ? { ok: true } : { ok: false, reason: 'invalid' };
+  if (updated.count !== 1) return { ok: false, reason: 'invalid' };
+  const u = await prisma.user.findFirst({ where: { email }, select: { id: true } });
+  if (u) await bumpSessionVersion(u.id);
+  return { ok: true };
 }

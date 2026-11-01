@@ -4,6 +4,8 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import { cookies } from 'next/headers';
 import { hashPassword, verifyPassword } from './lib/password';
+import { hitLimit, clearLimit, LIMITS } from './lib/auth-limits';
+import { getSessionVersion } from './lib/session-version';
 import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
@@ -62,6 +64,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // 2. Standard Database User Lookup
+        // Attempt limit per email, enforced here so the direct auth endpoint is covered too.
+        const lim = await hitLimit('signin', emailInput, LIMITS.signin.max, LIMITS.signin.windowSec);
+        if (!lim.allowed) return null;
         try {
           // Case-insensitive so accounts created before sign-up lowercased
           // emails (e.g. "Asha@Example.com") can still sign in.
@@ -75,6 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const check = await verifyPassword(passwordInput, user.password);
 
             if (check.ok) {
+              await clearLimit('signin', emailInput);
               if (check.needsUpgrade) {
                 // Old keyed-digest hash: rewrite with the slow salted hash now
                 // that we hold the correct plain password.
@@ -119,6 +125,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async jwt({ token, user, trigger, session }) {
+      const tk = token as typeof token & { sv?: number };
+      if (user?.id) {
+        tk.sv = await getSessionVersion(user.id);
+      } else if (token.sub) {
+        // An older token (before a password change) is no longer valid.
+        const current = await getSessionVersion(token.sub);
+        if (current !== (tk.sv ?? 0)) return null;
+      }
       // Assign user fields to token
       if (user) {
         token.id = user.id;
