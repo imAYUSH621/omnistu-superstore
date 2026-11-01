@@ -8,9 +8,10 @@ const fmt = (iso: string | null) => (iso ? `${iso.slice(0, 16).replace('T', ' ')
 const reasonText = (r: string) =>
   r === 'NO_DISPATCH_RECORD' ? 'No dispatch record' : 'Dispatch not complete';
 
-export default async function ReconciliationPage() {
+export default async function ReconciliationPage({ searchParams }: { searchParams?: Promise<{ after?: string }> }) {
   await requireAdmin(); // same guard as the other admin pages (non-admins go to /unauthorized)
-  const res = await getPaidOrderReconciliation();
+  const sp = (await searchParams) ?? {};
+  const res = await getPaidOrderReconciliation(sp.after);
   const oversold = await getOversoldProducts();
   if (!res.success) {
     return (
@@ -30,8 +31,8 @@ export default async function ReconciliationPage() {
         The supplier outcome is unknown for these: do not retry automatically. Check the supplier dashboard
         first, and dispatch manually only if no supplier order exists.
       </p>
-      {res.items.length === 0 ? (
-        <p className="rounded border p-3 text-sm">No paid orders need attention.</p>
+      {res.items.length === 0 && !res.nextToken ? (
+        <p className="rounded border p-3 text-sm">{sp.after ? 'No more paid orders on this page.' : 'No paid orders need attention.'}</p>
       ) : (
         <>
           <ul className="space-y-3 md:hidden">
@@ -68,6 +69,12 @@ export default async function ReconciliationPage() {
           </table>
         </>
       )}
+      {res.nextToken && (
+        <p className="text-sm">
+          More paid orders need attention.{' '}
+          <a className="underline" href={`/admin/reconciliation?after=${res.nextToken}`}>Next page</a>
+        </p>
+      )}
       {oversold.success && oversold.items.length > 0 && (
         <section className="space-y-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm" aria-label="Oversold products">
           <h2 className="font-semibold">Oversold products (stock below zero)</h2>
@@ -75,6 +82,7 @@ export default async function ReconciliationPage() {
             More units were paid for than were in stock. This list is read-only and changes nothing: decide per product
             whether to refund, backorder or re-source.
           </p>
+          {oversold.truncated && <p className="font-medium">Showing the 100 lowest-stock products; more are oversold.</p>}
           <ul className="space-y-1">
             {oversold.items.map((p) => (
               <li key={p.slug} className="break-words">

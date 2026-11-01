@@ -55,16 +55,64 @@ export function classifyPaidOrder(o: PaidOrderRow, now = new Date()): ReconcileI
   return null;
 }
 
-export async function findPaidOrdersNeedingAttention(
-  db: { order: { findMany: (args: unknown) => Promise<PaidOrderRow[]> } },
-  now = new Date(),
-  limit = 200
-): Promise<ReconcileItem[]> {
+export interface ReconcileCursor {
+  paidAt: string | null;
+  id: string;
+}
+
+export interface ReconcilePage {
+  items: ReconcileItem[];
+  /** Pass back as `after` to read the next page; null when this is the last page. */
+  nextCursor: ReconcileCursor | null;
+}
+
+type Db = { order: { findMany: (args: unknown) => Promise<PaidOrderRow[]> } };
+
+/**
+ * One page of paid orders needing attention, oldest first, in a stable order (paidAt, id).
+ * Orders still inside the grace window are filtered in the query so they cannot use up page
+ * slots. A full page returns a cursor, so no order is unreachable however many are older.
+ */
+export async function findPaidOrdersNeedingAttentionPage(
+  db: Db,
+  opts: { now?: Date; limit?: number; after?: ReconcileCursor | null } = {}
+): Promise<ReconcilePage> {
+  const now = opts.now ?? new Date();
+  const limit = opts.limit ?? 200;
+  const cutoff = new Date(now.getTime() - DISPATCH_GRACE_MS);
+  const and: unknown[] = [
+    {
+      OR: [
+        { dispatchStatus: { not: 'DISPATCHED' } },
+        { dispatchStatus: null, OR: [{ paidAt: null }, { paidAt: { lt: cutoff } }] },
+      ],
+    },
+  ];
+  const a = opts.after;
+  if (a) {
+    const t = a.paidAt ? new Date(a.paidAt) : null;
+    and.push(
+      t
+        ? { OR: [{ paidAt: { gt: t } }, { paidAt: t, id: { gt: a.id } }] }
+        : { OR: [{ paidAt: null, id: { gt: a.id } }, { paidAt: { not: null } }] }
+    );
+  }
   const rows = await db.order.findMany({
-    where: { isPaid: true, OR: [{ dispatchStatus: null }, { dispatchStatus: { not: 'DISPATCHED' } }] },
+    where: { isPaid: true, AND: and },
     select: { id: true, isPaid: true, paidAt: true, dispatchStatus: true, dispatchError: true, supplierOrderId: true },
-    orderBy: { paidAt: 'asc' },
-    take: limit,
+    orderBy: [{ paidAt: { sort: 'asc', nulls: 'first' } }, { id: 'asc' }],
+    take: limit + 1,
   });
-  return rows.map((r) => classifyPaidOrder(r, now)).filter((x): x is ReconcileItem => x !== null);
+  const more = rows.length > limit;
+  const pageRows = more ? rows.slice(0, limit) : rows;
+  const last = pageRows[pageRows.length - 1];
+  return {
+    items: pageRows.map((r) => classifyPaidOrder(r, now)).filter((x): x is ReconcileItem => x !== null),
+    nextCursor: more && last ? { paidAt: last.paidAt ? last.paidAt.toISOString() : null, id: last.id } : null,
+  };
+}
+
+/** First page only. Use findPaidOrdersNeedingAttentionPage to reach orders beyond it. */
+export async function findPaidOrdersNeedingAttention(db: Db, now = new Date(), limit = 200): Promise<ReconcileItem[]> {
+  return (await findPaidOrdersNeedingAttentionPage(db, { now, limit })).items;
 }
