@@ -6,6 +6,10 @@ import React from 'react';
 
 const links = [
   {
+    title: 'Overview',
+    href: '/user',
+  },
+  {
     title: 'Profile',
     href: '/user/profile',
   },
@@ -30,8 +34,8 @@ const MainNav = ({
           key={item.href}
           href={item.href}
           className={cn(
-            'text-sm font-medium transition-colors hover:text-primary',
-            pathname.includes(item.href) ? '' : 'text-muted-foreground'
+            'text-sm font-medium transition-colors hover:text-white',
+            pathname.includes(item.href) ? 'text-white' : 'text-neutral-400'
           )}
         >
           {item.title}

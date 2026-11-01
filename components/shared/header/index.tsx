@@ -67,31 +67,19 @@ const Header = () => {
               <CategoryDrawer />
             </div>
             <Link
-              href='/search?sort=deals'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              <T k='todaysDeals' />
-            </Link>
-            <Link
-              href='/search?category=Electronics'
+              href='/search?category=Tech%20%26%20Gadgets'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
               <T k='techGadgets' />
             </Link>
             <Link
-              href='/search?category=Jewelry'
+              href='/search?category=Jewelry%20%26%20Watches'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
               <T k='jewelryWatches' />
             </Link>
             <Link
-              href='/search?sort=trending'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              <T k='trendingFinds' />
-            </Link>
-            <Link
-              href='/search?category=Merch'
+              href='/search?category=Custom%20Apparel'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
               <T k='customApparel' />
