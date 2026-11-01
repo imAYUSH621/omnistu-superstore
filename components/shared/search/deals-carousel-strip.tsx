@@ -22,18 +22,15 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
           </span>
           <div>
             <h2 className='text-sm sm:text-base font-bold text-foreground flex items-center gap-2'>
-              Today&apos;s Deals in Omnistu Superstore
-              <span className='bg-red-600 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded shadow-sm'>
-                Up to 45% Off
-              </span>
+              Featured in Omnistu Superstore
             </h2>
           </div>
         </div>
         <Link
-          href='/search?sort=rating'
+          href='/search?q=all'
           className='text-xs font-semibold text-primary hover:underline flex items-center gap-1'
         >
-          <span>See all deals</span>
+          <span>See all products</span>
           <ArrowRight className='w-3 h-3' />
         </Link>
       </div>
