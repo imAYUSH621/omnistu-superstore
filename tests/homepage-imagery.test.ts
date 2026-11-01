@@ -42,13 +42,24 @@ describe('ai concierge launcher focus behavior', () => {
     'utf8'
   );
 
-  it('unmounts the launcher while an external form control has focus', () => {
-    expect(src).toMatch(/addEventListener\('focusin'/);
-    expect(src).toMatch(/\{!formFocused && \(/);
-    expect(src).toMatch(/tagName === 'TEXTAREA'/);
+  it('hides the launcher pre-hydration while an external form control has focus', () => {
+    // launcher carries the stable class the CSS rule targets
+    expect(src).toMatch(/ai-concierge-launcher/);
+    expect(src).toMatch(/data-ai-concierge/);
+    const layout = fs.readFileSync(path.join(process.cwd(), 'app/layout.tsx'), 'utf8');
+    // guard must run before hydration - SSR controls are focusable before React loads
+    expect(layout).toMatch(/<script src='\/form-focus-guard.js' \/>/);
+    const guard = fs.readFileSync(path.join(process.cwd(), 'public/form-focus-guard.js'), 'utf8');
+    expect(guard).toMatch(/setAttribute\('data-form-focus', '1'\)/);
     // its own chat input must not hide the launcher (Close control)
-    expect(src).toMatch(/rootRef\.current && rootRef\.current\.contains/);
-    // no hidden+flex cascade conflict (first attempt regressed on this)
-    expect(src).not.toMatch(/hidden ' : ''\}fixed/);
+    expect(guard).toMatch(/closest\('\[data-ai-concierge\]'\)/);
+  });
+
+  it('globals.css hides the launcher in the form-focus state', () => {
+    const css = fs.readFileSync(
+      path.join(process.cwd(), 'assets/styles/globals.css'),
+      'utf8'
+    );
+    expect(css).toMatch(/html\[data-form-focus='1'\] \.ai-concierge-launcher/);
   });
 });
