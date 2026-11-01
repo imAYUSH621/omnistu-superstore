@@ -18,7 +18,7 @@ const Search = async () => {
       <div className='flex items-center w-full rounded-[4px] bg-white overflow-hidden shadow-xs border border-transparent focus-within:ring-2 focus-within:ring-[#f3a847] focus-within:ring-offset-1 h-10'>
         {/* Category Picker */}
         <Select name='category' defaultValue='all'>
-          <SelectTrigger className='hidden xl:flex w-[130px] md:w-[150px] h-10 border-0 rounded-none bg-[#f3f3f3] hover:bg-[#dadada] text-[#555] text-[12px] font-normal focus:ring-0 border-r border-[#cdcdcd] px-2.5 transition-colors cursor-pointer'>
+          <SelectTrigger className='flex w-[130px] md:w-[150px] h-10 border-0 rounded-none bg-[#f3f3f3] hover:bg-[#dadada] text-[#555] text-[12px] font-normal focus:ring-0 border-r border-[#cdcdcd] px-2.5 transition-colors cursor-pointer'>
             <SelectValue placeholder='All' />
           </SelectTrigger>
           <SelectContent className='text-xs'>
