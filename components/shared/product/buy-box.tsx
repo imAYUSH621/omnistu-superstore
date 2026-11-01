@@ -154,8 +154,15 @@ export default function BuyBox({
           </div>
         )}
 
-        {/* CTA Action Buttons */}
-        {product.stock > 0 && (
+        {/* CTA Action Buttons - hidden in sample-catalog preview mode:
+            sample products have no database row, so cart actions would
+            silently fail. Show an honest disabled state instead. */}
+        {product.stock > 0 && product.id.startsWith('sample-') && (
+          <div className='rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-3 py-2.5 text-xs text-amber-900 dark:text-amber-200' data-testid='sample-mode-note'>
+            <T k='sampleModeNote' />
+          </div>
+        )}
+        {product.stock > 0 && !product.id.startsWith('sample-') && (
           <div className='space-y-2 pt-1'>
             {/* Add to Cart Button */}
             <Button
