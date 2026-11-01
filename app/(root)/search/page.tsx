@@ -82,7 +82,7 @@ const SearchPage = async (props: {
       <SearchNarrowChips />
 
       {/* 2. Main Search Body: Left Faceted Sidebar + Right Results Stream */}
-      <div className='flex flex-col md:flex-row gap-6 items-start'>
+      <div className='flex flex-col md:flex-row gap-6 items-stretch md:items-start'>
         {/* Left Faceted Navigation Sidebar (collapsible on mobile, sticky on desktop) */}
         <SearchFiltersCollapsible>
           <SearchFacetedSidebar

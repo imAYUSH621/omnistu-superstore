@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { ProductImage } from '@/components/shared/product/product-image';
 import { Product } from '@/types';
 import Rating from '@/components/shared/product/rating';
 import { Button } from '@/components/ui/button';
@@ -102,10 +102,9 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
         </button>
 
         <Link href={`/product/${product.slug}`} className='relative w-full h-full block'>
-          <Image
+          <ProductImage
             src={product.images[0] || '/images/products/silicone-magnetic-balls-1.svg'}
             alt={product.name}
-            fill
             sizes='(max-width: 768px) 100vw, 224px'
             className='object-contain group-hover:scale-105 transition-transform duration-300'
           />
