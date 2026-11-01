@@ -57,6 +57,15 @@ describe('executeRefund fail-closed behavior (G3)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('fails closed on a zero-decimal currency (JPY) before any provider call', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    const r = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_jpy', currency: 'jpy' }, amount: 50 });
+    expect(r.status).toBe('FAILED');
+    expect(r.note).toContain('Currency mismatch');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('rounds safely to minor units (Stripe cents)', async () => {
     process.env.REFUNDS_LIVE_ENABLED = 'true';
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
