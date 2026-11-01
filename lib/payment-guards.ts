@@ -22,3 +22,13 @@ export function sameLineItems(
   if (a.length !== b.length) return false;
   return a.every((x) => b.some((y) => y.productId === x.productId && y.qty === x.qty));
 }
+
+/** Stripe amounts are integer minor units; keep both decimals (toFixed() with no digits rounds 42.50 to 43). */
+export function stripeMinorToAmount(minor: number): string {
+  return (minor / 100).toFixed(2);
+}
+
+/** The store prices every order in USD; a capture in any other currency must not mark an order paid. */
+export function isExpectedCurrency(currency: string | null | undefined, expected = 'USD'): boolean {
+  return typeof currency === 'string' && currency.toUpperCase() === expected;
+}

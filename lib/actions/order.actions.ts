@@ -9,7 +9,7 @@ import { insertOrderSchema } from '../validators';
 import { prisma } from '@/db/prisma';
 import { CartItem, PaymentResult, ShippingAddress } from '@/types';
 import { paypal } from '../paypal';
-import { isAmountMismatch, sameLineItems } from '../payment-guards';
+import { isAmountMismatch, isExpectedCurrency, sameLineItems } from '../payment-guards';
 import { revalidatePath } from 'next/cache';
 import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
@@ -186,6 +186,16 @@ export async function getOrderById(orderId: string) {
   return convertToPlainObject(data);
 }
 
+// Server actions are callable outside the page that checks ownership, so the
+// owner-or-admin rule is enforced here too.
+async function requireOrderAccess(orderUserId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('User is not authenticated');
+  if (session.user.id !== orderUserId && session.user.role !== 'admin') {
+    throw new Error('User is not authorized');
+  }
+}
+
 // Create new paypal order
 export async function createPayPalOrder(orderId: string) {
   try {
@@ -197,6 +207,8 @@ export async function createPayPalOrder(orderId: string) {
     });
 
     if (order) {
+      await requireOrderAccess(order.userId);
+      if (order.isPaid) throw new Error('Order is already paid');
       // Create paypal order
       const paypalOrder = await paypal.createOrder(Number(order.totalPrice));
 
@@ -240,6 +252,7 @@ export async function approvePayPalOrder(
     });
 
     if (!order) throw new Error('Order not found');
+    await requireOrderAccess(order.userId);
 
     const captureData = await paypal.capturePayment(data.orderID);
 
@@ -249,6 +262,14 @@ export async function approvePayPalOrder(
       captureData.status !== 'COMPLETED'
     ) {
       throw new Error('Error in PayPal payment');
+    }
+
+    const capture = captureData.purchase_units[0]?.payments?.captures[0];
+    if (!isExpectedCurrency(capture?.amount?.currency_code)) {
+      const note = `CURRENCY_MISMATCH: captured ${capture?.amount?.currency_code ?? 'unknown'}, expected USD`;
+      await prisma.order.update({ where: { id: orderId }, data: { paymentNote: note } });
+      console.error(`[payments] ${note} on order ${orderId} - not marking paid`);
+      throw new Error('Captured currency does not match the order currency');
     }
 
     // Update order to paid
