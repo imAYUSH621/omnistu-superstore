@@ -56,7 +56,6 @@ export function classifyPaidOrder(o: PaidOrderRow, now = new Date()): ReconcileI
 }
 
 export interface ReconcileCursor {
-  paidAt: string | null;
   id: string;
 }
 
@@ -69,9 +68,11 @@ export interface ReconcilePage {
 type Db = { order: { findMany: (args: unknown) => Promise<PaidOrderRow[]> } };
 
 /**
- * One page of paid orders needing attention, oldest first, in a stable order (paidAt, id).
- * Orders still inside the grace window are filtered in the query so they cannot use up page
- * slots. A full page returns a cursor, so no order is unreachable however many are older.
+ * One page of paid orders needing attention. Pages follow the order id (a stable, unique key), so every
+ * matching order is reachable exactly once however many there are. A timestamp cursor was rejected: the
+ * database keeps microseconds, JavaScript dates keep milliseconds, and a rounded cursor repeats rows.
+ * Within a page, items are shown oldest paid first. Orders still inside the grace window are filtered
+ * in the query so they cannot use up page slots.
  */
 export async function findPaidOrdersNeedingAttentionPage(
   db: Db,
@@ -88,28 +89,21 @@ export async function findPaidOrdersNeedingAttentionPage(
       ],
     },
   ];
-  const a = opts.after;
-  if (a) {
-    const t = a.paidAt ? new Date(a.paidAt) : null;
-    and.push(
-      t
-        ? { OR: [{ paidAt: { gt: t } }, { paidAt: t, id: { gt: a.id } }] }
-        : { OR: [{ paidAt: null, id: { gt: a.id } }, { paidAt: { not: null } }] }
-    );
-  }
+  if (opts.after) and.push({ id: { gt: opts.after.id } });
   const rows = await db.order.findMany({
     where: { isPaid: true, AND: and },
     select: { id: true, isPaid: true, paidAt: true, dispatchStatus: true, dispatchError: true, supplierOrderId: true },
-    orderBy: [{ paidAt: { sort: 'asc', nulls: 'first' } }, { id: 'asc' }],
+    orderBy: { id: 'asc' },
     take: limit + 1,
   });
   const more = rows.length > limit;
   const pageRows = more ? rows.slice(0, limit) : rows;
   const last = pageRows[pageRows.length - 1];
-  return {
-    items: pageRows.map((r) => classifyPaidOrder(r, now)).filter((x): x is ReconcileItem => x !== null),
-    nextCursor: more && last ? { paidAt: last.paidAt ? last.paidAt.toISOString() : null, id: last.id } : null,
-  };
+  const items = pageRows
+    .map((r) => classifyPaidOrder(r, now))
+    .filter((x): x is ReconcileItem => x !== null)
+    .sort((x, y) => (x.paidAt ?? '').localeCompare(y.paidAt ?? ''));
+  return { items, nextCursor: more && last ? { id: last.id } : null };
 }
 
 /** First page only. Use findPaidOrdersNeedingAttentionPage to reach orders beyond it. */

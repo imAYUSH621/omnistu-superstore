@@ -196,7 +196,7 @@ DELETE FROM "User" WHERE id = '${userId}';`);
       made.push(order.id);
     }
     const seen: string[] = [];
-    let after = null as { paidAt: string | null; id: string } | null;
+    let after = null as { id: string } | null;
     for (let guard = 0; guard < 1000; guard++) {
       const page = await findPaidOrdersNeedingAttentionPage(prisma as never, { limit: 2, after });
       seen.push(...page.items.map((i) => i.orderId));
@@ -204,6 +204,18 @@ DELETE FROM "User" WHERE id = '${userId}';`);
       after = page.nextCursor;
     }
     for (const id of made) expect(seen).toContain(id);
+    // Same-timestamp orders with microsecond precision must still page without repeats.
+    await prisma.$executeRawUnsafe(`UPDATE "Order" SET "paidAt" = (now() at time zone 'utc') - interval '2 hours 0.123456 seconds' WHERE id IN (${made.map((m) => `'${m}'`).join(',')})`);
+    const seen2: string[] = [];
+    let after2 = null as { id: string } | null;
+    for (let guard = 0; guard < 1000; guard++) {
+      const page = await findPaidOrdersNeedingAttentionPage(prisma as never, { limit: 2, after: after2 });
+      seen2.push(...page.items.map((i) => i.orderId));
+      if (!page.nextCursor) break;
+      after2 = page.nextCursor;
+    }
+    expect(new Set(seen2).size).toBe(seen2.length);
+    for (const id of made) expect(seen2).toContain(id);
     expect(new Set(seen).size).toBe(seen.length);
   }, 30000);
 
@@ -212,7 +224,14 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     const { order } = await makeOrder();
     await prisma.order.update({ where: { id: order.id }, data: { isPaid: true, paidAt: new Date(Date.now() - 3600_000) } });
     const before = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
-    const items = await findPaidOrdersNeedingAttention(prisma as never);
+    const items: Awaited<ReturnType<typeof findPaidOrdersNeedingAttention>> = [];
+    let cur = null as { id: string } | null;
+    for (let guard = 0; guard < 1000; guard++) {
+      const pg = await findPaidOrdersNeedingAttentionPage(prisma as never, { after: cur });
+      items.push(...pg.items);
+      if (!pg.nextCursor) break;
+      cur = pg.nextCursor;
+    }
     expect(items.map((i) => i.orderId)).toContain(order.id);
     const after = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(JSON.stringify(after)).toBe(JSON.stringify(before));
