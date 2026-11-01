@@ -6,6 +6,8 @@ import { LayoutGrid, List, X } from 'lucide-react';
 
 interface SearchResultsHeaderProps {
   totalResults: number;
+  page?: number;
+  pageSize?: number;
   currentQ: string;
   currentCategory: string;
   currentPrice: string;
@@ -17,13 +19,19 @@ interface SearchResultsHeaderProps {
 
 // Headline for the results strip. With zero results "Showing 1-0 of 0" is
 // nonsense - say so plainly instead.
-export function formatResultsCount(totalResults: number): string {
+export function formatResultsCount(totalResults: number, page = 1, pageSize = 24): string {
   if (totalResults <= 0) return 'No results';
-  return `Showing 1-${totalResults} of ${totalResults} results`;
+  const safePage = Math.max(1, page);
+  const start = (safePage - 1) * pageSize + 1;
+  if (start > totalResults) return `${totalResults} results`;
+  const end = Math.min(totalResults, safePage * pageSize);
+  return `Showing ${start}-${end} of ${totalResults} results`;
 }
 
 export default function SearchResultsHeader({
   totalResults,
+  page = 1,
+  pageSize = 24,
   currentQ,
   currentCategory,
   currentPrice,
@@ -68,7 +76,7 @@ export default function SearchResultsHeader({
         <div>
           <h1 className='text-sm sm:text-base text-foreground'>
             <span className='font-normal text-muted-foreground'>
-              {formatResultsCount(totalResults)}
+              {formatResultsCount(totalResults, page, pageSize)}
             </span>{' '}
             {currentQ && currentQ !== 'all' && (
               <span>

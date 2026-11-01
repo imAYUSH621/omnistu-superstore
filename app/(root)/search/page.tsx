@@ -8,6 +8,7 @@ import SearchNarrowChips from '@/components/shared/search/search-narrow-chips';
 import SearchFacetedSidebar from '@/components/shared/search/search-faceted-sidebar';
 import SearchFiltersCollapsible from '@/components/shared/search/search-filters-collapsible';
 import { catalogSource } from '@/lib/utils';
+import Pagination from '@/components/shared/pagination';
 import SearchResultsClient from '@/components/shared/search/search-results-client';
 
 export async function generateMetadata(props: {
@@ -101,9 +102,12 @@ const SearchPage = async (props: {
         </SearchFiltersCollapsible>
 
         {/* Right Search Results Stream */}
+        <div className='flex-1 min-w-0'>
         <SearchResultsClient
           products={productsResult.data}
-          totalResults={productsResult.data.length}
+          totalResults={productsResult.totalCount}
+          page={Math.max(1, Number(page) || 1)}
+          pageSize={24}
           featuredDeals={featuredDeals}
           currentQ={q}
           currentCategory={category}
@@ -111,6 +115,12 @@ const SearchPage = async (props: {
           currentRating={rating}
           currentSort={sort}
         />
+        {productsResult.totalPages > 1 && (
+          <div className='flex justify-center py-4'>
+            <Pagination page={Math.max(1, Number(page) || 1)} totalPages={productsResult.totalPages} />
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

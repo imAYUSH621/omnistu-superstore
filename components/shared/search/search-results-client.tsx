@@ -13,6 +13,8 @@ import { RotateCcw } from 'lucide-react';
 interface SearchResultsClientProps {
   products: Product[];
   totalResults: number;
+  page?: number;
+  pageSize?: number;
   featuredDeals: Product[];
   currentQ: string;
   currentCategory: string;
@@ -24,6 +26,8 @@ interface SearchResultsClientProps {
 export default function SearchResultsClient({
   products,
   totalResults,
+  page = 1,
+  pageSize = 24,
   featuredDeals,
   currentQ,
   currentCategory,
@@ -39,6 +43,8 @@ export default function SearchResultsClient({
       {/* Search Results Header with Sort & View Mode Switcher */}
       <SearchResultsHeader
         totalResults={totalResults}
+        page={page}
+        pageSize={pageSize}
         currentQ={currentQ}
         currentCategory={currentCategory}
         currentPrice={currentPrice}
