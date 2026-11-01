@@ -10,6 +10,11 @@ export async function getPaidOrderReconciliation(): Promise<
 > {
   const session = await auth();
   if (session?.user?.role !== 'admin') return { success: false, message: 'User is not authorized' };
-  const items = await findPaidOrdersNeedingAttention(prisma as never);
-  return { success: true, items };
+  try {
+    const items = await findPaidOrdersNeedingAttention(prisma as never);
+    return { success: true, items };
+  } catch (e) {
+    console.error('[reconciliation] query failed:', e instanceof Error ? e.message : e);
+    return { success: false, message: 'Could not load the reconciliation list. Try again; the database may be unreachable.' };
+  }
 }
