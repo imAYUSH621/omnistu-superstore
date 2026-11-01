@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { updateUserPaymentMethod } from '@/lib/actions/user.actions';
+import T from '@/components/shared/i18n-text';
 
 const PaymentMethodForm = ({
   preferredPaymentMethod,
@@ -56,7 +57,7 @@ const PaymentMethodForm = ({
   return (
     <>
       <div className='max-w-md mx-auto space-y-4'>
-        <h1 className='h2-bold mt-4'>Payment Method</h1>
+        <h1 className='h2-bold mt-4'><T k='paymentMethod' /></h1>
         <p className='text-sm text-muted-foreground'>
           Please select a payment method
         </p>

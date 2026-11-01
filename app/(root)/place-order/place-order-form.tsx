@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createOrder } from '@/lib/actions/order.actions';
+import T from '@/components/shared/i18n-text';
 
 const PlaceOrderForm = () => {
   const router = useRouter();

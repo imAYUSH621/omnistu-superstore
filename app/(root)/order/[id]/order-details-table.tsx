@@ -31,6 +31,7 @@ import {
 } from '@/lib/actions/order.actions';
 import StripePayment from './stripe-payment';
 import OrderTrackingStepper from '@/components/shared/order/order-tracking-stepper';
+import T from '@/components/shared/i18n-text';
 
 const OrderDetailsTable = ({
   order,
@@ -204,7 +205,7 @@ const OrderDetailsTable = ({
           </Card>
           <Card>
             <CardContent className='p-4 gap-4'>
-              <h2 className='text-xl pb-4 font-bold'>Order Items</h2>
+              <h2 className='text-xl pb-4 font-bold'><T k='orderItems' /></h2>
               <Table>
                 <TableHeader>
                   <TableRow>
