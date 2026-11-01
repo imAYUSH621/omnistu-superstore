@@ -114,13 +114,9 @@ export default function BuyBox({
 
         {/* Stock Urgency Indicator */}
         <div>
-          {product.stock > 10 ? (
-            <p className='text-emerald-600 dark:text-emerald-400 font-semibold text-lg flex items-center gap-1.5'>
-              <CheckCircle2 className='w-5 h-5' /> In Stock
-            </p>
-          ) : product.stock > 0 ? (
-            <p className='text-amber-600 dark:text-amber-500 font-semibold text-base flex items-center gap-1.5'>
-              Only {product.stock} left in stock - order soon.
+          {product.stock > 0 ? (
+            <p className='text-emerald-600 dark:text-emerald-400 font-semibold text-base flex items-center gap-1.5'>
+              <CheckCircle2 className='w-5 h-5' /> Demo item - test mode checkout only
             </p>
           ) : (
             <p className='text-destructive font-semibold text-base'>

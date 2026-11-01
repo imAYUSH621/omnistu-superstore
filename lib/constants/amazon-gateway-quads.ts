@@ -218,7 +218,7 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
         "url": "/s?k=Men%20Shoes"
       },
       {
-        "label": "Kids'", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
+        "label": "Kids'", "image": "/images/tiles/kids.svg",
         "url": "/s?k=Kid%20Shoes"
       },
       {
@@ -582,7 +582,7 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
         "url": "/s?k=teen%20apparel"
       },
       {
-        "label": "For Kids", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
+        "label": "For Kids", "image": "/images/tiles/for-kids.svg",
         "url": "/s?k=kids%20apparel"
       }
     ],

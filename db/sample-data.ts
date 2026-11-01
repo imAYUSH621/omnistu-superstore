@@ -15,11 +15,11 @@ const sampleData = {
   ],
   products: [
     {
-      name: 'Royal Kashmiri Mongra Saffron (Grade A++ Organic, 2g)',
+      name: 'Royal Kashmiri Mongra Saffron (2g)',
       slug: 'royal-kashmiri-mongra-saffron',
       category: 'Gourmet & Indian Food',
       description:
-        'Certified 100% Grade A++ Organic Kashmiri Mongra Saffron handpicked from the valleys of Pampore. Vacuum sealed in luxury glass jar to preserve potent aroma, crocin potency, and culinary color.',
+        'Kashmiri Mongra saffron threads sourced from Pampore, vacuum sealed in a glass jar. Grade and origin are supplier-stated and not independently verified by Omnistu.',
       images: [
         '/images/products/placeholder.svg',
       ],
@@ -87,7 +87,7 @@ const sampleData = {
       slug: 'magsafe-fast-wireless-magnetic-power-bank',
       category: 'Electronics & Gadgets',
       description:
-        'Slim 15W Qi-certified magnetic wireless power bank with 20W USB-C Power Delivery fast charging. Ultra-strong N52 neodymium magnetic ring locks firmly to iPhone and magnetic cases without slippage.',
+        'Slim 15W Qi-compatible magnetic wireless power bank with 20W USB-C Power Delivery fast charging. Ultra-strong N52 neodymium magnetic ring locks firmly to iPhone and magnetic cases without slippage.',
       images: [
         '/images/products/magsafe-powerbank-1.svg',
       ],

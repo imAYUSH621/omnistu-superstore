@@ -161,14 +161,14 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           </div>
 
 
-          {/* Stock / Urgency */}
-          {product.stock <= 5 ? (
-            <p className='text-xs text-red-600 dark:text-red-400 font-semibold mt-1'>
-              Only {product.stock} left in stock - order soon.
+          {/* Stock status - honest states only, no urgency copy */}
+          {product.stock === 0 ? (
+            <p className='text-xs text-muted-foreground mt-1'>
+              Currently unavailable - supplier stock not yet verified
             </p>
           ) : (
-            <p className='text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1'>
-              <ShieldCheck className='w-3.5 h-3.5' /> In Stock & Ready to Ship
+            <p className='text-xs text-muted-foreground mt-1'>
+              Demo catalog item - test mode, no real fulfillment
             </p>
           )}
         </div>
