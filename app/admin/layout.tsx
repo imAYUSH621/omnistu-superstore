@@ -13,8 +13,11 @@ export default function AdminLayout({
   return (
     <>
       <div className='flex flex-col'>
-        <div className='border-b container mx-auto'>
-          <div className='flex items-center h-16 px-4'>
+        {/* Dark header: the shared storefront Menu hard-codes text-white for
+            the dark storefront header, so a light admin header made every
+            account/cart control white-on-white. */}
+        <div className='border-b border-neutral-700 bg-[#1e293b] text-white'>
+          <div className='flex items-center h-16 px-4 container mx-auto'>
             <Link href='/' className='w-22'>
               <Image
                 src='/images/logo.svg'
