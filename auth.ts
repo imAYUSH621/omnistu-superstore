@@ -3,7 +3,7 @@ import { authConfig } from './auth.config';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import { cookies } from 'next/headers';
-import { hashPassword, verifyPassword } from './lib/password';
+import { hashPassword, verifyPasswordGated, dummyVerify, HashBusyError } from './lib/password';
 import { hitLimit, clearLimit, LIMITS } from './lib/auth-limits';
 import { getSessionVersion } from './lib/session-version';
 import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
@@ -77,7 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (user && user.password) {
-            const check = await verifyPassword(passwordInput, user.password);
+            const check = await verifyPasswordGated(passwordInput, user.password);
 
             if (check.ok) {
               await clearLimit('signin', emailInput);
@@ -100,8 +100,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 role: user.role,
               };
             }
+          } else {
+            // Unknown email or no password set: spend the same hashing work so
+            // response time does not reveal which emails exist (measured only
+            // locally as a microbenchmark, not over HTTP).
+            await dummyVerify(passwordInput);
           }
         } catch (dbError) {
+          if (dbError instanceof HashBusyError) return null;
           console.error('Database authentication error:', dbError);
         }
 
