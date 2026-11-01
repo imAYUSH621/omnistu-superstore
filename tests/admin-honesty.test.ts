@@ -59,3 +59,11 @@ describe('admin overview separates unavailable from zero (source check)', () => 
     expect(src).not.toMatch(/Real-time CJ|Telemetry|Free-Tier Postgres Meter/);
   });
 });
+
+describe('admin overview has no demo hub (source check)', () => {
+  it('demo hub with invented orders, supplier status and meters is gone', () => {
+    const fs = require('fs');
+    expect(fs.existsSync('app/admin/overview/admin-interactive-hub.tsx')).toBe(false);
+    expect(fs.readFileSync('app/admin/overview/page.tsx', 'utf8')).not.toMatch(/AdminInteractiveHub/);
+  });
+});
