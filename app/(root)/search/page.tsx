@@ -6,6 +6,7 @@ import {
 import SearchNarrowChips from '@/components/shared/search/search-narrow-chips';
 import SearchFacetedSidebar from '@/components/shared/search/search-faceted-sidebar';
 import SearchFiltersCollapsible from '@/components/shared/search/search-filters-collapsible';
+import { catalogSource } from '@/lib/utils';
 import SearchResultsClient from '@/components/shared/search/search-results-client';
 
 export async function generateMetadata(props: {
@@ -92,6 +93,7 @@ const SearchPage = async (props: {
             currentRating={rating}
             currentSort={sort}
             currentQ={q}
+            showIdeas={catalogSource() === 'sample'}
           />
         </SearchFiltersCollapsible>
 
