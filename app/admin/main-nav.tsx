@@ -34,7 +34,7 @@ const MainNav = ({
   const pathname = usePathname();
   return (
     <nav
-      className={cn('flex items-center space-x-4 lg:space-x-6', className)}
+      className={cn('flex items-center space-x-4 lg:space-x-6 whitespace-nowrap', className)}
       {...props}
     >
       {links.map((item) => (
@@ -42,7 +42,7 @@ const MainNav = ({
           key={item.href}
           href={item.href}
           className={cn(
-            'text-sm font-medium transition-colors hover:text-white',
+            'shrink-0 text-sm font-medium transition-colors hover:text-white',
             pathname.includes(item.href)
               ? 'text-white border-b-2 border-amber-400 pb-0.5'
               : 'text-neutral-300'
