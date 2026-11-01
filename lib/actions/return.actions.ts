@@ -108,3 +108,18 @@ export async function getMyReturns(): Promise<{ success: boolean; data?: unknown
   });
   return { success: true, data };
 }
+
+export async function getAllReturns(): Promise<{ success: boolean; data?: unknown[]; message?: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (role !== 'admin') return { success: false, message: 'Admin access required.' };
+  const data = await prisma.returnRequest.findMany({
+    include: {
+      order: { select: { id: true, totalPrice: true, isPaid: true, dispatchSupplier: true, createdAt: true } },
+      user: { select: { email: true, name: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+  return { success: true, data: JSON.parse(JSON.stringify(data)) };
+}
