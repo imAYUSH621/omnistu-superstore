@@ -130,6 +130,11 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link href='/contact' className='hover:underline hover:text-white'>
+                Contact & Support
+              </Link>
+            </li>
+            <li>
               <Link href='/privacy' className='hover:underline hover:text-white'>
                 Help & Privacy Center
               </Link>

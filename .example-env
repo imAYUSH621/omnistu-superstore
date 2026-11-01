@@ -43,6 +43,7 @@ BRANDSGATEWAY_API_KEY=""
 
 # --- Email (Resend; order confirmations skip cleanly when unset) ---
 RESEND_API_KEY=""
+SUPPORT_EMAIL=""             # inbox that receives contact-form messages; without it /api/contact answers 503 "not configured"
 SENDER_EMAIL="onboarding@resend.dev"
 
 # --- AI concierge (503s until one provider key is set) ---
