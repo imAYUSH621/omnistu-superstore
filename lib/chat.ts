@@ -74,27 +74,51 @@ export async function findProducts(query: string): Promise<string> {
 }
 
 // ---- Order lookup: requires BOTH order number and the email on the order ---
+// Exact match only (no partial id), identifiers constrained before they reach
+// the query, never a bypass-RLS key, and a per-order/email attempt throttle.
+const ORDER_NO_RE = /\b(OMN-[A-Z0-9-]{3,}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/i;
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+export const LOOKUP_ATTEMPTS = 5;
+export const LOOKUP_WINDOW_MS = 15 * 60_000;
+const lookupHits = new Map<string, number[]>();
+
+export function lookupThrottled(orderNo: string, email: string, now = Date.now()): boolean {
+  const k = `${orderNo}|${email}`;
+  const recent = (lookupHits.get(k) ?? []).filter((t) => now - t < LOOKUP_WINDOW_MS);
+  recent.push(now);
+  lookupHits.set(k, recent);
+  if (lookupHits.size > 5000) lookupHits.clear();
+  return recent.length > LOOKUP_ATTEMPTS;
+}
+
+export function buildOrderLookupQuery(orderNo: string, email: string): URLSearchParams {
+  return new URLSearchParams({
+    select: 'order_id,customer_email,status,tracking_number,carrier,created_at',
+    order_id: `eq.${orderNo}`,
+    customer_email: `eq.${email}`,
+    limit: '1',
+  });
+}
+
 export async function lookupOrder(text: string): Promise<string> {
-  const orderNo = text.match(/\b(OMN-[A-Z0-9-]{3,}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/i)?.[0]?.toUpperCase();
-  const email = text.match(/[^\s@]+@[^\s@]+\.[^\s@]+/)?.[0]?.toLowerCase();
+  const orderNo = text.match(ORDER_NO_RE)?.[0]?.toUpperCase();
+  const email = text.match(EMAIL_RE)?.[0]?.toLowerCase();
   if (!orderNo) return '';
   if (!email) return 'ORDER LOOKUP: Customer provided an order number but no email address. Please ask for the email used at checkout to verify identity.';
-  
+
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  // Deliberately NOT the service-role key: an unauthenticated lookup must not
+  // run with a key that bypasses row-level security.
+  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
     return 'ORDER LOOKUP: Database connection unavailable in current environment. Tell the customer our support team will follow up at their email.';
   }
+  if (lookupThrottled(orderNo, email)) {
+    return 'ORDER LOOKUP: Too many lookup attempts for that order. Tell the customer our support team will follow up at their email.';
+  }
 
-  // 1. Try querying orders table (standard REST schema)
   try {
-    const qs = new URLSearchParams({
-      select: 'order_id,customer_email,status,tracking_number,carrier,created_at',
-      or: `(order_id.eq.${orderNo},order_id.ilike.%${orderNo}%)`,
-      customer_email: `eq.${email}`,
-      limit: '1',
-    });
-    const res = await fetch(`${url.replace(/\/+$/, '')}/rest/v1/orders?${qs}`, {
+    const res = await fetch(`${url.replace(/\/+$/, '')}/rest/v1/orders?${buildOrderLookupQuery(orderNo, email)}`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
     });
     if (res.ok) {
@@ -104,27 +128,7 @@ export async function lookupOrder(text: string): Promise<string> {
       }
     }
   } catch {
-    // Continue to fallback
-  }
-
-  // 2. Try querying Prisma 'Order' table
-  try {
-    const qsPrisma = new URLSearchParams({
-      select: 'id,totalPrice,isPaid,isDelivered,createdAt',
-      id: `eq.${orderNo}`,
-      limit: '1',
-    });
-    const resPrisma = await fetch(`${url.replace(/\/+$/, '')}/rest/v1/Order?${qsPrisma}`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-    });
-    if (resPrisma.ok) {
-      const rowsPrisma = (await resPrisma.json()) as Record<string, unknown>[];
-      if (rowsPrisma && rowsPrisma.length > 0) {
-        return `ORDER LOOKUP RESULT (verified): ${JSON.stringify(rowsPrisma[0])}`;
-      }
-    }
-  } catch {
-    // Continue
+    // fall through to the no-match message
   }
 
   return 'ORDER LOOKUP: No matching order found for that order number and email combination. Please suggest checking both for typos.';
