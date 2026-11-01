@@ -7,6 +7,7 @@
  *
  * Requires DATABASE_URL pointing at disposable Postgres. Skipped otherwise.
  */
+export {};
 const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
 
 (RUN ? describe : describe.skip)('search flight safety (real DB)', () => {
