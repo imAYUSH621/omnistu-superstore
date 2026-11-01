@@ -117,3 +117,30 @@ describe('reviewReturn (admin)', () => {
     expect((await reviewReturn('rr-1', true)).success).toBe(false);
   });
 });
+
+describe('getAllReturns admin listing', () => {
+  it('rejects non-admin callers', async () => {
+    const { getAllReturns } = await import('@/lib/actions/return.actions');
+    mockAuth.mockResolvedValueOnce({ user: { id: 'u1', role: 'user' } });
+    const res = await getAllReturns();
+    expect(res.success).toBe(false);
+    expect(mockReturnFindMany).not.toHaveBeenCalled();
+  });
+  it('returns serialized rows for admins', async () => {
+    const { getAllReturns } = await import('@/lib/actions/return.actions');
+    mockAuth.mockResolvedValueOnce({ user: { id: 'a1', role: 'admin' } });
+    mockReturnFindMany.mockResolvedValueOnce([{ id: 'r1', status: 'REQUESTED' }]);
+    const res = await getAllReturns();
+    expect(res.success).toBe(true);
+    expect(res.data).toEqual([{ id: 'r1', status: 'REQUESTED' }]);
+  });
+});
+
+describe('admin returns page (source scan)', () => {
+  const src = require('fs').readFileSync('app/admin/returns/page.tsx', 'utf8');
+  it('is admin-guarded and labels refunds as simulated', () => {
+    expect(src).toMatch(/requireAdmin/);
+    expect(src).toMatch(/SIMULATED/);
+    expect(src).not.toMatch(/processRefund|stripe\.refunds|paypal.*refund/i);
+  });
+});
