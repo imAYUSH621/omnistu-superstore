@@ -1,6 +1,7 @@
 import { executeRefund } from '@/lib/refunds';
 
-const CAPTURE_PR = { id: 'ORDER123', purchase_units: [{ payments: { captures: [{ id: 'CAPTURE456' }] } }] };
+const CAPTURE_PR = { id: 'ORDER123', purchase_units: [{ payments: { captures: [{ id: 'CAPTURE456', amount: { currency_code: 'USD', value: '100.00' } }] } }] };
+const CAPTURE_PR_EUR = { id: 'ORDER124', purchase_units: [{ payments: { captures: [{ id: 'CAPTURE457', amount: { currency_code: 'EUR', value: '100.00' } }] } }] };
 const BASE = { orderTotal: 100, alreadyRefunded: 0, idempotencyKey: 'return-rr-1' };
 
 describe('executeRefund fail-closed behavior (G3)', () => {
@@ -24,6 +25,45 @@ describe('executeRefund fail-closed behavior (G3)', () => {
     const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
     expect(r.status).toBe('SIMULATED');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects currency mismatch BEFORE any provider call (PayPal)', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.PAYPAL_CLIENT_ID = 'id';
+    process.env.PAYPAL_APP_SECRET = 'secret';
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR_EUR, amount: 25 });
+    expect(r.status).toBe('FAILED');
+    expect(r.note).toContain('Currency mismatch');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects unconfirmable currency BEFORE any provider call (PayPal)', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.PAYPAL_CLIENT_ID = 'id';
+    process.env.PAYPAL_APP_SECRET = 'secret';
+    const pr = { id: 'ORDER9', purchase_units: [{ payments: { captures: [{ id: 'CAP9' }] } }] };
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: pr, amount: 25 });
+    expect(r.status).toBe('FAILED');
+    expect(r.note).toContain('Cannot confirm the original payment currency');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects currency mismatch BEFORE any provider call (Stripe)', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    const r = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_eur', currency: 'eur' }, amount: 25 });
+    expect(r.status).toBe('FAILED');
+    expect(r.note).toContain('Currency mismatch');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rounds safely to minor units (Stripe cents)', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 're_9' }) } as Response);
+    await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_9', currency: 'usd' }, amount: 19.99 });
+    const body = String(fetchMock.mock.calls[0][1].body);
+    expect(body).toContain('amount=1999');
   });
 
   it('SIMULATED when flag set but keys missing', async () => {
@@ -70,12 +110,12 @@ describe('executeRefund fail-closed behavior (G3)', () => {
   });
 
   it('Stripe path: cents conversion and payment_intent passed; SIMULATED without key', async () => {
-    const sim = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
+    const sim = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1', currency: 'usd' }, amount: 19.99 });
     expect(sim.status).toBe('SIMULATED');
     process.env.REFUNDS_LIVE_ENABLED = 'true';
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 're_1' }) } as Response);
-    const r = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1', currency: 'usd' }, amount: 19.99 });
     expect(r.status).toBe('EXECUTED');
     const body = fetchMock.mock.calls[0][1].body as URLSearchParams;
     expect(body.get('payment_intent')).toBe('pi_1');
