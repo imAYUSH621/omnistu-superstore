@@ -55,7 +55,7 @@ describe('homepage honest imagery', () => {
     // every image surface routes through the honest ProductImage wrapper
     const surfaces = [
       'components/shared/home/top-category-cards.tsx',
-      'components/shared/home/category-quads.tsx',
+      'components/shared/home/category-quads-grid.tsx',
       'components/shared/home/best-sellers-shelf.tsx',
       'components/shared/product/product-card.tsx',
       'components/shared/cart/cart-drawer.tsx',
