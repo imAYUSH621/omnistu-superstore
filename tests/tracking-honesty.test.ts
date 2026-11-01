@@ -50,3 +50,17 @@ describe('order tracking honesty', () => {
     expect(view.progress).toBe('placed');
   });
 });
+
+describe('shipping badge honesty (D19)', () => {
+  it('never shows In Transit for an undispatched order', async () => {
+    const { shippingBadgeState } = await import('@/lib/tracking');
+    expect(shippingBadgeState({ isDelivered: false, dispatchStatus: null, trackingNumber: null })).toBe('not_dispatched');
+    expect(shippingBadgeState({ isDelivered: false, dispatchStatus: 'PENDING', trackingNumber: null })).toBe('not_dispatched');
+  });
+  it('shows in_transit only with real dispatch and delivered only when delivered', async () => {
+    const { shippingBadgeState } = await import('@/lib/tracking');
+    expect(shippingBadgeState({ isDelivered: false, dispatchStatus: 'DISPATCHED', trackingNumber: null })).toBe('in_transit');
+    expect(shippingBadgeState({ isDelivered: false, dispatchStatus: null, trackingNumber: 'T1' })).toBe('in_transit');
+    expect(shippingBadgeState({ isDelivered: true, dispatchStatus: 'DISPATCHED', trackingNumber: 'T1' })).toBe('delivered');
+  });
+});
