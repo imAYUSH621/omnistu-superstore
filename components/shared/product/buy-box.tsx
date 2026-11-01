@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import T from '@/components/shared/i18n-text';
 import { useRouter } from 'next/navigation';
 import { Product, Cart } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -120,7 +121,7 @@ export default function BuyBox({
             </p>
           ) : (
             <p className='text-destructive font-semibold text-base'>
-              Currently Unavailable
+              <T k='currentlyUnavailable' />
             </p>
           )}
         </div>
@@ -169,7 +170,7 @@ export default function BuyBox({
               ) : (
                 <ShoppingCart className='w-4 h-4 mr-2' />
               )}
-              Add to Cart {qty > 1 && `(${qty})`}
+              <T k='addToCart' /> {qty > 1 && `(${qty})`}
             </Button>
 
             {/* Buy Now Button (1-Click Instant Checkout) */}
@@ -185,7 +186,7 @@ export default function BuyBox({
               ) : (
                 <Zap className='w-4 h-4 mr-2 fill-current' />
               )}
-              Buy Now &bull; ${totalPrice}
+              <T k='buyNow' /> &bull; ${totalPrice}
             </Button>
           </div>
         )}
@@ -193,21 +194,21 @@ export default function BuyBox({
         {/* Enterprise Trust Table */}
         <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-xs space-y-1.5 text-muted-foreground'>
           <div className='flex justify-between py-0.5'>
-            <span>Ships from</span>
+            <span><T k='shipsFrom' /></span>
             <span className='font-medium text-foreground'>Demo - no real fulfillment</span>
           </div>
           <div className='flex justify-between py-0.5'>
-            <span>Sold by</span>
+            <span><T k='soldBy' /></span>
             <span className='font-medium text-foreground'>Demo catalog (sample data)</span>
           </div>
           <div className='flex justify-between py-0.5'>
-            <span>Returns</span>
+            <span><T k='returnsLabel' /></span>
             <span className='font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1'>
               <RotateCcw className='w-3 h-3' /> Refund policy (draft)
             </span>
           </div>
           <div className='flex justify-between py-0.5'>
-            <span>Payment</span>
+            <span><T k='paymentLabel' /></span>
             <span className='font-medium text-foreground flex items-center gap-1'>
               <Lock className='w-3 h-3 text-neutral-500' /> Secure SSL (Stripe / PayPal)
             </span>
@@ -233,11 +234,11 @@ export default function BuyBox({
                 isWishlisted ? 'text-red-500 fill-red-500' : ''
               }`}
             />
-            <span>{isWishlisted ? 'In Wishlist' : 'Add to Wishlist'}</span>
+            <span>{isWishlisted ? <T k='inWishlist' /> : <T k='addToWishlist' />}</span>
           </button>
           <div className='flex items-center gap-1'>
             <ShieldCheck className='w-3.5 h-3.5 text-emerald-600' />
-            <span>Buyer protection (demo - no live policy)</span>
+            <span><T k='buyerProtection' /></span>
           </div>
         </div>
       </CardContent>

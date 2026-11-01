@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import T from '@/components/shared/i18n-text';
 import { ProductImage } from '@/components/shared/product/product-image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -52,7 +53,7 @@ export default function CartDrawer() {
             <div className='flex items-center gap-2 text-emerald-600 dark:text-emerald-400'>
               <CheckCircle2 className='w-6 h-6' />
               <SheetTitle className='text-lg font-bold text-foreground'>
-                Added to Shopping Cart
+                <T k='addedToCart' />
               </SheetTitle>
             </div>
             <SheetDescription className='text-xs text-muted-foreground'>
@@ -115,7 +116,7 @@ export default function CartDrawer() {
             }}
             className='w-full bg-amber-400 hover:bg-amber-500 text-neutral-900 font-bold rounded-full py-5 text-sm shadow transition-all duration-150'
           >
-            Proceed to Checkout
+            <T k='proceedToCheckout' />
             <ArrowRight className='w-4 h-4 ml-2' />
           </Button>
 
