@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Check } from 'lucide-react';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { catalogSource } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'Featured Products | Omnistu Superstore',
@@ -95,6 +97,9 @@ export default async function BestSellersCategoryPage(props: {
   params: Promise<{ category: string }>;
 }) {
   const { category } = await props.params;
+  // This page lists a bundled static sample list. In database mode it would
+  // be fake commerce, so send visitors to the real catalog.
+  if (catalogSource() !== 'sample') redirect('/search');
   const currentCatName = CATEGORY_NAMES[category] || 'All Departments';
 
   const items =

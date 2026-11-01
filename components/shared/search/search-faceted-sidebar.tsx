@@ -14,6 +14,7 @@ interface FacetedSidebarProps {
   currentRating: string;
   currentSort: string;
   currentQ: string;
+  showIdeas?: boolean;
 }
 
 export default function SearchFacetedSidebar({
@@ -23,6 +24,7 @@ export default function SearchFacetedSidebar({
   currentRating,
   currentSort,
   currentQ,
+  showIdeas = false,
 }: FacetedSidebarProps) {
   const router = useRouter();
   const [minPrice, setMinPrice] = useState('');
@@ -93,7 +95,8 @@ export default function SearchFacetedSidebar({
         </div>
       )}
 
-      {/* 1. Popular Shopping Ideas / Tags */}
+      {/* 1. Popular Shopping Ideas / Tags (bundled sample terms: sample mode only) */}
+      {showIdeas && (<>
       <div className='space-y-2.5'>
         <h3 className='font-bold text-sm text-foreground uppercase tracking-wide text-xs'>
           Popular Shopping Ideas
@@ -116,6 +119,7 @@ export default function SearchFacetedSidebar({
       </div>
 
       <hr className='border-neutral-200 dark:border-neutral-800' />
+      </>)}
 
       {/* 2. Department / Categories */}
       <div className='space-y-2'>

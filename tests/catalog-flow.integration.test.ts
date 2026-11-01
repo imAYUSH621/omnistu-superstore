@@ -9,7 +9,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 jest.mock('@/auth', () => ({ auth: jest.fn() }));
 
 import { prisma } from '@/db/prisma';
-import { getAllProducts, getAllCategories, getProductBySlug } from '@/lib/actions/product.actions';
+import { getAllProducts, getAllCategories, getProductBySlug, getFeaturedProducts } from '@/lib/actions/product.actions';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB && process.env.DATABASE_URL === DB ? describe : describe.skip;
@@ -73,6 +73,12 @@ maybe('catalog flow on REAL Postgres (fixtures)', () => {
     for (const [i, n] of [[0, 2], [1, 2], [2, 1]] as const) {
       expect(c.find((x) => x.category === cats[i])?._count).toBe(n);
     }
+  });
+  it('featured rail in database mode never returns bundled sample items', async () => {
+    const res = await getFeaturedProducts();
+    expect(res.every((p: { id: string }) => !p.id.startsWith('featured-'))).toBe(true);
+    const dbFeatured = await prisma.product.count({ where: { isFeatured: true } });
+    if (dbFeatured === 0) expect(res).toEqual([]);
   });
   it('product page lookup by slug returns the product', async () => {
     const p = await getProductBySlug(slug('b'));

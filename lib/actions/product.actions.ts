@@ -324,12 +324,13 @@ export async function getFeaturedProducts(): Promise<Product[]> {
         orderBy: { createdAt: 'desc' },
         take: 4,
       });
-      if (data && data.length > 0) {
-        return convertToPlainObject(data);
-      }
+      // Database mode: an empty result is an honest empty result. Never mix
+      // in the bundled sample catalog.
+      return convertToPlainObject(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn('Prisma getFeaturedProducts fallback:', msg);
+      console.warn('Prisma getFeaturedProducts failed:', msg);
+      return [];
     }
   }
 
