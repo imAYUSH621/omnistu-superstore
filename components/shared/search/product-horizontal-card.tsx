@@ -116,8 +116,12 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
         <div>
           {/* Brand & Category Breadcrumb */}
           <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-            <span className='font-semibold text-primary/80'>{product.brand || 'Omnistu'}</span>
-            <span>•</span>
+            {product.brand ? (
+              <>
+                <span className='font-semibold text-primary/80'>{product.brand}</span>
+                <span>•</span>
+              </>
+            ) : null}
             <span>{product.category}</span>
           </div>
 

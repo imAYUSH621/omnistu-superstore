@@ -14,7 +14,11 @@ export const insertProductSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   slug: z.string().min(3, 'Slug must be at least 3 characters'),
   category: z.string().min(3, 'Category must be at least 3 characters'),
-  brand: z.string().min(3, 'Brand must be at least 3 characters'),
+  // Brand is the manufacturer's brand and may be genuinely unknown (blank = null).
+  brand: z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    z.string().min(3, 'Brand must be at least 3 characters').nullable().optional()
+  ),
   description: z.string().min(3, 'Description must be at least 3 characters'),
   stock: z.coerce.number(),
   images: z.array(z.string()).min(1, 'Product must have at least one image'),
