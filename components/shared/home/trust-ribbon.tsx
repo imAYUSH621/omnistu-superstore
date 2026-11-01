@@ -4,23 +4,23 @@ export default function TrustRibbon() {
   const perks = [
     {
       icon: Truck,
-      title: 'Free Express Shipping',
-      desc: 'Next-day delivery on eligible items',
+      title: 'Tracked Shipping',
+      desc: 'Delivery status on every order',
     },
     {
       icon: RotateCcw,
-      title: '30-Day Money-Back',
-      desc: 'Hassle-free return & replacement',
+      title: 'Easy Order Lookup',
+      desc: 'Find any order from your account',
     },
     {
       icon: ShieldCheck,
       title: 'Secure Checkout',
-      desc: '256-bit encryption (Stripe / PayPal)',
+      desc: 'Payments handled by Stripe / PayPal',
     },
     {
       icon: Headphones,
-      title: '24/7 Dedicated Care',
-      desc: 'Expert support anytime you need',
+      title: 'Order Support',
+      desc: 'Reach us from your order page',
     },
   ];
 

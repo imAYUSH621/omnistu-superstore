@@ -21,8 +21,6 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
   const [added, setAdded] = useState(false);
 
   const priceNum = Number(product.price);
-  const msrpNum = Number((priceNum * 1.35).toFixed(2));
-  const savingsPercent = Math.round(((msrpNum - priceNum) / msrpNum) * 100);
   const wholePrice = Math.floor(priceNum);
   const fractionPrice = (priceNum % 1).toFixed(2).substring(2);
 
@@ -74,13 +72,9 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
       <div className='relative w-full md:w-56 h-56 flex-shrink-0 bg-neutral-50 dark:bg-neutral-900/60 rounded-lg overflow-hidden flex items-center justify-center p-3'>
         {/* Badges */}
         <div className='absolute top-2 left-2 z-10 flex flex-col gap-1'>
-          {product.isFeatured ? (
-            <span className='bg-amber-400 text-neutral-950 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded shadow-sm'>
-              #1 Best Seller
-            </span>
-          ) : (
-            <span className='bg-red-600 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded shadow-sm'>
-              Limited Deal
+          {product.isFeatured && (
+            <span className='bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded shadow-sm'>
+              Featured
             </span>
           )}
         </div>
@@ -138,25 +132,23 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
             </Link>
           </h2>
 
-          {/* Ratings & Social Proof */}
-          <div className='flex items-center gap-2 mt-1.5 flex-wrap'>
-            <Rating value={Number(product.rating)} />
-            <span className='text-xs font-semibold text-neutral-700 dark:text-neutral-300'>
-              {Number(product.rating).toFixed(1)}
-            </span>
-            <span className='text-xs text-muted-foreground'>
-              ({Number(product.numReviews).toLocaleString()} reviews)
-            </span>
-            <span className='text-[11px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-1.5 py-0.5 rounded font-medium'>
-              1K+ bought in past month
-            </span>
-          </div>
+          {/* Ratings - only shown for products with real review data */}
+          {Number(product.numReviews) > 0 ? (
+            <div className='flex items-center gap-2 mt-1.5 flex-wrap'>
+              <Rating value={Number(product.rating)} />
+              <span className='text-xs font-semibold text-neutral-700 dark:text-neutral-300'>
+                {Number(product.rating).toFixed(1)}
+              </span>
+              <span className='text-xs text-muted-foreground'>
+                ({Number(product.numReviews).toLocaleString()} reviews)
+              </span>
+            </div>
+          ) : (
+            <p className='text-xs text-muted-foreground mt-1.5'>No reviews yet</p>
+          )}
 
           {/* Pricing Row */}
           <div className='mt-2.5 flex items-baseline gap-2 flex-wrap'>
-            <span className='bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded'>
-              -{savingsPercent}%
-            </span>
             <div className='flex items-start text-foreground'>
               <span className='text-xs font-bold leading-none mt-1'>$</span>
               <span className='text-2xl font-black tracking-tight leading-none'>
@@ -166,20 +158,8 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
                 {fractionPrice}
               </span>
             </div>
-            <span className='text-xs text-muted-foreground line-through'>
-              Typical: ${msrpNum.toFixed(2)}
-            </span>
           </div>
 
-          {/* Prime Express Delivery Tag */}
-          <div className='mt-2 flex items-center gap-2 text-xs'>
-            <span className='inline-flex items-center gap-1 font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 px-2 py-0.5 rounded text-[11px] border border-sky-200 dark:border-sky-800'>
-              <Zap className='w-3 h-3 fill-sky-500' /> Express Tomorrow
-            </span>
-            <span className='text-muted-foreground'>
-              FREE delivery <strong className='text-foreground'>Tomorrow, 2 PM</strong>
-            </span>
-          </div>
 
           {/* Stock / Urgency */}
           {product.stock <= 5 ? (
@@ -196,12 +176,6 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
 
       {/* 3. Right Action Box */}
       <div className='w-full md:w-48 flex-shrink-0 flex flex-col justify-between border-t md:border-t-0 md:border-l border-neutral-100 dark:border-neutral-800 pt-3 md:pt-0 md:pl-5 space-y-3'>
-        <div className='text-xs text-muted-foreground space-y-1 hidden md:block'>
-          <p className='font-medium text-foreground'>Ships from:</p>
-          <p>Omnistu Fulfillment Hub</p>
-          <p className='font-medium text-foreground pt-1'>Sold by:</p>
-          <p>Omnistu Direct Official</p>
-        </div>
 
         <div className='space-y-2 pt-2'>
           <Button

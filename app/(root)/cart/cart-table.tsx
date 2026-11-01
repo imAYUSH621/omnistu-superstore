@@ -30,17 +30,13 @@ const RECOMMENDED_ITEMS = [
     category: 'Toys & Games',
     image: '/images/products/silicone-magnetic-balls-1.svg',
     price: '12.99',
-    rating: '4.8',
-    numReviews: 2240,
   },
   {
     name: 'Omnistu Cyber Heavyweight Graphic Hoodie (300DPI)',
     slug: 'omnistu-cyber-heavyweight-graphic-hoodie',
     category: 'Apparel & Merch',
-    image: '/images/sample-products/p1-1.jpg',
+    image: '/images/products/placeholder.svg',
     price: '58.95',
-    rating: '4.9',
-    numReviews: 432,
   },
   {
     name: 'Active Noise-Cancelling Wireless Earbuds Pro',
@@ -48,8 +44,6 @@ const RECOMMENDED_ITEMS = [
     category: 'Electronics & Gadgets',
     image: '/images/products/anc-earbuds-1.svg',
     price: '49.99',
-    rating: '4.7',
-    numReviews: 3120,
   },
   {
     name: 'Smart Gravity Induction Constant Temp Coffee Mug Warmer',
@@ -57,8 +51,6 @@ const RECOMMENDED_ITEMS = [
     category: 'Home & Kitchen',
     image: '/images/products/smart-mug-warmer-1.svg',
     price: '24.99',
-    rating: '4.8',
-    numReviews: 1670,
   },
 ];
 
@@ -224,10 +216,6 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                           {item.name}
                         </h4>
                       </Link>
-                      <div className='flex items-center gap-1 text-[11px] text-amber-500 mt-1'>
-                        <span>★ {item.rating}</span>
-                        <span className='text-neutral-400'>({item.numReviews})</span>
-                      </div>
                       <div className='text-sm font-bold text-[#0f172a] dark:text-white mt-1'>
                         ${item.price}
                       </div>
@@ -333,10 +321,6 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
             {/* Right 1 Column: Sticky Amazon Checkout Box */}
             <div className='sticky top-20 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
-              <div className='text-xs text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1'>
-                <CheckCircle2 className='w-4 h-4 shrink-0' />
-                Part of your order qualifies for FREE Delivery.
-              </div>
 
               <div className='text-lg font-medium'>
                 Subtotal ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}

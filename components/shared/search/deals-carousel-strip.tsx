@@ -22,18 +22,15 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
           </span>
           <div>
             <h2 className='text-sm sm:text-base font-bold text-foreground flex items-center gap-2'>
-              Today&apos;s Deals in Omnistu Superstore
-              <span className='bg-red-600 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded shadow-sm'>
-                Up to 45% Off
-              </span>
+              Featured in Omnistu Superstore
             </h2>
           </div>
         </div>
         <Link
-          href='/search?sort=rating'
+          href='/search?q=all'
           className='text-xs font-semibold text-primary hover:underline flex items-center gap-1'
         >
-          <span>See all deals</span>
+          <span>See all products</span>
           <ArrowRight className='w-3 h-3' />
         </Link>
       </div>
@@ -42,8 +39,6 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
       <div className='flex items-stretch gap-3 overflow-x-auto pb-2 scrollbar-thin no-scrollbar'>
         {deals.map((deal) => {
           const priceNum = Number(deal.price);
-          const msrpNum = Number((priceNum * 1.35).toFixed(2));
-          const savingsPercent = Math.round(((msrpNum - priceNum) / msrpNum) * 100);
 
           return (
             <Link
@@ -62,20 +57,9 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
               </div>
 
               <div className='space-y-1.5'>
-                <div className='flex items-center gap-1.5'>
-                  <span className='bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded'>
-                    -{savingsPercent}%
-                  </span>
-                  <span className='text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-tight'>
-                    Top Deal
-                  </span>
-                </div>
 
                 <div className='flex items-baseline gap-1'>
                   <span className='text-sm font-bold text-foreground'>${priceNum.toFixed(2)}</span>
-                  <span className='text-[11px] text-muted-foreground line-through'>
-                    ${msrpNum.toFixed(2)}
-                  </span>
                 </div>
 
                 <p className='text-xs text-foreground font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors'>

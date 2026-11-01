@@ -86,25 +86,11 @@ export default function CartDrawer() {
             </div>
           )}
 
-          {/* Free Shipping Qualification Banner */}
-          <div className='bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 text-xs space-y-1.5'>
-            <div className='flex items-center justify-between font-semibold text-emerald-800 dark:text-emerald-300'>
-              <span>Free Delivery Qualified</span>
-              <span className='text-emerald-600 font-bold'>100% Free</span>
-            </div>
-            <div className='w-full bg-emerald-200 dark:bg-emerald-900 h-1.5 rounded-full overflow-hidden'>
-              <div className='bg-emerald-600 h-full w-full' />
-            </div>
-            <p className='text-muted-foreground text-[11px]'>
-              Your order qualifies for FREE Express Shipping with guaranteed next-day dispatch.
-            </p>
-          </div>
-
           {/* Quick recommendations */}
           <div className='pt-2 space-y-2 text-xs text-muted-foreground'>
             <div className='flex items-center gap-1.5 font-semibold text-foreground'>
               <Zap className='w-3.5 h-3.5 text-amber-500 fill-amber-500' />
-              <span>Recommended Amazon Best Seller</span>
+              <span>You might also like</span>
             </div>
             <Link
               href='/product/silicone-magnetic-balls-fidget-toys'
@@ -153,11 +139,6 @@ export default function CartDrawer() {
             </Button>
           </SheetClose>
 
-          {/* Security badge */}
-          <div className='flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1'>
-            <ShieldCheck className='w-3.5 h-3.5 text-emerald-600' />
-            <span>256-Bit SSL Encrypted Checkout &bull; 30-Day Guarantee</span>
-          </div>
         </div>
       </SheetContent>
     </Sheet>

@@ -39,7 +39,7 @@ const TOP_CARDS = [
   {
     id: 'card-6',
     title: 'Luxury Watches & Jewelry',
-    image: '/images/sample-products/p6-1.jpg',
+    image: '/images/sample-products/italian-18k-gold-plated-925-sterling-silver-miami-cuban-link-chain-nec-1.jpg',
     url: '/s?k=jewelry',
   },
 ];

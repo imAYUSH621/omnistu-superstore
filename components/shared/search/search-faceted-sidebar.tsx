@@ -266,27 +266,6 @@ export default function SearchFacetedSidebar({
       </div>
 
       <hr className='border-neutral-200 dark:border-neutral-800' />
-
-      {/* 5. Delivery & Fulfillment */}
-      <div className='space-y-2'>
-        <h3 className='font-bold text-sm text-foreground'>Delivery Day</h3>
-        <div className='space-y-2 text-xs'>
-          <label className='flex items-center gap-2 cursor-pointer hover:text-primary transition'>
-            <input
-              type='checkbox'
-              checked={true}
-              readOnly
-              className='rounded text-primary focus:ring-primary w-3.5 h-3.5'
-            />
-            <span className='inline-flex items-center gap-1 font-bold text-sky-600 dark:text-sky-400'>
-              <Zap className='w-3 h-3 fill-sky-500' /> Express Tomorrow
-            </span>
-          </label>
-          <p className='text-[11px] text-muted-foreground pl-5'>
-            Get free next-day dispatch on qualified items.
-          </p>
-        </div>
-      </div>
     </aside>
   );
 }

@@ -37,7 +37,7 @@ export async function generateMetadata(props: {
     };
   } else {
     return {
-      title: 'Search Products & Best Sellers | Omnistu Superstore',
+      title: 'Search Products | Omnistu Superstore',
     };
   }
 }

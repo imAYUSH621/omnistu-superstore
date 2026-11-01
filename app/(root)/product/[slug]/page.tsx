@@ -7,7 +7,7 @@ import ReviewList from './review-list';
 import { auth } from '@/auth';
 import Rating from '@/components/shared/product/rating';
 import Link from 'next/link';
-import { ChevronRight, Award, Check, Sparkles } from 'lucide-react';
+import { ChevronRight, Award } from 'lucide-react';
 
 const ProductDetailsPage = async (props: {
   params: Promise<{ slug: string }>;
@@ -52,13 +52,15 @@ const ProductDetailsPage = async (props: {
 
           {/* Details & Specs Column (4 Cols) */}
           <div className='lg:col-span-4 space-y-5 bg-white dark:bg-[#1a202c] p-6 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
-            {/* Best Seller Ribbon & Category */}
+            {/* Featured badge & Category */}
             <div className='flex items-center gap-2'>
-              <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-[#4f46e5] text-neutral-900 px-2 py-0.5 rounded-sm shadow-xs'>
-                <Award className='w-3.5 h-3.5' /> #1 Best Seller
-              </span>
+              {product.isFeatured && (
+                <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-sm shadow-xs'>
+                  <Award className='w-3.5 h-3.5' /> Featured
+                </span>
+              )}
               <span className='text-xs text-muted-foreground'>
-                in {product.category}
+                {product.category}
               </span>
             </div>
 
@@ -86,34 +88,6 @@ const ProductDetailsPage = async (props: {
               <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
                 {product.numReviews.toLocaleString()} ratings & reviews
               </span>
-            </div>
-
-            {/* Feature Highlights Bullet Points */}
-            <div className='space-y-2.5 pt-1 text-xs text-foreground'>
-              <p className='font-bold text-sm text-foreground flex items-center gap-1.5'>
-                <Sparkles className='w-4 h-4 text-amber-500' />
-                Key Product Highlights
-              </p>
-              <ul className='space-y-2 text-muted-foreground'>
-                <li className='flex items-start gap-2'>
-                  <Check className='w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5' />
-                  <span>
-                    <strong className='text-foreground'>Premium Grade:</strong> Engineered with non-toxic, certified components tested for longevity.
-                  </span>
-                </li>
-                <li className='flex items-start gap-2'>
-                  <Check className='w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5' />
-                  <span>
-                    <strong className='text-foreground'>Priority Delivery:</strong> Dispatched from CJ Dropshipping fulfillment hub within 24 hours.
-                  </span>
-                </li>
-                <li className='flex items-start gap-2'>
-                  <Check className='w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5' />
-                  <span>
-                    <strong className='text-foreground'>Risk-Free Guarantee:</strong> 30-day money-back guarantee with zero hassle returns.
-                  </span>
-                </li>
-              </ul>
             </div>
 
             {/* Description */}

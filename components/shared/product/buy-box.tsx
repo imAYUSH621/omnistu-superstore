@@ -27,7 +27,8 @@ import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function BuyBox({
-  product,
+  product,
+
   cart,
 }: {
   product: Product;
@@ -41,8 +42,6 @@ export default function BuyBox({
   const itemInCart = cart?.items.find((x) => x.productId === product.id);
 
   const priceNum = Number(product.price);
-  const msrpNum = Number((priceNum * 1.45).toFixed(2));
-  const savingsPercent = Math.round(((msrpNum - priceNum) / msrpNum) * 100);
   const totalPrice = (priceNum * qty).toFixed(2);
 
   const handleAddToCart = async (goToCheckout = false) => {
@@ -102,9 +101,6 @@ export default function BuyBox({
         {/* Price & Savings Header */}
         <div className='space-y-1'>
           <div className='flex items-baseline gap-2'>
-            <span className='text-xs font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/60 px-2 py-0.5 rounded'>
-              -{savingsPercent}%
-            </span>
             <span className='text-3xl font-extrabold tracking-tight'>
               <sup className='text-sm align-super font-medium'>$</sup>
               {Math.floor(priceNum)}
@@ -113,28 +109,8 @@ export default function BuyBox({
               </sup>
             </span>
           </div>
-          <div className='text-xs text-muted-foreground flex items-center gap-1.5'>
-            <span>Typical price:</span>
-            <span className='line-through'>${msrpNum.toFixed(2)}</span>
-          </div>
         </div>
 
-        {/* Prime Fast Delivery Guarantee */}
-        <div className='bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 rounded-lg p-3 space-y-1.5'>
-          <div className='flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-semibold text-sm'>
-            <Truck className='w-4 h-4 text-emerald-600' />
-            <span>FREE delivery Tomorrow</span>
-          </div>
-          <p className='text-xs text-muted-foreground leading-relaxed'>
-            Order within <strong className='text-foreground'>3 hrs 15 mins</strong> with Omnistu Express Priority.
-          </p>
-          <div className='text-xs text-muted-foreground flex items-center gap-1 pt-1'>
-            <span>Deliver to</span>
-            <strong className='text-foreground hover:underline cursor-pointer'>
-              United States &bull; Priority Hub
-            </strong>
-          </div>
-        </div>
 
         {/* Stock Urgency Indicator */}
         <div>
