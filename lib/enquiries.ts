@@ -38,3 +38,21 @@ export function rateLimited(key: string, now = Date.now(), max = 5, windowMs = 1
   if (hits.size > 5000) hits.clear();
   return false;
 }
+
+type FindMany = (args: {
+  where: { userId: string };
+  orderBy: { createdAt: 'desc' };
+  take: number;
+  select: Record<string, true>;
+}) => Promise<unknown[]>;
+
+/** Own enquiries only: always filtered by the signed-in user's id. No email matching. */
+export async function listEnquiriesForUser(findMany: FindMany, userId: string | undefined | null) {
+  if (!userId) return [];
+  return findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+    select: { id: true, serviceSlug: true, message: true, status: true, createdAt: true },
+  });
+}
