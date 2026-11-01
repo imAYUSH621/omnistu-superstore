@@ -32,7 +32,7 @@ const Header = () => {
           </Link>
 
           {/* Amazon Deliver to India Location Widget */}
-          <div className='hidden lg:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
+          <div className='hidden xl:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
             <MapPin className='w-4 h-4 text-white shrink-0 mt-1' />
             <div className='flex flex-col text-left leading-tight'>
               <T k='deliverTo' className='text-[11px] text-[#cccccc] font-normal leading-none' />
@@ -46,7 +46,7 @@ const Header = () => {
         <SiteSwitch className='hidden md:inline-grid shrink-0' />
 
         {/* Center: 3-Piece Rectangular Amazon Search Bar */}
-        <div className='hidden md:flex flex-1 justify-center max-w-3xl mx-2'>
+        <div className='hidden md:flex flex-1 min-w-0 justify-center max-w-3xl mx-2'>
           <Search />
         </div>
 
