@@ -149,7 +149,7 @@ export default function Footer() {
         <div className='max-w-[1000px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4'>
           <Link href='/' className='flex items-center gap-1.5'>
             <span className='font-extrabold text-[22px] tracking-tight text-white'>
-              omnistu<span className='text-[#4f46e5] text-[16px] font-black'>.us</span>
+              omnistu<span className='text-[#4f46e5] text-[16px] font-black'>.com</span>
             </span>
           </Link>
 

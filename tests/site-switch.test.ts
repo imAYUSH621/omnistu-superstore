@@ -15,8 +15,18 @@ describe('Products/Services switch', () => {
       expect(readFileSync(f, 'utf8')).not.toMatch(/All Departments|Shop by Department/);
     }
   });
-  it('services catalog carries no invented offerings while empty', () => {
-    expect(Array.isArray(SERVICES)).toBe(true);
-    for (const s of SERVICES) expect(s.title && s.summary && s.slug).toBeTruthy();
+  it('services catalog has unique slugs and no price/guarantee/count claims', () => {
+    expect(SERVICES.length).toBeGreaterThan(0);
+    expect(new Set(SERVICES.map((x) => x.slug)).size).toBe(SERVICES.length);
+    const text = JSON.stringify(SERVICES);
+    expect(text).not.toMatch(/\$|USD|₹|guarantee|within \d|days|%|\d{2,}\+?\s*(clients|projects|channels)/i);
+    for (const s of SERVICES) expect(s.title && s.summary && s.covers.length).toBeTruthy();
+  });
+  it('brand wordmark uses omnistu.com, not .us', () => {
+    for (const f of ['components/shared/header/index.tsx', 'components/footer.tsx']) {
+      const t = readFileSync(f, 'utf8');
+      expect(t).not.toMatch(/>\s*\.us\s*</);
+      expect(t).toMatch(/\.com/);
+    }
   });
 });
