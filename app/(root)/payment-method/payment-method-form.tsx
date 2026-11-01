@@ -109,7 +109,7 @@ const PaymentMethodForm = ({
                 ) : (
                   <ArrowRight className='w-4 h-4' />
                 )}{' '}
-                Continue
+                <T k='continueLabel' />
               </Button>
             </div>
           </form>
