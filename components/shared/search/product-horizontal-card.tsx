@@ -21,6 +21,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [added, setAdded] = useState(false);
 
+  const isFixture = isTestFixtureSlug(product.slug);
   const priceNum = Number(product.price);
   const wholePrice = Math.floor(priceNum);
   const fractionPrice = (priceNum % 1).toFixed(2).substring(2);
@@ -109,6 +110,11 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
             sizes='(max-width: 768px) 100vw, 224px'
             className='object-contain group-hover:scale-105 transition-transform duration-300'
           />
+          {isFixture && (
+            <span className='absolute bottom-0 left-0 right-0 bg-red-700/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white' data-testid='placeholder-image-label'>
+              Placeholder image - not a photo of this product
+            </span>
+          )}
         </Link>
       </div>
 
@@ -152,6 +158,12 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
             <p className='text-xs text-muted-foreground mt-1.5'>No reviews yet</p>
           )}
 
+          {isFixture ? (
+            <p className='mt-2.5 text-xs text-red-900' data-testid='fixture-card-cost'>
+              <span className='font-bold'>Reference only</span> - supplier cost ${priceNum.toFixed(2)}, not a sale price
+            </p>
+          ) : (
+          <>
           {/* Pricing Row */}
           <div className='mt-2.5 flex items-baseline gap-2 flex-wrap'>
             <div className='flex items-start text-foreground'>
@@ -166,8 +178,11 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           </div>
 
 
+          </>
+          )}
+
           {/* Stock status - honest states only, no urgency copy */}
-          {product.stock === 0 ? (
+          {isFixture ? null : product.stock === 0 ? (
             <p className='text-xs text-muted-foreground mt-1'>
               Currently unavailable - supplier stock not yet verified
             </p>
@@ -183,6 +198,9 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
       <div className='w-full md:w-48 flex-shrink-0 flex flex-col justify-between border-t md:border-t-0 md:border-l border-neutral-100 dark:border-neutral-800 pt-3 md:pt-0 md:pl-5 space-y-3'>
 
         <div className='space-y-2 pt-2'>
+          {isFixture ? (
+            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>Test fixture - not for sale</p>
+          ) : (
           <Button
             type='button'
             onClick={handleQuickAdd}
@@ -203,13 +221,14 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
               </>
             )}
           </Button>
+          )}
 
           <Button
             asChild
             variant='outline'
             className='w-full text-xs h-9 rounded-full border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800'
           >
-            <Link href={`/product/${product.slug}`}>See options</Link>
+            <Link href={`/product/${product.slug}`}>{isFixture ? 'View details' : 'See options'}</Link>
           </Button>
         </div>
       </div>
