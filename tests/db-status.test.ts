@@ -24,10 +24,18 @@ describe('classifyDatabase', () => {
   it('schema_incomplete when a migration is recorded as failed', async () => {
     expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : [{ failed: BigInt(1) }])))).toBe('schema_incomplete');
   });
+  const authOk = { attempt_t: '"AuthAttempt"', version_t: '"UserSessionVersion"' };
   it('ok when the app role cannot read the migrations table (failed check unknown)', async () => {
-    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : new Error('permission denied for table _prisma_migrations'))))).toBe('ok');
+    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : n === 3 ? new Error('permission denied for table _prisma_migrations') : [authOk])))).toBe('ok');
   });
-  it('ok when tables exist and no migration failed', async () => {
-    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : [{ failed: BigInt(0) }])))).toBe('ok');
+  it('ok when tables exist, no migration failed and the auth tables exist', async () => {
+    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : n === 3 ? [{ failed: BigInt(0) }] : [authOk])))).toBe('ok');
+  });
+  it('auth_tables_missing when either auth table is absent', async () => {
+    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : n === 3 ? [{ failed: BigInt(0) }] : [{ attempt_t: null, version_t: '"UserSessionVersion"' }])))).toBe('auth_tables_missing');
+    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : n === 3 ? [{ failed: BigInt(0) }] : [{ attempt_t: '"AuthAttempt"', version_t: null }])))).toBe('auth_tables_missing');
+  });
+  it('auth_tables_missing when the check itself errors', async () => {
+    expect(await classifyDatabase(true, q((n) => (n === 1 ? [{}] : n === 2 ? [core] : n === 3 ? [{ failed: BigInt(0) }] : new Error('boom'))))).toBe('auth_tables_missing');
   });
 });

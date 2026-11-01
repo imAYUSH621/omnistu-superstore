@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Health endpoint. Reports liveness + a coarse database classification:
- * ok | not_configured | down | schema_incomplete.
+ * ok | not_configured | down | schema_incomplete | auth_tables_missing.
  * catalogSource says whether product reads use the database or the bundled sample
  * data (a connected DB with a localhost URL still serves the sample unless
  * ALLOW_LOCAL_DATABASE=1 is set for local testing).
