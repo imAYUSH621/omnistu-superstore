@@ -71,12 +71,14 @@ const ProductDetailsPage = async (props: {
             </h1>
 
             {/* Brand Link */}
-            <p className='text-xs text-muted-foreground'>
-              <T k='brandLabel' />{' '}
-              <span className='text-[#4f46e5] dark:text-[#56b6c2] font-semibold hover:underline cursor-pointer'>
-                {product.brand}
-              </span>
-            </p>
+            {product.brand ? (
+              <p className='text-xs text-muted-foreground'>
+                <T k='brandLabel' />{' '}
+                <span className='text-[#4f46e5] dark:text-[#56b6c2] font-semibold hover:underline cursor-pointer'>
+                  {product.brand}
+                </span>
+              </p>
+            ) : null}
 
             {/* Star Rating & Reviews */}
             <div className='flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4'>

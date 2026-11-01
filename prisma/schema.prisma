@@ -14,7 +14,7 @@ model Product {
   slug        String      @unique(map: "product_slug_idx")
   category    String
   images      String[]
-  brand       String
+  brand       String?
   description String
   stock       Int
   price       Decimal     @default(0) @db.Decimal(12, 2)

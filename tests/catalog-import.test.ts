@@ -26,10 +26,17 @@ describe('planCatalogImport', () => {
     expect(p.invalid.map((i) => i.index)).toEqual([0, 1, 2, 3, 5]);
     expect(p.create).toHaveLength(1);
   });
-  it('does not invent stock or brand: a row missing them is invalid', () => {
-    const { stock: _s, brand: _b, ...rest } = row();
-    void _s; void _b;
+  it('does not invent stock: a row without stock is invalid', () => {
+    const { stock: _s, ...rest } = row();
+    void _s;
     expect(planCatalogImport([rest], new Set(), false).invalid).toHaveLength(1);
+  });
+  it('does not invent a brand: a row without one imports with brand null (unknown)', () => {
+    const { brand: _b, ...rest } = row();
+    void _b;
+    const p = planCatalogImport([rest, row({ slug: 'blank-brand', brand: '  ' })], new Set(), false);
+    expect(p.invalid).toHaveLength(0);
+    expect(p.create.map((c) => c.brand ?? null)).toEqual([null, null]);
   });
   it('accepts a numeric price', () => {
     expect(planCatalogImport([row({ price: 12 })], new Set(), false).create).toHaveLength(1);

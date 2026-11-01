@@ -107,7 +107,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       <CardContent className='p-4 flex flex-col justify-between flex-1 gap-3'>
         <div className='space-y-1.5'>
           <div className='flex items-center justify-between text-[11px] text-muted-foreground uppercase tracking-wider font-semibold'>
-            <span>{product.brand}</span>
+            <span>{product.brand ?? ''}</span>
             <span className='truncate max-w-[120px]'>{product.category}</span>
           </div>
 

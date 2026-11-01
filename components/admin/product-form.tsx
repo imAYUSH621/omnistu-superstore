@@ -196,7 +196,7 @@ const ProductForm = ({
               <FormItem className='w-full'>
                 <FormLabel>Brand</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter brand' {...field} />
+                  <Input placeholder='Brand (leave blank if unknown)' {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
