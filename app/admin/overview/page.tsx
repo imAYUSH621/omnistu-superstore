@@ -24,6 +24,8 @@ const AdminOverviewPage = async () => {
   await requireAdmin();
 
   const summary = await getOrderSummary();
+  const unavailable = 'unavailable' in summary && summary.unavailable === true;
+  const num = (n: number) => (unavailable ? 'Unavailable' : formatNumber(n));
 
   return (
     <div className='space-y-6'>
@@ -34,7 +36,7 @@ const AdminOverviewPage = async () => {
             Seller Executive Center
           </h1>
           <p className='text-xs text-muted-foreground mt-1'>
-            Autonomous E-Commerce Infrastructure • Real-time CJ & Printify Telemetry • Free-Tier Postgres Meter
+            Store totals from the database
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -43,6 +45,12 @@ const AdminOverviewPage = async () => {
           </span>
         </div>
       </div>
+
+      {unavailable && (
+        <p role='alert' className='text-sm text-red-700 border border-red-300 bg-red-50 rounded p-3'>
+          Store totals could not be loaded. The values below are not zero; they are unavailable.
+        </p>
+      )}
 
       {/* KPI Stats Grid */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
@@ -53,9 +61,9 @@ const AdminOverviewPage = async () => {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {formatCurrency(
-                summary.totalSales._sum.totalPrice?.toString() ?? '0'
-              )}
+              {unavailable
+                ? 'Unavailable'
+                : formatCurrency(summary.totalSales._sum.totalPrice?.toString() ?? '0')}
             </div>
           </CardContent>
         </Card>
@@ -67,7 +75,7 @@ const AdminOverviewPage = async () => {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {formatNumber(summary.ordersCount)}
+              {num(summary.ordersCount)}
             </div>
           </CardContent>
         </Card>
@@ -79,7 +87,7 @@ const AdminOverviewPage = async () => {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {formatNumber(summary.usersCount)}
+              {num(summary.usersCount)}
             </div>
           </CardContent>
         </Card>
@@ -91,7 +99,7 @@ const AdminOverviewPage = async () => {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {formatNumber(summary.productsCount)}
+              {num(summary.productsCount)}
             </div>
           </CardContent>
         </Card>

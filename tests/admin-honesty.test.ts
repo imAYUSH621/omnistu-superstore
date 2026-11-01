@@ -49,3 +49,13 @@ describe('admin overview and analytics carry no invented numbers (source check)'
     for (const bad of [/24892/, /1248/, /topKeywords/, /mostViewedProducts/, /conversionRate/]) expect(src).not.toMatch(bad);
   });
 });
+
+describe('admin overview separates unavailable from zero (source check)', () => {
+  const read = (f: string) => require('fs').readFileSync(f, 'utf8');
+  it('summary flags failure and page renders Unavailable', () => {
+    expect(read('lib/actions/order.actions.ts')).toMatch(/unavailable: true/);
+    const src = read('app/admin/overview/page.tsx');
+    expect(src).toMatch(/Unavailable/);
+    expect(src).not.toMatch(/Real-time CJ|Telemetry|Free-Tier Postgres Meter/);
+  });
+});
