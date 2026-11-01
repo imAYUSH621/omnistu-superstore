@@ -37,7 +37,7 @@ export default function DepartmentRibbon() {
             Shop by Category & Department
           </h2>
           <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
-            Explore Amazon & Omnistu verified supplier catalogs with fast fulfillment
+            Sample categories - demo data; no live supplier integration or fulfillment
           </p>
         </div>
         <Link

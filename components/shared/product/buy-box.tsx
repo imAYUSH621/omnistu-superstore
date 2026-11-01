@@ -194,11 +194,11 @@ export default function BuyBox({
         <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-xs space-y-1.5 text-muted-foreground'>
           <div className='flex justify-between py-0.5'>
             <span>Ships from</span>
-            <span className='font-medium text-foreground'>Omnistu Direct Hub</span>
+            <span className='font-medium text-foreground'>Demo - no real fulfillment</span>
           </div>
           <div className='flex justify-between py-0.5'>
             <span>Sold by</span>
-            <span className='font-medium text-foreground'>Omnistu Official</span>
+            <span className='font-medium text-foreground'>Demo catalog (sample data)</span>
           </div>
           <div className='flex justify-between py-0.5'>
             <span>Returns</span>
@@ -237,7 +237,7 @@ export default function BuyBox({
           </button>
           <div className='flex items-center gap-1'>
             <ShieldCheck className='w-3.5 h-3.5 text-emerald-600' />
-            <span>Buyer Protection</span>
+            <span>Buyer protection (demo - no live policy)</span>
           </div>
         </div>
       </CardContent>
