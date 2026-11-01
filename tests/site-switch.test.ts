@@ -32,11 +32,12 @@ describe('Products/Services switch', () => {
 });
 
 describe('assistant launcher does not cover content on phones', () => {
-  it('is icon-only below sm, and the page reserves room under main', () => {
+  it('docks to the right edge and the page keeps a gutter beside and room under main', () => {
     const c = readFileSync('components/shared/ai-concierge.tsx', 'utf8');
     expect(c).toMatch(/hidden sm:inline[^"]*"?>\{open/);
-    expect(c).toMatch(/p-2.5 sm:px-4 sm:py-3/);
+    expect(c).toMatch(/fixed right-0 /);
+    expect(c).toMatch(/translate-x-\[calc\(100%-28px\)\]/); // only a slim strip rests over the page
     expect(c).toContain('aria-label={open ?'); // still labelled for screen readers
-    expect(readFileSync('app/(root)/layout.tsx', 'utf8')).toMatch(/<main className='flex-1 w-full pb-16 sm:pb-0'>/);
+    expect(readFileSync('app/(root)/layout.tsx', 'utf8')).toContain("<main className='flex-1 w-full pb-16 pr-7 sm:pb-20 sm:pr-8'>");
   });
 });

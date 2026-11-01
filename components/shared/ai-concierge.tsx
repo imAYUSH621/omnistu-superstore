@@ -79,14 +79,14 @@ export default function AiConcierge() {
 
   return (
     <div ref={rootRef} data-ai-concierge>
-      {/* Floating Trigger Button */}
+      {/* Docked edge tab: only a slim strip rests over the page (content keeps a gutter), it slides out on hover, focus or tap */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close shopping assistant' : 'Open 24/7 shopping assistant'}
-        className={`ai-concierge-launcher fixed right-3 bottom-3 sm:right-5 sm:bottom-5 z-50 flex items-center gap-2 p-2.5 sm:px-4 sm:py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans ${tucked && !open ? 'max-sm:translate-x-16 max-sm:opacity-0' : ''}`}
+        className={`ai-concierge-launcher group fixed right-0 bottom-3 sm:bottom-5 z-50 flex items-center gap-2 py-2.5 pl-2 pr-2 sm:py-3 sm:pl-2.5 bg-[#1e293b] hover:bg-[#334155] text-white rounded-l-full rounded-r-none shadow-xl border border-r-0 border-[#4f46e5]/40 transition-transform duration-200 select-none font-sans ${open ? 'translate-x-0' : 'translate-x-[calc(100%-28px)] hover:translate-x-0 focus-visible:translate-x-0'} ${tucked && !open ? 'opacity-0 pointer-events-none' : ''}`}
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
-        <span className="hidden sm:inline text-[13px] font-bold">{open ? <T k='closeAssistant' /> : <T k='aiAssistant' />}</span>
+        <span className="hidden sm:inline whitespace-nowrap text-[13px] font-bold">{open ? <T k='closeAssistant' /> : <T k='aiAssistant' />}</span>
       </button>
 
       {/* Slideout Chat Modal */}
