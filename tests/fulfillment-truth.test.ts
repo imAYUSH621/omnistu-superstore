@@ -21,6 +21,13 @@ const baseOrder = {
   totalPrice: '9.99',
 };
 
+// D11: these honesty tests exercise the dispatch path itself, so the
+// fail-closed spend guard must be satisfied with explicit test caps.
+beforeEach(() => {
+  process.env.FULFILLMENT_MAX_ORDER_TOTAL_USD = '100000';
+  process.env.FULFILLMENT_MAX_ITEM_QTY = '100';
+});
+
 describe('validateDispatchAddress (D5)', () => {
   it('accepts a complete address', () => {
     expect(validateDispatchAddress(fullAddress)).toEqual({ ok: true, missing: [] });

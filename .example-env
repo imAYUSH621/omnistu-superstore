@@ -69,3 +69,9 @@ EXCHANGE_RATES_JSON=""         # optional JSON object overriding all USD_TO_* ra
 
 # --- Crypto (PII field encryption) ---
 ENCRYPTION_KEY=""              # 32-byte key for lib/encrypt.ts
+
+# D11 fail-closed spend guard (REQUIRED for any supplier dispatch):
+# dispatch is refused unless BOTH are set to positive numbers. Limits are
+# never invented or defaulted - set them deliberately before going live.
+FULFILLMENT_MAX_ORDER_TOTAL_USD=
+FULFILLMENT_MAX_ITEM_QTY=
