@@ -32,7 +32,7 @@ const Header = () => {
           </Link>
 
           {/* Amazon Deliver to India Location Widget */}
-          <div className='hidden xl:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
+          <div className='hidden 2xl:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
             <MapPin className='w-4 h-4 text-white shrink-0 mt-1' />
             <div className='flex flex-col text-left leading-tight'>
               <T k='deliverTo' className='text-[11px] text-[#cccccc] font-normal leading-none' />
