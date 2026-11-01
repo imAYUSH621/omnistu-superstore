@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { ProductImage } from '@/components/shared/product/product-image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types';
@@ -93,10 +93,9 @@ const ProductCard = ({ product }: { product: Product }) => {
       {/* Product Image */}
       <CardHeader className='p-0 overflow-hidden bg-neutral-50 dark:bg-neutral-900/50 aspect-square flex items-center justify-center relative'>
         <Link href={`/product/${product.slug}`} className='w-full h-full relative'>
-          <Image
+          <ProductImage
             src={product.images[0] || '/images/sample-products/p1-1.jpg'}
             alt={product.name}
-            fill
             sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
             className='object-contain p-4 group-hover:scale-105 transition-transform duration-300'
             priority={false}

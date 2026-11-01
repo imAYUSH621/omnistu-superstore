@@ -2,21 +2,39 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { ImageOff } from 'lucide-react';
+import { isImageUnavailable } from '@/lib/constants/unavailable-images';
 
 const ProductImages = ({ images }: { images: string[] }) => {
   const [current, setCurrent] = useState(0);
+  // Drop sample photos that do not depict this product (tracker D21); if
+  // none remain, show one explicit neutral tile instead of a wrong photo.
+  const usable = images.filter((i) => !isImageUnavailable(i));
+
+  if (usable.length === 0) {
+    return (
+      <div
+        role='img'
+        aria-label='product image unavailable'
+        className='min-h-[300px] aspect-square w-full flex flex-col items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 select-none'
+      >
+        <ImageOff className='w-10 h-10' aria-hidden />
+        <span className='text-[12px] font-medium uppercase tracking-wide'>Image unavailable</span>
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-4'>
       <Image
-        src={images[current]}
+        src={usable[Math.min(current, usable.length - 1)]}
         alt='product image'
         width={1000}
         height={1000}
         className='min-h-[300px] object-cover object-center'
       />
       <div className='flex'>
-        {images.map((image, index) => (
+        {usable.map((image, index) => (
           <div
             key={image}
             onClick={() => setCurrent(index)}

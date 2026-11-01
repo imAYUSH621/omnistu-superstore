@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { ProductImage } from '@/components/shared/product/product-image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -64,10 +64,9 @@ export default function CartDrawer() {
           {latestItem && (
             <div className='flex items-start gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800'>
               <div className='relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-white border'>
-                <Image
+                <ProductImage
                   src={latestItem.image || '/images/sample-products/p1-1.jpg'}
                   alt={latestItem.name}
-                  fill
                   sizes='80px'
                   className='object-contain p-1'
                 />

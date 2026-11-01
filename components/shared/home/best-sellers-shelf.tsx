@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { ProductImage } from '@/components/shared/product/product-image';
 import { Star, Check } from 'lucide-react';
 
 export interface BestSellerProduct {
@@ -179,10 +179,9 @@ export default function BestSellersShelf() {
               {/* Product Image */}
               <Link href={`/product/${p.slug}`} className='block mb-2'>
                 <div className='aspect-square relative w-full overflow-hidden bg-[#fafafa] dark:bg-neutral-800/50 p-2'>
-                  <Image
+                  <ProductImage
                     src={p.image}
                     alt={p.name}
-                    fill
                     sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw'
                     className='object-contain p-2 group-hover:scale-105 transition-transform duration-200'
                   />

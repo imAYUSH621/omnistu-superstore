@@ -31,6 +31,55 @@ describe('homepage honest imagery', () => {
     expect(unknown).toEqual([]);
   });
 
+
+  it('sample photos that do not depict their product render an explicit unavailable tile', () => {
+    const unavail = fs.readFileSync(
+      path.join(process.cwd(), 'lib/constants/unavailable-images.ts'),
+      'utf8'
+    );
+    // the 11 visually verified mismatches (tracker D21) must stay listed
+    const flagged = [
+      'a2-vedic-desi-gir-cow-cultured-ghee',
+      'royal-heritage-indian-festive-sweet-savory-hamper',
+      'smart-titanium-health-fitness-tracking-ring',
+      'heavyweight-french-terry-oversized-streetwear-hoodie',
+      'vintage-washed-boxy-fit-graphic-tee',
+      'artisan-matte-ceramic-pour-over-coffee-brewer',
+      'precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy',
+      'artisan-laser-cut-wooden-mechanical-gear-treasure-box',
+      'italian-18k-gold-plated-925-sterling-silver-miami-cuban-link',
+      'single-estate-darjeeling-first-flush',
+      'japanese-raw-selvedge-denim-overshirt',
+    ];
+    for (const f of flagged) expect(unavail).toContain(f);
+    // every image surface routes through the honest ProductImage wrapper
+    const surfaces = [
+      'components/shared/home/top-category-cards.tsx',
+      'components/shared/home/category-quads.tsx',
+      'components/shared/home/best-sellers-shelf.tsx',
+      'components/shared/product/product-card.tsx',
+      'components/shared/cart/cart-drawer.tsx',
+      'components/shared/product/product-carousel.tsx',
+    ];
+    for (const surf of surfaces) {
+      const src = fs.readFileSync(path.join(process.cwd(), surf), 'utf8');
+      expect(src).toMatch(/ProductImage/);
+    }
+    const gallery = fs.readFileSync(
+      path.join(process.cwd(), 'components/shared/product/product-images.tsx'),
+      'utf8'
+    );
+    expect(gallery).toMatch(/isImageUnavailable/);
+    expect(gallery).toMatch(/Image unavailable/);
+    const wrapper = fs.readFileSync(
+      path.join(process.cwd(), 'components/shared/product/product-image.tsx'),
+      'utf8'
+    );
+    expect(wrapper).toMatch(/Image unavailable/);
+    expect(wrapper).toMatch(/isImageUnavailable/);
+  
+});
+
   it('every referenced image file exists in public/', () => {
     const refs = [...quads.matchAll(/[/]([a-z0-9-]+[.]jpg)/g)].map((m) => m[1]);
     expect(refs.length).toBeGreaterThan(5);
