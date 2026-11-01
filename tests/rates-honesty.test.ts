@@ -23,4 +23,8 @@ describe('exchange rate labelling', () => {
   it('returns page does not promise live carrier status (source check)', () => {
     expect(fs.readFileSync('app/(root)/returns/page.tsx', 'utf8')).not.toMatch(/live real-time carrier/i);
   });
+  it('selector labels each rate source separately (source check)', () => {
+    const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
+    for (const k of ['default_safe', 'env_override', 'live_api']) expect(src).toContain(k);
+  });
 });

@@ -13,7 +13,7 @@ export default function GlobalSelector() {
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ratesFallback, setRatesFallback] = useState(false);
+  const [ratesSource, setRatesSource] = useState<string>('');
 
   useEffect(() => {
     // Read from localStorage on mount
@@ -31,7 +31,7 @@ export default function GlobalSelector() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.rates) {
-          setRatesFallback(data.source === 'default_safe');
+          setRatesSource(String(data.source || ''));
           window.dispatchEvent(
             new CustomEvent('omnistu:rates-updated', { detail: { rates: data.rates } })
           );
@@ -136,9 +136,13 @@ export default function GlobalSelector() {
           </div>
 
           <div className='mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-[10px] text-neutral-400 text-center'>
-            {ratesFallback
+            {ratesSource === 'default_safe'
               ? 'Converted amounts are estimates (fixed fallback rates; live rates unavailable).'
-              : 'Converted amounts are estimates from recent market rates.'}
+              : ratesSource === 'env_override'
+                ? 'Converted amounts are estimates (rates set by the store).'
+                : ratesSource === 'live_api' || ratesSource === 'cache'
+                  ? 'Converted amounts are estimates from recent market rates.'
+                  : 'Converted amounts are estimates.'}
           </div>
         </div>
       )}
