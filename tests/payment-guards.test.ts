@@ -4,8 +4,19 @@ describe('isAmountMismatch (D12)', () => {
   it('accepts an exact capture', () => {
     expect(isAmountMismatch('42.00', 42)).toBe(false);
   });
-  it('accepts a one-cent rounding difference', () => {
-    expect(isAmountMismatch('42.01', 42)).toBe(false);
+  it('rejects a one-cent difference in either direction (exact minor units, no tolerance)', () => {
+    expect(isAmountMismatch('42.01', 42)).toBe(true);
+    expect(isAmountMismatch('41.99', 42)).toBe(true);
+  });
+  it('compares Decimal(12,2) string totals exactly', () => {
+    expect(isAmountMismatch('42.50', '42.5')).toBe(false);
+    expect(isAmountMismatch('42.5', '42.50')).toBe(false);
+    expect(isAmountMismatch('0.30', 0.1 + 0.2)).toBe(false); // float noise in the expected side does not matter
+  });
+  it('treats unparseable or over-precise amounts as mismatches', () => {
+    expect(isAmountMismatch('42.505', '42.50')).toBe(true);
+    expect(isAmountMismatch('1e2', '100.00')).toBe(true);
+    expect(isAmountMismatch('NaN', '42.50')).toBe(true);
   });
   it('rejects an undercharge', () => {
     expect(isAmountMismatch('4.20', 42)).toBe(true);

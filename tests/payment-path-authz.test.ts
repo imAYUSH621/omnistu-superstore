@@ -147,7 +147,7 @@ describe('payment guards', () => {
     expect(isAmountMismatch(stripeMinorToAmount(-4250), 42.5)).toBe(true);
     expect(isAmountMismatch(stripeMinorToAmount(NaN), 42.5)).toBe(true);
     expect(isAmountMismatch(stripeMinorToAmount(0), 42.5)).toBe(true);
-    expect(isAmountMismatch(stripeMinorToAmount(4249), 42.5)).toBe(false); // within 1 cent tolerance, documented
+    expect(isAmountMismatch(stripeMinorToAmount(4249), 42.5)).toBe(true); // exact minor units, no tolerance
     expect(isAmountMismatch(stripeMinorToAmount(4300), 42.5)).toBe(true);
   });
 });
