@@ -1,6 +1,7 @@
 import { executeRefund } from '@/lib/refunds';
 
 const CAPTURE_PR = { id: 'ORDER123', purchase_units: [{ payments: { captures: [{ id: 'CAPTURE456' }] } }] };
+const BASE = { orderTotal: 100, alreadyRefunded: 0, idempotencyKey: 'return-rr-1' };
 
 describe('executeRefund fail-closed behavior (G3)', () => {
   const env = process.env;
@@ -20,14 +21,14 @@ describe('executeRefund fail-closed behavior (G3)', () => {
   });
 
   it('SIMULATED without keys and never calls any provider', async () => {
-    const r = await executeRefund({ paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
     expect(r.status).toBe('SIMULATED');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('SIMULATED when flag set but keys missing', async () => {
     process.env.REFUNDS_LIVE_ENABLED = 'true';
-    const r = await executeRefund({ paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
     expect(r.status).toBe('SIMULATED');
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -39,7 +40,7 @@ describe('executeRefund fail-closed behavior (G3)', () => {
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'tok' }) } as Response)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'REFUND789' }) } as Response);
-    const r = await executeRefund({ paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
     expect(r.status).toBe('EXECUTED');
     expect(r.providerRef).toBe('REFUND789');
     const refundCall = fetchMock.mock.calls[1];
@@ -54,7 +55,7 @@ describe('executeRefund fail-closed behavior (G3)', () => {
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'tok' }) } as Response)
       .mockResolvedValueOnce({ ok: false, status: 422, text: async () => 'UNPROCESSABLE' } as Response);
-    const r = await executeRefund({ paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
     expect(r.status).toBe('FAILED');
     expect(r.note).toContain('422');
   });
@@ -63,26 +64,61 @@ describe('executeRefund fail-closed behavior (G3)', () => {
     process.env.REFUNDS_LIVE_ENABLED = 'true';
     process.env.PAYPAL_CLIENT_ID = 'id';
     process.env.PAYPAL_APP_SECRET = 'secret';
-    const r = await executeRefund({ paymentMethod: 'PayPal', paymentResult: null, amount: 25 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: null, amount: 25 });
     expect(r.status).toBe('FAILED');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('Stripe path: cents conversion and payment_intent passed; SIMULATED without key', async () => {
-    const sim = await executeRefund({ paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
+    const sim = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
     expect(sim.status).toBe('SIMULATED');
     process.env.REFUNDS_LIVE_ENABLED = 'true';
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 're_1' }) } as Response);
-    const r = await executeRefund({ paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'Stripe', paymentResult: { id: 'pi_1' }, amount: 19.99 });
     expect(r.status).toBe('EXECUTED');
     const body = fetchMock.mock.calls[0][1].body as URLSearchParams;
     expect(body.get('payment_intent')).toBe('pi_1');
     expect(body.get('amount')).toBe('1999');
   });
 
+  it('sends the idempotency key to the provider (PayPal-Request-Id)', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.PAYPAL_CLIENT_ID = 'id';
+    process.env.PAYPAL_APP_SECRET = 'secret';
+    fetchMock
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'tok' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'REFUND789' }) } as Response);
+    await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    expect(fetchMock.mock.calls[1][1].headers['PayPal-Request-Id']).toBe('return-rr-1');
+  });
+
+  it('network failure after the call is UNKNOWN - never blind-retry', async () => {
+    process.env.REFUNDS_LIVE_ENABLED = 'true';
+    process.env.PAYPAL_CLIENT_ID = 'id';
+    process.env.PAYPAL_APP_SECRET = 'secret';
+    fetchMock
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'tok' }) } as Response)
+      .mockRejectedValueOnce(new Error('socket timeout'));
+    const r = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    expect(r.status).toBe('UNKNOWN');
+    expect(r.note).toMatch(/reconcile/i);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // auth + one attempt, no retry
+  });
+
+  it('validates amounts: non-positive, over total, and cumulative cap', async () => {
+    const neg = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 0 });
+    expect(neg.status).toBe('FAILED');
+    const over = await executeRefund({ ...BASE, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 101 });
+    expect(over.status).toBe('FAILED');
+    const cum = await executeRefund({ ...BASE, alreadyRefunded: 80, paymentMethod: 'PayPal', paymentResult: CAPTURE_PR, amount: 25 });
+    expect(cum.status).toBe('FAILED');
+    expect(cum.note).toMatch(/cumulative/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('FAILED for unknown payment method, no provider call', async () => {
-    const r = await executeRefund({ paymentMethod: 'CashOnDelivery', paymentResult: {}, amount: 10 });
+    const r = await executeRefund({ ...BASE, paymentMethod: 'CashOnDelivery', paymentResult: {}, amount: 10 });
     expect(r.status).toBe('FAILED');
     expect(fetchMock).not.toHaveBeenCalled();
   });
