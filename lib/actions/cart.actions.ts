@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE } from '@/lib/test-fixture';
 import { CartItem } from '@/types';
 import { convertToPlainObject, formatError, round2, isDatabaseAvailable } from '../utils';
 import { auth } from '@/auth';
@@ -47,6 +48,7 @@ export async function addItemToCart(data: CartItem) {
       where: { id: item.productId },
     });
     if (!product) throw new Error('Product not found');
+    if (isTestFixtureSlug(product.slug)) throw new Error(TEST_FIXTURE_MESSAGE);
 
     if (!cart) {
       // Create new cart object

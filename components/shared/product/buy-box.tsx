@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { isTestFixtureSlug } from '@/lib/test-fixture';
 import T from '@/components/shared/i18n-text';
 import { useRouter } from 'next/navigation';
 import { Product, Cart } from '@/types';
@@ -162,7 +163,12 @@ export default function BuyBox({
             <T k='sampleModeNote' />
           </div>
         )}
-        {product.stock > 0 && !product.id.startsWith('sample-') && (
+        {isTestFixtureSlug(product.slug) && (
+          <div className='rounded-md border border-red-300 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-900' data-testid='test-fixture-note'>
+            TEST FIXTURE - not for sale. Price shown is a supplier cost and stock is a supplier warehouse total, not a retail offer.
+          </div>
+        )}
+        {product.stock > 0 && !product.id.startsWith('sample-') && !isTestFixtureSlug(product.slug) && (
           <div className='space-y-2 pt-1'>
             {/* Add to Cart Button */}
             <Button
