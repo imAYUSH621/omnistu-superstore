@@ -1,0 +1,28 @@
+name: Supplier sync (manual)
+
+# MANUAL ONLY. Scheduled execution is deliberately disabled: nightly
+# automation against live suppliers stays off until the owner settles the
+# supplier accounts, target environment and staging-review flow. To enable
+# later, uncomment the schedule block after that decision.
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '17 2 * * *'  # nightly ~02:17 UTC, staggered off the hour
+
+jobs:
+  staging-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx prisma generate
+      - name: Supplier staging report (no-ops without keys)
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+          BLANKA_API_KEY: ${{ secrets.BLANKA_API_KEY }}
+          BRANDSGATEWAY_API_KEY: ${{ secrets.BRANDSGATEWAY_API_KEY }}
+          PRINTIFY_API_TOKEN: ${{ secrets.PRINTIFY_API_TOKEN }}
+        run: npx ts-node scripts/sync_supplier_report.ts
