@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import T from '@/components/shared/i18n-text';
 import { auth } from '@/auth';
 import { signOutUser } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
@@ -22,10 +23,10 @@ const UserButton = async () => {
         className='flex flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
       >
         <span className='text-[11px] text-[#cccccc] font-normal leading-none'>
-          Hello, sign in
+          <T k='helloSignIn' />
         </span>
         <span className='text-[13px] font-bold text-white leading-tight flex items-center gap-0.5 mt-0.5'>
-          Account & Lists
+          <T k='accountLists' />
           <ChevronDown className='w-3 h-3 text-[#a7acb2]' />
         </span>
       </Link>

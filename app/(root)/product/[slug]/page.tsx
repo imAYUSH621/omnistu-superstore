@@ -28,7 +28,7 @@ const ProductDetailsPage = async (props: {
       {/* Breadcrumb Navigation */}
       <nav className='flex items-center gap-1.5 text-xs text-muted-foreground'>
         <Link href='/' className='hover:text-foreground transition'>
-          Home
+          <T k='homeLabel' />
         </Link>
         <ChevronRight className='w-3.5 h-3.5' />
         <Link
@@ -72,7 +72,7 @@ const ProductDetailsPage = async (props: {
 
             {/* Brand Link */}
             <p className='text-xs text-muted-foreground'>
-              Brand:{' '}
+              <T k='brandLabel' />{' '}
               <span className='text-[#4f46e5] dark:text-[#56b6c2] font-semibold hover:underline cursor-pointer'>
                 {product.brand}
               </span>
