@@ -1,0 +1,119 @@
+/**
+ * Return/RMA flow (G3) - simulation-only guarantees.
+ */
+
+const mockOrderFindUnique = jest.fn();
+const mockReturnFindFirst = jest.fn();
+const mockReturnFindUnique = jest.fn();
+const mockReturnCreate = jest.fn();
+const mockReturnUpdate = jest.fn();
+const mockReturnFindMany = jest.fn();
+const mockAuth = jest.fn();
+
+jest.mock('@/db/prisma', () => ({
+  prisma: {
+    order: { findUnique: (...a: unknown[]) => mockOrderFindUnique(...a) },
+    returnRequest: {
+      findFirst: (...a: unknown[]) => mockReturnFindFirst(...a),
+      findUnique: (...a: unknown[]) => mockReturnFindUnique(...a),
+      create: (...a: unknown[]) => mockReturnCreate(...a),
+      update: (...a: unknown[]) => mockReturnUpdate(...a),
+      findMany: (...a: unknown[]) => mockReturnFindMany(...a),
+    },
+  },
+}));
+jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
+
+import { requestReturn, reviewReturn } from '@/lib/actions/return.actions';
+
+const paidOrder = {
+  id: 'order-1',
+  userId: 'user-1',
+  isPaid: true,
+  totalPrice: '42.00',
+  dispatchSupplier: null,
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockAuth.mockResolvedValue({ user: { id: 'user-1', role: 'user' } });
+});
+
+describe('requestReturn', () => {
+  test('requires sign-in', async () => {
+    mockAuth.mockResolvedValue(null);
+    const res = await requestReturn('order-1', 'Item arrived damaged and unusable');
+    expect(res.success).toBe(false);
+  });
+
+  test('rejects unpaid orders and foreign orders', async () => {
+    mockOrderFindUnique.mockResolvedValueOnce({ ...paidOrder, isPaid: false });
+    expect((await requestReturn('order-1', 'Item arrived damaged and unusable')).success).toBe(false);
+    mockOrderFindUnique.mockResolvedValueOnce({ ...paidOrder, userId: 'someone-else' });
+    expect((await requestReturn('order-1', 'Item arrived damaged and unusable')).success).toBe(false);
+  });
+
+  test('rejects duplicate open requests', async () => {
+    mockOrderFindUnique.mockResolvedValueOnce(paidOrder);
+    mockReturnFindFirst.mockResolvedValueOnce({ id: 'rr-1', status: 'REQUESTED' });
+    const res = await requestReturn('order-1', 'Item arrived damaged and unusable');
+    expect(res.success).toBe(false);
+    expect(res.returnId).toBe('rr-1');
+  });
+
+  test('creates a REQUESTED record for an owned paid order', async () => {
+    mockOrderFindUnique.mockResolvedValueOnce(paidOrder);
+    mockReturnFindFirst.mockResolvedValueOnce(null);
+    mockReturnCreate.mockResolvedValueOnce({ id: 'rr-2' });
+    const res = await requestReturn('order-1', 'Item arrived damaged and unusable');
+    expect(res.success).toBe(true);
+    expect(mockReturnCreate).toHaveBeenCalledWith({
+      data: { orderId: 'order-1', userId: 'user-1', reason: 'Item arrived damaged and unusable' },
+    });
+  });
+});
+
+describe('reviewReturn (admin)', () => {
+  const requested = { id: 'rr-1', status: 'REQUESTED', order: paidOrder };
+
+  test('non-admin cannot review', async () => {
+    const res = await reviewReturn('rr-1', true);
+    expect(res.success).toBe(false);
+  });
+
+  test('admin approval records SIMULATED refund - never a provider call', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
+    mockReturnFindUnique.mockResolvedValueOnce(requested);
+    const res = await reviewReturn('rr-1', true);
+    expect(res.success).toBe(true);
+    const update = mockReturnUpdate.mock.calls[0][0];
+    expect(update.data.status).toBe('APPROVED');
+    expect(update.data.refundStatus).toBe('SIMULATED');
+    expect(update.data.resolutionNote).toMatch(/no provider call/i);
+    expect(update.data.supplierReturnStatus).toBe('NOT_REQUIRED');
+  });
+
+  test('supplier-dispatched orders get PENDING_MANUAL supplier-return status', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
+    mockReturnFindUnique.mockResolvedValueOnce({
+      ...requested,
+      order: { ...paidOrder, dispatchSupplier: 'CJ' },
+    });
+    const res = await reviewReturn('rr-1', true);
+    expect(res.success).toBe(true);
+    const update = mockReturnUpdate.mock.calls[0][0];
+    expect(update.data.supplierReturnStatus).toBe('PENDING_MANUAL');
+    expect(update.data.resolutionNote).toMatch(/manually/);
+  });
+
+  test('rejection records note; already-resolved requests cannot be re-reviewed', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
+    mockReturnFindUnique.mockResolvedValueOnce(requested);
+    const res = await reviewReturn('rr-1', false, 'Outside policy window');
+    expect(res.success).toBe(true);
+    expect(mockReturnUpdate.mock.calls[0][0].data.status).toBe('REJECTED');
+
+    mockReturnFindUnique.mockResolvedValueOnce({ ...requested, status: 'APPROVED' });
+    expect((await reviewReturn('rr-1', true)).success).toBe(false);
+  });
+});

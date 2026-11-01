@@ -1,6 +1,7 @@
 'use client';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import ReturnRequestButton from '@/components/shared/order/return-request-button';
 import {
   Table,
   TableBody,
@@ -156,9 +157,14 @@ const OrderDetailsTable = ({
               <h2 className='text-xl pb-4 font-bold'>Payment Method</h2>
               <p className='mb-2 font-medium'>{paymentMethod}</p>
               {isPaid ? (
-                <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
-                  Paid at {formatDateTime(paidAt!).dateTime}
-                </Badge>
+                <>
+                  <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
+                    Paid at {formatDateTime(paidAt!).dateTime}
+                  </Badge>
+                  <div className='mt-4'>
+                    <ReturnRequestButton orderId={id} />
+                  </div>
+                </>
               ) : (
                 <Badge variant='destructive'>Not paid</Badge>
               )}
