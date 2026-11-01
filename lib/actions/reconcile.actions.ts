@@ -11,11 +11,11 @@ export async function getPaidOrderReconciliation(
   const session = await auth();
   if (session?.user?.role !== 'admin') return { success: false, message: 'User is not authorized' };
   try {
-    let after: { paidAt: string | null; id: string } | null = null;
+    let after: { id: string } | null = null;
     if (afterToken) {
       try {
         const o = JSON.parse(Buffer.from(afterToken, 'base64url').toString('utf8'));
-        if (typeof o?.id === 'string' && (o.paidAt === null || typeof o.paidAt === 'string')) after = { paidAt: o.paidAt, id: o.id };
+        if (typeof o?.id === 'string' && o.id.length > 0 && o.id.length < 100) after = { id: o.id };
       } catch {
         return { success: false, message: 'That page link is not valid.' };
       }
