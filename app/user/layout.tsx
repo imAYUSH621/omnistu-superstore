@@ -12,8 +12,8 @@ export default function UserLayout({
   return (
     <>
       <div className='flex flex-col'>
-        <div className='border-b container mx-auto'>
-          <div className='flex items-center h-16 px-4'>
+        <div className='border-b border-neutral-800 bg-[#0f172a]'>
+          <div className='flex items-center h-16 px-4 container mx-auto'>
             <Link href='/' className='w-22'>
               <Image
                 src='/images/logo.svg'
