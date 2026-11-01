@@ -1,9 +1,22 @@
 import type { MetadataRoute } from 'next';
+import { catalogSource } from '@/lib/utils';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://omnistu-superstore.vercel.app';
 
+// /bestsellers/* only renders in sample mode (it redirects otherwise), and
+// /blog and /bestsellers/fashion have no page, so none are listed unconditionally.
 export default function sitemap(): MetadataRoute.Sitemap {
+  const sampleOnly: MetadataRoute.Sitemap =
+    catalogSource() === 'sample'
+      ? ['toys-and-games', 'electronics'].map((c) => ({
+          url: `${BASE_URL}/bestsellers/${c}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.8,
+        }))
+      : [];
   return [
+    ...sampleOnly,
     {
       url: BASE_URL,
       lastModified: new Date(),
@@ -15,30 +28,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.9,
-    },
-    {
-      url: `${BASE_URL}/bestsellers/toys-and-games`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/bestsellers/electronics`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/bestsellers/fashion`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.6,
     },
     {
       url: `${BASE_URL}/privacy`,
