@@ -67,3 +67,14 @@ describe('admin overview has no demo hub (source check)', () => {
     expect(fs.readFileSync('app/admin/overview/page.tsx', 'utf8')).not.toMatch(/AdminInteractiveHub/);
   });
 });
+
+describe('admin overview revenue counts paid orders only (source check)', () => {
+  it('sum and monthly chart filter on isPaid; labels do not overstate', () => {
+    const fs = require('fs');
+    const a = fs.readFileSync('lib/actions/order.actions.ts', 'utf8');
+    expect(a).toMatch(/where: \{ isPaid: true \}/);
+    expect(a).toMatch(/WHERE "isPaid" = true/);
+    const pg = fs.readFileSync('app/admin/overview/page.tsx', 'utf8');
+    expect(pg).not.toMatch(/Total Gross Revenue|Live Catalog SKUs|Revenue Velocity/);
+  });
+});
