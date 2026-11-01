@@ -18,7 +18,8 @@ export default function RootLayout({
       <div className='w-full bg-amber-100 dark:bg-amber-950/60 border-b border-amber-300 dark:border-amber-800 text-center text-[11px] sm:text-xs text-amber-900 dark:text-amber-200 py-1 px-3'>
         <T k='demoBanner' />
       </div>
-      <main className='flex-1 w-full'>{children}</main>
+      {/* pb-16 on mobile keeps the last content clear of the fixed assistant launcher */}
+      <main className='flex-1 w-full pb-16 sm:pb-0'>{children}</main>
       <Footer />
       <CartDrawer />
       <AiConcierge />
