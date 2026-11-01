@@ -161,7 +161,9 @@ export default function Footer() {
       </div>
 
       {/* 4. Sub-Footer Legal & Compliance Notice */}
-      <div className='bg-[#131a22] py-8 text-[11px] text-[#999] text-center'>
+      {/* Bottom padding clears the fixed AI Assistant launcher so legal links
+      stay reachable and unobstructed at the page bottom. */}
+      <div className='bg-[#131a22] pt-8 pb-20 sm:pb-16 text-[11px] text-[#999] text-center'>
         <div className='max-w-[1000px] mx-auto px-6 space-y-2'>
           <div className='flex flex-wrap items-center justify-center gap-4 text-[#ddd]'>
             <Link href='/terms' className='hover:underline'>
