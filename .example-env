@@ -75,3 +75,9 @@ ENCRYPTION_KEY=""              # 32-byte key for lib/encrypt.ts
 # never invented or defaulted - set them deliberately before going live.
 FULFILLMENT_MAX_ORDER_TOTAL_USD=
 FULFILLMENT_MAX_ITEM_QTY=
+
+# Refunds (G3): approving a return runs lib/refunds.ts. Without this flag
+# (or without live provider keys) every refund is recorded SIMULATED and no
+# provider is called. Set to true only with live keys AND an approved
+# refund policy - real money moves when this is on.
+# REFUNDS_LIVE_ENABLED=false
