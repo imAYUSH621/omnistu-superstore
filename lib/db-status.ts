@@ -7,7 +7,8 @@ type Query = <T = unknown>(sql: TemplateStringsArray, ...v: unknown[]) => Promis
  * not_configured: DATABASE_URL was never set (the app would silently fall
  *   back to localhost, which cannot exist on a serverless host).
  * down: cannot connect / query.
- * schema_incomplete: reachable, but core tables are missing or a Prisma
+ * schema_incomplete: reachable (the failed-migration check is skipped when the
+ *   least-privilege app role cannot read _prisma_migrations), but core tables are missing or a Prisma
  *   migration is recorded as failed (e.g. migrations were never applied).
  */
 export async function classifyDatabase(
@@ -20,17 +21,24 @@ export async function classifyDatabase(
   } catch {
     return 'down';
   }
+  let r: { order_t: string | null; user_t: string | null } | undefined;
   try {
-    const rows = await query<{ order_t: string | null; user_t: string | null; failed: bigint | number | null }[]>`
-      SELECT to_regclass('"Order"')::text AS order_t,
-             to_regclass('"User"')::text AS user_t,
-             CASE WHEN to_regclass('_prisma_migrations') IS NULL THEN NULL
-                  ELSE (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL) END AS failed`;
-    const r = rows[0];
-    if (!r || !r.order_t || !r.user_t) return 'schema_incomplete';
-    if (r.failed !== null && Number(r.failed) > 0) return 'schema_incomplete';
-    return 'ok';
+    const rows = await query<{ order_t: string | null; user_t: string | null }[]>`
+      SELECT to_regclass('"Order"')::text AS order_t, to_regclass('"User"')::text AS user_t`;
+    r = rows[0];
   } catch {
     return 'schema_incomplete';
   }
+  if (!r || !r.order_t || !r.user_t) return 'schema_incomplete';
+  // Separate statement: a least-privilege app role cannot read _prisma_migrations
+  // (permission is checked even in an untaken CASE branch), so the failed-migration
+  // check is skipped when it is unreadable.
+  try {
+    const m = await query<{ failed: bigint | number }[]>`
+      SELECT count(*) AS failed FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL`;
+    if (Number(m[0]?.failed ?? 0) > 0) return 'schema_incomplete';
+  } catch {
+    /* unreadable: failed-migration status unknown */
+  }
+  return 'ok';
 }
