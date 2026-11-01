@@ -109,7 +109,9 @@ export const DICTIONARY = {
     cart: 'Cart',
     deliverTo: 'Deliver to',
     searchPlaceholder: 'Search Omnistu Superstore...',
-    freeShippingGuarantee: 'Free Tracked Shipping on Orders Over $35',
+    trendingFinds: 'Trending Finds',
+    customerService: 'Customer Service',
+    trackOrder: 'Track Order',
   },
   HI: {
     todaysDeals: 'आज के डील्स',
@@ -121,7 +123,9 @@ export const DICTIONARY = {
     cart: 'कार्ट',
     deliverTo: 'डिलीवरी स्थान',
     searchPlaceholder: 'ओम्निस्टू सुपरस्टोर में खोजें...',
-    freeShippingGuarantee: '₹3,000 से अधिक के ऑर्डर पर मुफ्त ट्रैक की गई डिलीवरी',
+    trendingFinds: 'ट्रेंडिंग खोजें',
+    customerService: 'ग्राहक सेवा',
+    trackOrder: 'ऑर्डर ट्रैक करें',
   },
   ES: {
     todaysDeals: 'Ofertas del Día',
@@ -133,7 +137,9 @@ export const DICTIONARY = {
     cart: 'Carrito',
     deliverTo: 'Entregar en',
     searchPlaceholder: 'Buscar en Omnistu Superstore...',
-    freeShippingGuarantee: 'Envío rastreado gratuito en pedidos superiores a $35',
+    trendingFinds: 'Tendencias',
+    customerService: 'Atención al Cliente',
+    trackOrder: 'Rastrear Pedido',
   },
   FR: {
     todaysDeals: 'Offres du Jour',
@@ -145,7 +151,9 @@ export const DICTIONARY = {
     cart: 'Panier',
     deliverTo: 'Livrer à',
     searchPlaceholder: 'Rechercher sur Omnistu Superstore...',
-    freeShippingGuarantee: 'Livraison suivie gratuite à partir de 35 $ d’achat',
+    trendingFinds: 'Tendances',
+    customerService: 'Service Client',
+    trackOrder: 'Suivre la Commande',
   },
   DE: {
     todaysDeals: 'Heutige Angebote',
@@ -157,7 +165,9 @@ export const DICTIONARY = {
     cart: 'Warenkorb',
     deliverTo: 'Liefern nach',
     searchPlaceholder: 'Omnistu Superstore durchsuchen...',
-    freeShippingGuarantee: 'Kostenloser Sendungsverfolgter Versand ab 35 $',
+    trendingFinds: 'Angesagte Funde',
+    customerService: 'Kundenservice',
+    trackOrder: 'Bestellung verfolgen',
   },
   JA: {
     todaysDeals: '本日のセール',
@@ -169,8 +179,16 @@ export const DICTIONARY = {
     cart: 'カート',
     deliverTo: 'お届け先',
     searchPlaceholder: 'Omnistu スーパーストアで検索...',
-    freeShippingGuarantee: '35ドル以上のご注文で追跡付き送料無料',
+    trendingFinds: '話題のアイテム',
+    customerService: 'カスタマーサービス',
+    trackOrder: '注文を追跡',
   },
 } as const;
 
 export type SupportedLang = keyof typeof DICTIONARY;
+export type DictionaryKey = keyof (typeof DICTIONARY)['EN'];
+
+export function translate(lang: string, key: DictionaryKey): string {
+  const dict = (DICTIONARY as Record<string, Record<string, string>>)[lang];
+  return dict?.[key] ?? DICTIONARY.EN[key];
+}

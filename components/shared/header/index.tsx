@@ -3,6 +3,7 @@ import Menu from './menu';
 import CategoryDrawer from './category-drawer';
 import Search from './search';
 import { MapPin, Sparkles } from 'lucide-react';
+import T from '@/components/shared/i18n-text';
 
 const Header = () => {
   return (
@@ -33,9 +34,7 @@ const Header = () => {
           <div className='hidden lg:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
             <MapPin className='w-4 h-4 text-white shrink-0 mt-1' />
             <div className='flex flex-col text-left leading-tight'>
-              <span className='text-[11px] text-[#cccccc] font-normal leading-none'>
-                Deliver to
-              </span>
+              <T k='deliverTo' className='text-[11px] text-[#cccccc] font-normal leading-none' />
               <span className='text-[13px] font-bold text-white leading-tight mt-0.5'>
                 India
               </span>
@@ -72,43 +71,43 @@ const Header = () => {
               href='/search?sort=deals'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Today&apos;s Deals
+              <T k='todaysDeals' />
             </Link>
             <Link
               href='/search?category=Electronics'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Tech &amp; Gadgets
+              <T k='techGadgets' />
             </Link>
             <Link
               href='/search?category=Jewelry'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Jewelry &amp; Watches
+              <T k='jewelryWatches' />
             </Link>
             <Link
               href='/search?sort=trending'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Trending Finds
+              <T k='trendingFinds' />
             </Link>
             <Link
               href='/search?category=Merch'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Custom Apparel
+              <T k='customApparel' />
+            </Link>
+            <Link
+              href='/contact'
+              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
+            >
+              <T k='customerService' />
             </Link>
             <Link
               href='/orders'
               className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
             >
-              Customer Service
-            </Link>
-            <Link
-              href='/orders'
-              className='px-2 py-1.5 border border-transparent hover:border-white rounded-xs whitespace-nowrap transition-colors'
-            >
-              Track Order
+              <T k='trackOrder' />
             </Link>
           </div>
 
