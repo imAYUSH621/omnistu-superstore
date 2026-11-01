@@ -84,8 +84,14 @@ export async function createUpdateReview(
   }
 }
 
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+// Sample-data fallback products carry ids like `sample-<slug>`. They are
+// not database rows, so review queries for them must not touch the uuid
+// columns - return empty instead of crashing with P2023.
 // Get all reviews for a product
 export async function getReviews({ productId }: { productId: string }) {
+  if (!UUID_RE.test(productId)) return { data: [] };
   const data = await prisma.review.findMany({
     where: {
       productId: productId,
@@ -114,6 +120,7 @@ export async function getReviewByProductId({
   const session = await auth();
 
   if (!session) throw new Error('User is not authenticated');
+  if (!UUID_RE.test(productId)) return null;
 
   return await prisma.review.findFirst({
     where: {
