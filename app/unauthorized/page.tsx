@@ -36,9 +36,6 @@ export default function UnauthorizedPage() {
         </Link>
       </div>
 
-      <div className='text-xs text-neutral-500 pt-4 border-t max-w-sm'>
-        Pre-configured admin login: <code>admin@example.com</code> / <code>123456</code> or <code>admin@omnistu.com</code> / <code>2026</code>
-      </div>
     </div>
   );
 }
