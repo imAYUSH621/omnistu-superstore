@@ -17,8 +17,6 @@ const ProductCard = ({ product }: { product: Product }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const priceNum = Number(product.price);
-  const msrpNum = Number((priceNum * 1.45).toFixed(2));
-  const savingsPercent = Math.round(((msrpNum - priceNum) / msrpNum) * 100);
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,13 +61,9 @@ const ProductCard = ({ product }: { product: Product }) => {
     <Card className='group relative flex flex-col justify-between overflow-hidden border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card hover:shadow-lg transition-all duration-200'>
       {/* Badges Overlay */}
       <div className='absolute top-2.5 left-2.5 z-10 flex flex-col gap-1'>
-        {product.isFeatured ? (
-          <span className='bg-amber-400 text-neutral-900 font-bold text-[11px] px-2 py-0.5 rounded shadow-sm'>
-            #1 Best Seller
-          </span>
-        ) : (
-          <span className='bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-sm'>
-            Limited Deal
+        {product.isFeatured && (
+          <span className='bg-indigo-600 text-white font-bold text-[11px] px-2 py-0.5 rounded shadow-sm'>
+            Featured
           </span>
         )}
       </div>
@@ -124,21 +118,22 @@ const ProductCard = ({ product }: { product: Product }) => {
             </h2>
           </Link>
 
-          {/* Star Rating with Numeric Count */}
-          <div className='flex items-center gap-1.5 pt-0.5'>
-            <Rating value={Number(product.rating)} />
-            <span className='text-xs text-muted-foreground'>
-              ({product.numReviews.toLocaleString()})
-            </span>
-          </div>
+          {/* Star Rating - only for products with real review data */}
+          {Number(product.numReviews) > 0 ? (
+            <div className='flex items-center gap-1.5 pt-0.5'>
+              <Rating value={Number(product.rating)} />
+              <span className='text-xs text-muted-foreground'>
+                ({product.numReviews.toLocaleString()})
+              </span>
+            </div>
+          ) : (
+            <p className='text-xs text-muted-foreground pt-0.5'>No reviews yet</p>
+          )}
         </div>
 
         {/* Pricing Block & Prime Delivery */}
         <div className='space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800/80'>
           <div className='flex items-baseline gap-2'>
-            <span className='text-xs font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/60 px-1.5 py-0.5 rounded'>
-              -{savingsPercent}%
-            </span>
             <span className='text-xl font-extrabold text-foreground tracking-tight'>
               <sup className='text-xs align-super font-normal'>$</sup>
               {Math.floor(priceNum)}
@@ -146,16 +141,8 @@ const ProductCard = ({ product }: { product: Product }) => {
                 {(priceNum % 1).toFixed(2).slice(2)}
               </sup>
             </span>
-            <span className='text-xs text-muted-foreground line-through'>
-              ${msrpNum.toFixed(2)}
-            </span>
           </div>
 
-          {/* Prime Delivery Promise */}
-          <div className='flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium'>
-            <Truck className='w-3.5 h-3.5 text-emerald-600' />
-            <span>FREE Delivery Tomorrow</span>
-          </div>
 
           {/* Quick Add To Cart Button */}
           {product.stock > 0 ? (

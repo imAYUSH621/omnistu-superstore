@@ -48,10 +48,15 @@ describe('Amazon-Style Faceted Search Engine Invariants', () => {
       page: 1,
       limit: 50,
     });
-    expect(res.data.length).toBeGreaterThan(0);
+    // Invariant: every returned product must actually match the rating facet.
     res.data.forEach((p) => {
       expect(Number(p.rating)).toBeGreaterThanOrEqual(4.8);
     });
+    // The catalog has honest zero ratings until real customer reviews exist,
+    // so the facet must return an empty result instead of unfiltered products.
+    if (sampleData.products.every((p) => Number(p.rating) === 0)) {
+      expect(res.data.length).toBe(0);
+    }
   });
 
   test('Sorting: Lowest Price (asc) sorts correctly', async () => {

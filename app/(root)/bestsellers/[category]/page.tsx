@@ -5,8 +5,8 @@ import { Star, Check } from 'lucide-react';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Amazon Best Sellers: Top 100 Leaderboard | Omnistu Superstore',
-  description: 'Our most popular products based on sales. Updated hourly.',
+  title: 'Featured Products | Omnistu Superstore',
+  description: 'A curated selection of featured products from our catalog.',
 };
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -18,102 +18,75 @@ const CATEGORY_NAMES: Record<string, string> = {
 
 const LEADERBOARD_ITEMS = [
   {
-    rank: 1,
     name: 'Silicone Magnetic Balls Fidget Toys for Adults & Teens (4-Pack)',
     slug: 'silicone-magnetic-balls-fidget-toys',
     category: 'Toys & Games',
     catSlug: 'toys-and-games',
     price: '$12.99',
-    rating: 4.8,
-    reviews: 2240,
     image: '/images/products/silicone-magnetic-balls-1.svg',
   },
   {
-    rank: 2,
     name: 'Omnistu Cyber Heavyweight Graphic Hoodie (300DPI Printify)',
     slug: 'omnistu-cyber-heavyweight-graphic-hoodie',
     category: 'Apparel & Merch',
     catSlug: 'apparel',
     price: '$58.95',
-    rating: 4.9,
-    reviews: 432,
-    image: '/images/sample-products/p1-1.jpg',
+    image: '/images/products/placeholder.svg',
   },
   {
-    rank: 3,
     name: 'Active Noise-Cancelling Wireless Earbuds Pro (45dB ANC)',
     slug: 'active-noise-cancelling-wireless-earbuds-pro',
     category: 'Electronics & Gadgets',
     catSlug: 'electronics',
     price: '$49.99',
-    rating: 4.7,
-    reviews: 3120,
     image: '/images/products/anc-earbuds-1.svg',
   },
   {
-    rank: 4,
     name: 'Magnetic Pen Fidget Decompression Toy with Stylus Tips',
     slug: 'magnetic-pen-fidget-decompression-toy',
     category: 'Toys & Games',
     catSlug: 'toys-and-games',
     price: '$18.95',
-    rating: 4.7,
-    reviews: 1480,
     image: '/images/products/magnetic-pen-1.svg',
   },
   {
-    rank: 5,
     name: 'Smart Gravity Induction Constant Temp Coffee Mug Warmer',
     slug: 'smart-gravity-induction-coffee-mug-warmer',
     category: 'Home & Kitchen',
     catSlug: 'home',
     price: '$24.99',
-    rating: 4.8,
-    reviews: 1670,
     image: '/images/products/smart-mug-warmer-1.svg',
   },
   {
-    rank: 6,
     name: 'MagSafe Fast Wireless Magnetic Power Bank 10000mAh',
     slug: 'magsafe-fast-wireless-magnetic-power-bank',
     category: 'Electronics & Gadgets',
     catSlug: 'electronics',
     price: '$39.95',
-    rating: 4.6,
-    reviews: 890,
     image: '/images/products/magsafe-powerbank-1.svg',
   },
   {
-    rank: 7,
     name: 'Omnistu Vintage Wash Streetwear Oversized Tee (280GSM)',
     slug: 'omnistu-vintage-wash-streetwear-oversized-tee',
     category: 'Apparel & Merch',
     catSlug: 'apparel',
     price: '$34.95',
-    rating: 4.8,
-    reviews: 610,
-    image: '/images/sample-products/p2-1.jpg',
+    image: '/images/products/placeholder.svg',
   },
   {
-    rank: 8,
     name: 'Anti-Gravity Levitating Magnetic Floating Desk Globe',
     slug: 'anti-gravity-levitating-magnetic-floating-desk-globe',
     category: 'Toys & Games',
     catSlug: 'toys-and-games',
     price: '$42.50',
-    rating: 4.6,
-    reviews: 740,
     image: '/images/products/levitating-globe-1.svg',
   },
   {
-    rank: 9,
     name: 'Handcrafted Ultrasonic Aroma Diffuser with Flame Light Effect',
     slug: 'handcrafted-ultrasonic-aroma-diffuser-flame-light',
     category: 'Home & Kitchen',
     catSlug: 'home',
     price: '$29.99',
-    rating: 4.7,
-    reviews: 1840,
     image: '/images/products/flame-diffuser-1.svg',
   },
 ];
@@ -134,10 +107,10 @@ export default async function BestSellersCategoryPage(props: {
       {/* Breadcrumb Header */}
       <div className='border-b border-[#e7e7e7] dark:border-neutral-800 pb-4 mb-6'>
         <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
-          Amazon Best Sellers
+          Featured products
         </h1>
         <p className='text-[13px] text-[#565959] dark:text-neutral-400 mt-1'>
-          Our most popular products based on sales. Updated hourly.
+          A curated selection from our catalog.
         </p>
       </div>
 
@@ -203,7 +176,7 @@ export default async function BestSellersCategoryPage(props: {
         <div className='flex-1 w-full bg-white dark:bg-[#1a202c] p-6 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
           <div className='flex items-center justify-between border-b border-[#e7e7e7] dark:border-neutral-800 pb-3 mb-6'>
             <h2 className='text-lg font-bold text-[#0f172a] dark:text-white'>
-              Best Sellers in {currentCatName}
+              Featured in {currentCatName}
             </h2>
             <span className='text-xs text-[#565959] dark:text-neutral-400'>
               Showing 1 - {items.length} of {items.length}
@@ -216,12 +189,6 @@ export default async function BestSellersCategoryPage(props: {
                 key={item.slug}
                 className='border border-[#e7e7e7] dark:border-neutral-800/80 p-4 rounded-sm flex flex-col justify-between hover:shadow-md transition relative bg-white dark:bg-[#1a202c]'
               >
-                {/* Large Rank Banner */}
-                <div className='absolute top-3 left-3 z-10'>
-                  <span className='bg-[#e67a00] text-white text-xs font-black px-2 py-0.5 rounded-[2px] shadow-sm'>
-                    #{idx + 1}
-                  </span>
-                </div>
 
                 {/* Product Image */}
                 <Link href={`/product/${item.slug}`} className='block my-4'>
@@ -246,32 +213,9 @@ export default async function BestSellersCategoryPage(props: {
                       {item.name}
                     </Link>
 
-                    {/* Star Rating */}
-                    <div className='flex items-center gap-1.5 mb-2'>
-                      <div className='flex text-[#de7921]'>
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className='w-3.5 h-3.5 fill-current stroke-current'
-                          />
-                        ))}
-                      </div>
-                      <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
-                        {item.reviews.toLocaleString()}
-                      </span>
-                    </div>
-
                     {/* Price */}
                     <div className='text-lg font-bold text-[#0f172a] dark:text-white mb-1'>
                       {item.price}
-                    </div>
-
-                    {/* Prime badge */}
-                    <div className='flex items-center gap-1 text-xs text-[#565959] dark:text-neutral-400'>
-                      <span className='text-[#00a8e1] font-extrabold flex items-center'>
-                        <Check className='w-3 h-3 stroke-[3]' /> prime
-                      </span>
-                      <span>Tomorrow</span>
                     </div>
                   </div>
 

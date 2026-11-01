@@ -57,10 +57,6 @@ export default function OrderTrackingStepper({
             Order ID: <span className='text-emerald-600 font-mono'>{formattedId}</span>
           </h3>
         </div>
-        <div className='flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300'>
-          <Truck className='w-4 h-4 text-emerald-600' />
-          <span>Guaranteed Next-Day Express Delivery</span>
-        </div>
       </div>
 
       {/* 4-Step Stepper Line */}

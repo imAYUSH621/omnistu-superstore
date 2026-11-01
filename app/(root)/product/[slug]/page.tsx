@@ -52,13 +52,15 @@ const ProductDetailsPage = async (props: {
 
           {/* Details & Specs Column (4 Cols) */}
           <div className='lg:col-span-4 space-y-5 bg-white dark:bg-[#1a202c] p-6 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
-            {/* Best Seller Ribbon & Category */}
+            {/* Featured badge & Category */}
             <div className='flex items-center gap-2'>
-              <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-[#4f46e5] text-neutral-900 px-2 py-0.5 rounded-sm shadow-xs'>
-                <Award className='w-3.5 h-3.5' /> #1 Best Seller
-              </span>
+              {product.isFeatured && (
+                <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-sm shadow-xs'>
+                  <Award className='w-3.5 h-3.5' /> Featured
+                </span>
+              )}
               <span className='text-xs text-muted-foreground'>
-                in {product.category}
+                {product.category}
               </span>
             </div>
 

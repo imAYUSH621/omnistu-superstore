@@ -5,9 +5,7 @@ interface DealItem {
   id: string;
   title: string;
   image: string;
-  discount: string;
   price: string;
-  listPrice: string;
   url: string;
 }
 
@@ -16,54 +14,42 @@ const DEALS: DealItem[] = [
     id: 'deal-1',
     title: 'Silicone Magnetic Balls Fidget Toys (4-Pack)',
     image: '/images/products/silicone-magnetic-balls-1.svg',
-    discount: '43% off',
     price: '$12.99',
-    listPrice: '$24.99',
     url: '/product/silicone-magnetic-balls-fidget-toys',
   },
   {
     id: 'deal-2',
     title: 'Magnetic Pen Fidget Decompression Toy with Stylus',
     image: '/images/products/magnetic-pen-1.svg',
-    discount: '38% off',
     price: '$18.95',
-    listPrice: '$29.99',
     url: '/product/magnetic-pen-fidget-decompression-toy',
   },
   {
     id: 'deal-3',
     title: 'Active Noise-Cancelling Earbuds Pro',
     image: '/images/products/anc-earbuds-1.svg',
-    discount: '50% off',
     price: '$49.99',
-    listPrice: '$99.99',
     url: '/product/active-noise-cancelling-wireless-earbuds-pro',
   },
   {
     id: 'deal-4',
     title: 'Smart Gravity Coffee Mug Warmer (3 Temps)',
     image: '/images/products/smart-mug-warmer-1.svg',
-    discount: '35% off',
     price: '$24.99',
-    listPrice: '$39.99',
     url: '/product/smart-gravity-induction-coffee-mug-warmer',
   },
   {
     id: 'deal-5',
     title: 'Omnistu Cyber Heavyweight Graphic Hoodie (300DPI)',
-    image: '/images/sample-products/p1-1.jpg',
-    discount: '25% off',
+    image: '/images/products/placeholder.svg',
     price: '$58.95',
-    listPrice: '$78.00',
     url: '/product/omnistu-cyber-heavyweight-graphic-hoodie',
   },
   {
     id: 'deal-6',
     title: 'Handcrafted Ultrasonic Aroma Diffuser Flame Light',
     image: '/images/products/flame-diffuser-1.svg',
-    discount: '40% off',
     price: '$29.99',
-    listPrice: '$49.99',
     url: '/product/handcrafted-ultrasonic-aroma-diffuser-flame-light',
   },
 ];
@@ -79,7 +65,7 @@ export default function DealsShelf() {
               Today&apos;s Deals
             </h2>
             <span className='hidden sm:inline-block text-[13px] text-[#565959] dark:text-neutral-400 font-normal'>
-              Prime Early Access & Limited Time Deals
+              Selected offers from our catalog
             </span>
           </div>
           <Link
@@ -109,23 +95,11 @@ export default function DealsShelf() {
               </div>
 
               <div>
-                {/* Deal Badge & Status */}
-                <div className='flex items-center gap-1.5 mb-1'>
-                  <span className='bg-[#b91c1c] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-[2px] leading-none'>
-                    {deal.discount}
-                  </span>
-                  <span className='text-[11px] font-bold text-[#b91c1c]'>
-                    Deal
-                  </span>
-                </div>
 
                 {/* Price Display */}
                 <div className='flex items-baseline gap-1.5 mb-1'>
                   <span className='text-[16px] font-bold text-[#0f172a] dark:text-white'>
                     {deal.price}
-                  </span>
-                  <span className='text-[12px] text-[#565959] dark:text-neutral-400 line-through'>
-                    List: {deal.listPrice}
                   </span>
                 </div>
 

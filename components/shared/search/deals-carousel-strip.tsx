@@ -42,8 +42,6 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
       <div className='flex items-stretch gap-3 overflow-x-auto pb-2 scrollbar-thin no-scrollbar'>
         {deals.map((deal) => {
           const priceNum = Number(deal.price);
-          const msrpNum = Number((priceNum * 1.35).toFixed(2));
-          const savingsPercent = Math.round(((msrpNum - priceNum) / msrpNum) * 100);
 
           return (
             <Link
@@ -62,20 +60,9 @@ export default function DealsCarouselStrip({ deals }: DealsCarouselStripProps) {
               </div>
 
               <div className='space-y-1.5'>
-                <div className='flex items-center gap-1.5'>
-                  <span className='bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded'>
-                    -{savingsPercent}%
-                  </span>
-                  <span className='text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-tight'>
-                    Top Deal
-                  </span>
-                </div>
 
                 <div className='flex items-baseline gap-1'>
                   <span className='text-sm font-bold text-foreground'>${priceNum.toFixed(2)}</span>
-                  <span className='text-[11px] text-muted-foreground line-through'>
-                    ${msrpNum.toFixed(2)}
-                  </span>
                 </div>
 
                 <p className='text-xs text-foreground font-medium line-clamp-2 leading-snug group-hover:text-primary transition-colors'>
