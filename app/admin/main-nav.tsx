@@ -25,6 +25,10 @@ const links = [
     title: 'Returns',
     href: '/admin/returns',
   },
+  {
+    title: 'Service enquiries',
+    href: '/admin/enquiries',
+  },
 ];
 
 const MainNav = ({

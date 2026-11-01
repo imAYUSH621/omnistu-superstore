@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import EnquiryForm from '@/components/services/enquiry-form';
 import { SERVICES, getService } from '@/lib/services-catalog';
 
 export const dynamicParams = false;
@@ -31,12 +32,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           ))}
         </ul>
       </div>
-      <Link
-        href='/contact'
-        className='inline-block rounded-md bg-[#4f46e5] px-4 py-2 text-sm font-semibold text-white'
-      >
-        Enquire about this
-      </Link>
+      <EnquiryForm serviceSlug={s.slug} />
     </div>
   );
 }
