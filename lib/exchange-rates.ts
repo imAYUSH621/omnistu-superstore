@@ -39,7 +39,8 @@ export async function fetchLiveExchangeRates(): Promise<LiveRates> {
 
   // 1. Return in-memory cache if still valid
   if (cachedRates && now - cachedRates.timestamp < CACHE_TTL_MS) {
-    return { ...cachedRates, source: 'cache' };
+    // A cached fallback must keep reporting itself as a fallback.
+    return { ...cachedRates, source: cachedRates.source === 'default_safe' ? 'default_safe' : 'cache' };
   }
 
   // 2. Check environment override JSON if supplied by orchestrator or deployment

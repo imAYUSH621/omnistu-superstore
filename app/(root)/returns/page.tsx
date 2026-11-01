@@ -68,10 +68,10 @@ export default function ReturnsPage() {
               <Truck className='w-4 h-4 text-amber-500' /> 3. Need to Track an Existing Shipment?
             </h2>
             <p className='mb-3'>
-              If you are waiting for an item in transit, you can check its live real-time carrier status anytime using your order ID:
+              If you are waiting for an item in transit, you can see your order status on your order page after you sign in. A carrier and tracking number appear once the order has been dispatched:
             </p>
             <Link href='/track' className='inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded shadow transition'>
-              Track Your Package ✈
+              Go to order status
             </Link>
           </section>
         </div>

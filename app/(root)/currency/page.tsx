@@ -6,7 +6,7 @@ import { APP_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: `Multi-Currency & Zero FX Policy | ${APP_NAME}`,
-  description: 'Shop in your local currency with transparent mid-market foreign exchange rates and zero hidden conversion surcharges.',
+  description: 'Shop in your local currency. Converted amounts are estimates from market exchange rates.',
 };
 
 export default function CurrencyPolicyPage() {
@@ -38,7 +38,7 @@ export default function CurrencyPolicyPage() {
               sourced internationally. At {APP_NAME}, we believe in full financial transparency:
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Real-Time Mid-Market Rates:</strong> All converted prices across USD ($), EUR (€), GBP (£), INR (₹), CAD (C$), and AUD (A$) use verified real-time institutional exchange rates.</li>
+              <li><strong>Estimated Rates:</strong> Converted prices across USD ($), EUR (€), GBP (£), INR (₹), CAD (C$), and AUD (A$) use market exchange rates fetched about hourly. If they cannot be fetched, fixed fallback rates are used. Converted amounts are estimates.</li>
               <li><strong>Zero DCC Surcharges:</strong> We never apply predatory Dynamic Currency Conversion (DCC) fees. What you see in your cart is exactly what your bank or card statement will reflect.</li>
               <li><strong>Clear Price Breakdown:</strong> Product base price, calculated estimated local sales tax/VAT, and international shipping options are explicitly itemized prior to final payment authorization.</li>
             </ul>
