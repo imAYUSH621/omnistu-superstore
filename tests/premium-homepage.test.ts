@@ -5,6 +5,7 @@
  */
 import { readFileSync } from 'fs';
 import { DICTIONARY } from '@/lib/i18n';
+import { UNAVAILABLE_IMAGES } from '@/lib/constants/unavailable-images';
 
 const page = readFileSync('app/(root)/page.tsx', 'utf8');
 const ribbon = readFileSync('components/shared/home/department-ribbon.tsx', 'utf8');
@@ -12,6 +13,8 @@ const hero = readFileSync('components/shared/home/personal-hero.tsx', 'utf8');
 const trust = readFileSync('components/shared/home/trust-ribbon.tsx', 'utf8');
 const latest = readFileSync('components/shared/home/latest-arrivals.tsx', 'utf8');
 const cards = readFileSync('components/shared/home/top-category-cards.tsx', 'utf8');
+const header = readFileSync('components/shared/header/index.tsx', 'utf8');
+const drawer = readFileSync('components/shared/header/category-drawer.tsx', 'utf8');
 
 describe('premium category-first homepage', () => {
   it('composes personalization, departments, categories, arrivals, trust, quads', () => {
@@ -44,10 +47,27 @@ describe('premium category-first homepage', () => {
     expect(trust).not.toContain('PayPal');
   });
 
-  it('department ribbon header wraps and chip labels clamp instead of truncating', () => {
+  it('department ribbon wraps and chip labels render in full (no clamp/truncate)', () => {
     expect(ribbon).toContain('flex-wrap');
-    expect(ribbon).toContain('line-clamp-2');
-    expect(ribbon).not.toContain('dark:text-white truncate');
+    expect(ribbon).not.toContain('line-clamp');
+    expect(ribbon).not.toContain('truncate');
+  });
+
+  it('top category cards never use a verified-mismatched image', () => {
+    for (const img of UNAVAILABLE_IMAGES) {
+      expect(cards).not.toContain(img);
+    }
+  });
+
+  it('signed-out hero offers real department quick links, not an empty card', () => {
+    expect(hero).toContain('getAllCategories');
+    expect(hero).toContain('/search?category=');
+  });
+
+  it('header renders the All drawer label exactly once', () => {
+    expect(header).not.toContain(">All</span>");
+    expect(drawer).toContain('>All</span>');
+    expect(drawer).not.toContain('hidden sm:inline');
   });
 
   it('user-visible metadata is de-Amazoned', () => {

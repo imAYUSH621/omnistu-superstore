@@ -50,7 +50,7 @@ export default async function DepartmentRibbon() {
                 <IconComponent className='w-5 h-5 text-[#4f46e5] dark:text-[#56b6c2]' />
               </div>
               <div className='flex flex-col min-w-0'>
-                <span className='text-[12px] leading-tight font-semibold text-[#0f172a] dark:text-white line-clamp-2'>
+                <span className='text-[12px] leading-tight font-semibold text-[#0f172a] dark:text-white'>
                   {c.category}
                 </span>
                 <span className='text-[11px] text-[#565959] dark:text-neutral-400'>
