@@ -1,6 +1,7 @@
 'use server';
 
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
+import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE } from '@/lib/test-fixture';
 import { convertToPlainObject, formatError } from '../utils';
 import { auth } from '@/auth';
 import { getMyCart } from './cart.actions';
@@ -37,6 +38,10 @@ export async function createOrder(idempotencyKey?: string) {
         message: 'Your cart is empty',
         redirectTo: '/cart',
       };
+    }
+
+    if ((cart.items as { slug?: string }[]).some((i) => isTestFixtureSlug(i.slug))) {
+      return { success: false, message: TEST_FIXTURE_MESSAGE, redirectTo: '/cart' };
     }
 
     if (!user.address) {

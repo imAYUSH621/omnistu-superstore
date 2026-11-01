@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { isTestFixtureSlug } from '@/lib/test-fixture';
 import Link from 'next/link';
 import { ProductImage } from '@/components/shared/product/product-image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -108,6 +109,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         <div className='space-y-1.5'>
           <div className='flex items-center justify-between text-[11px] text-muted-foreground uppercase tracking-wider font-semibold'>
             <span>{product.brand ?? ''}</span>
+            {isTestFixtureSlug(product.slug) && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>TEST FIXTURE</span>}
             <span className='truncate max-w-[120px]'>{product.category}</span>
           </div>
 
