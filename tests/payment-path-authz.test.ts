@@ -94,12 +94,34 @@ describe('approvePayPalOrder', () => {
     mockFindFirst.mockResolvedValue(order);
     mockCapture.mockResolvedValue({
       id: 'PP-1', status: 'COMPLETED', payer: { email_address: 'a@b.co' },
-      purchase_units: [{ payments: { captures: [{ amount: { value: '10.00', currency_code: 'EUR' } }] } }],
+      purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '10.00', currency_code: 'EUR' } }] } }],
     });
     const r = await approvePayPalOrder('o1', { orderID: 'PP-1' });
     expect(r.success).toBe(false);
     expect(r.message).toMatch(/currency/i);
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { paymentNote: expect.stringContaining('CURRENCY_MISMATCH') } }));
+    expect(mockUpdateToPaidInner).not.toHaveBeenCalled();
+  });
+  const cap = (captures: unknown[], id = 'PP-1') => ({ id, status: 'COMPLETED', payer: { email_address: 'a@b.co' }, purchase_units: [{ payments: { captures } }] });
+  it.each([
+    ['no capture object', [] as unknown[]],
+    ['capture not COMPLETED', [{ status: 'PENDING', amount: { value: '10.00', currency_code: 'USD' } }]],
+    ['capture without amount', [{ status: 'COMPLETED', amount: { currency_code: 'USD' } }]],
+    ['capture with empty amount', [{ status: 'COMPLETED', amount: { value: '', currency_code: 'USD' } }]],
+  ])('fails closed and does not mark paid: %s', async (_n, captures) => {
+    mockAuth.mockResolvedValue(ADMIN);
+    mockFindFirst.mockResolvedValue(order);
+    mockCapture.mockResolvedValue(cap(captures));
+    const r = await approvePayPalOrder('o1', { orderID: 'PP-1' });
+    expect(r.success).toBe(false);
+    expect(mockUpdateToPaidInner).not.toHaveBeenCalled();
+  });
+  it('rejects a capture whose PayPal order id differs from the one bound at create time', async () => {
+    mockAuth.mockResolvedValue(ADMIN);
+    mockFindFirst.mockResolvedValue(order);
+    mockCapture.mockResolvedValue(cap([{ status: 'COMPLETED', amount: { value: '10.00', currency_code: 'USD' } }], 'PP-OTHER'));
+    const r = await approvePayPalOrder('o1', { orderID: 'PP-1' });
+    expect(r.success).toBe(false);
     expect(mockUpdateToPaidInner).not.toHaveBeenCalled();
   });
 });
@@ -119,5 +141,13 @@ describe('payment guards', () => {
     expect(isExpectedCurrency('USD')).toBe(true);
     expect(isExpectedCurrency('EUR')).toBe(false);
     expect(isExpectedCurrency(undefined)).toBe(false);
+  });
+  it('Stripe negative scenarios: negative, NaN and fractional minor units never match a real total', () => {
+    expect(stripeMinorToAmount(-4250)).toBe('-42.50');
+    expect(isAmountMismatch(stripeMinorToAmount(-4250), 42.5)).toBe(true);
+    expect(isAmountMismatch(stripeMinorToAmount(NaN), 42.5)).toBe(true);
+    expect(isAmountMismatch(stripeMinorToAmount(0), 42.5)).toBe(true);
+    expect(isAmountMismatch(stripeMinorToAmount(4249), 42.5)).toBe(false); // within 1 cent tolerance, documented
+    expect(isAmountMismatch(stripeMinorToAmount(4300), 42.5)).toBe(true);
   });
 });
