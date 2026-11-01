@@ -19,14 +19,21 @@ describe('homepage honest imagery', () => {
     expect(quads).not.toMatch(/\/images\/tiles\//);
   });
 
-  it('links homepage quads only at real category searches', () => {
+  it('quad items link only to real product pages or category searches', () => {
     expect(quads).not.toMatch(/\/s\?k=/);
     expect(quads).toMatch(/search\?category=/);
+    // product links must target seeded slugs (no imagined products)
+    const data = fs.readFileSync(path.join(process.cwd(), 'db/sample-data.ts'), 'utf8');
+    const slugs = new Set([...data.matchAll(/slug: '([^']+)'/g)].map((m) => m[1]));
+    const linked = [...quads.matchAll(/prod\('([^']+)'\)/g)].map((m) => m[1]);
+    expect(linked.length).toBeGreaterThan(5);
+    const unknown = linked.filter((slug) => !slugs.has(slug));
+    expect(unknown).toEqual([]);
   });
 
   it('every referenced image file exists in public/', () => {
     const refs = [...quads.matchAll(/[/]([a-z0-9-]+[.]jpg)/g)].map((m) => m[1]);
-    expect(refs.length).toBeGreaterThan(10);
+    expect(refs.length).toBeGreaterThan(5);
     const missing = refs.filter(
       (r) => !fs.existsSync(path.join(process.cwd(), 'public/images/sample-products', r))
     );

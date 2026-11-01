@@ -8,39 +8,27 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const TOP_CARDS = [
   {
     id: 'card-1',
-    title: 'Shop kitchen must-haves',
-    image: '/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg',
-    url: '/s?k=kitchen%20must-haves',
+    title: 'Royal Gourmet & Indian Food',
+    image: '/images/sample-products/artisan-indian-spice-box-kit-7-whole-organic-spices-green-cardamom-sta-1.jpg',
+    url: '/search?category=Gourmet%20%26%20Indian%20Food',
   },
   {
     id: 'card-2',
-    title: 'Home & living essentials',
-    image: '/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg',
-    url: '/search?category=Home%20%26%20Kitchen',
+    title: 'Tech & Gadgets',
+    image: '/images/sample-products/pro-anc-active-noise-cancelling-wireless-earbuds-spatial-audio-bluetoo-1.jpg',
+    url: '/search?category=Tech%20%26%20Gadgets',
   },
   {
     id: 'card-3',
-    title: 'Start looking sharp',
-    image: '/images/sample-products/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg',
-    url: '/search?category=Apparel%20%26%20Merch',
+    title: 'Custom Apparel',
+    image: '/images/sample-products/japanese-raw-selvedge-denim-overshirt-jacket-14-5oz-kuroki-mill-denim--1.jpg',
+    url: '/search?category=Custom%20Apparel',
   },
   {
     id: 'card-4',
-    title: 'Royal Gourmet & Indian Food',
-    image: '/images/sample-products/artisan-indian-spice-box-kit-7-whole-organic-spices-green-cardamom-sta-1.jpg',
-    url: '/s?k=indian%20food',
-  },
-  {
-    id: 'card-5',
-    title: 'Level up your Tech & Gadgets',
-    image: '/images/sample-products/pro-anc-active-noise-cancelling-wireless-earbuds-spatial-audio-bluetoo-1.jpg',
-    url: '/search?category=Electronics%20%26%20Gadgets',
-  },
-  {
-    id: 'card-6',
-    title: 'Luxury Watches & Jewelry',
-    image: '/images/sample-products/italian-18k-gold-plated-925-sterling-silver-miami-cuban-link-chain-nec-1.jpg',
-    url: '/s?k=jewelry',
+    title: 'Jewelry & Watches',
+    image: '/images/sample-products/2-0-carat-d-color-vvs1-moissanite-solitaire-engagement-ring-in-18k-whi-1.jpg',
+    url: '/search?category=Jewelry%20%26%20Watches',
   },
 ];
 
