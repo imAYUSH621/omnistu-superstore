@@ -344,3 +344,45 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     }))
   );
 }
+
+
+
+/**
+ * How many products each price bucket / rating option would return, within the
+ * current search text and category (the other facet selections are ignored, so
+ * the numbers answer "what would I get if I picked this option"). Used so the
+ * UI never offers an option that returns nothing.
+ */
+import { FACET_PRICE_BUCKETS, FACET_RATINGS, type FacetCounts } from '@/lib/constants/facets';
+
+export async function getFacetCounts({ query, category }: { query?: string; category?: string }): Promise<FacetCounts> {
+  const out: FacetCounts = { price: {}, rating: {} };
+  if (isDatabaseAvailable()) {
+    try {
+      const base: Prisma.ProductWhereInput = {
+        ...(query && query !== 'all' ? { name: { contains: query, mode: 'insensitive' } as Prisma.StringFilter } : {}),
+        ...(category && category !== 'all' ? { category } : {}),
+      };
+      for (const b of FACET_PRICE_BUCKETS) {
+        const [lo, hi] = b.split('-').map(Number);
+        out.price[b] = await prisma.product.count({ where: { ...base, price: { gte: lo, lte: hi } } });
+      }
+      for (const r of FACET_RATINGS) {
+        out.rating[String(r)] = await prisma.product.count({ where: { ...base, rating: { gte: r } } });
+      }
+      return out;
+    } catch (err: unknown) {
+      console.warn('Prisma getFacetCounts failed:', err instanceof Error ? err.message : String(err));
+      return { price: {}, rating: {} };
+    }
+  }
+  let list = [...sampleData.products];
+  if (query && query !== 'all') list = list.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+  if (category && category !== 'all') list = list.filter((p) => p.category === category);
+  for (const b of FACET_PRICE_BUCKETS) {
+    const [lo, hi] = b.split('-').map(Number);
+    out.price[b] = list.filter((p) => Number(p.price) >= lo && Number(p.price) <= hi).length;
+  }
+  for (const r of FACET_RATINGS) out.rating[String(r)] = list.filter((p) => Number(p.rating) >= r).length;
+  return out;
+}
