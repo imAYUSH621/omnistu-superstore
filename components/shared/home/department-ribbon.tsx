@@ -24,7 +24,7 @@ export default async function DepartmentRibbon() {
 
   return (
     <div className='bg-white dark:bg-[#1a202c] shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 p-5'>
-      <div className='flex items-center justify-between mb-4 border-b border-[#e7e7e7] dark:border-neutral-800 pb-2'>
+      <div className='flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4 border-b border-[#e7e7e7] dark:border-neutral-800 pb-2'>
         <h2 className='text-[18px] md:text-[20px] font-bold text-[#0f172a] dark:text-white tracking-tight'>
           <T k='shopByDepartment' />
         </h2>
@@ -50,7 +50,7 @@ export default async function DepartmentRibbon() {
                 <IconComponent className='w-5 h-5 text-[#4f46e5] dark:text-[#56b6c2]' />
               </div>
               <div className='flex flex-col min-w-0'>
-                <span className='text-[13px] font-semibold text-[#0f172a] dark:text-white truncate'>
+                <span className='text-[12px] leading-tight font-semibold text-[#0f172a] dark:text-white line-clamp-2'>
                   {c.category}
                 </span>
                 <span className='text-[11px] text-[#565959] dark:text-neutral-400'>

@@ -44,6 +44,12 @@ describe('premium category-first homepage', () => {
     expect(trust).not.toContain('PayPal');
   });
 
+  it('department ribbon header wraps and chip labels clamp instead of truncating', () => {
+    expect(ribbon).toContain('flex-wrap');
+    expect(ribbon).toContain('line-clamp-2');
+    expect(ribbon).not.toContain('dark:text-white truncate');
+  });
+
   it('user-visible metadata is de-Amazoned', () => {
     expect(page).not.toContain('Amazon');
     expect(cards).not.toContain('Amazon_Ember');
