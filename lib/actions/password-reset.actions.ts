@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { hitLimit, limitKey, LIMITS } from '@/lib/auth-limits';
 import { devOutboxEnabled } from '@/lib/dev-outbox';
 import { consumePasswordReset, requestPasswordReset } from '@/lib/password-reset';
 
@@ -12,7 +13,8 @@ export async function requestReset(_prev: unknown, formData: FormData) {
   if (!devOutboxEnabled()) return { success: false, message: UNAVAILABLE };
   const parsed = emailSchema.safeParse(formData.get('email'));
   if (parsed.success) {
-    try {
+    const lim = await hitLimit('reset-req', parsed.data, LIMITS.resetRequest.max, LIMITS.resetRequest.windowSec);
+    if (lim.allowed) try {
       await requestPasswordReset(parsed.data, process.env.NEXTAUTH_URL || 'http://localhost:3000');
     } catch (e) {
       console.warn('password reset request failed', e instanceof Error ? e.name : 'error');
@@ -40,6 +42,8 @@ export async function resetPassword(_prev: unknown, formData: FormData) {
     confirmPassword: formData.get('confirmPassword'),
   });
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
+  const lim = await hitLimit('reset-use', limitKey(parsed.data.token), LIMITS.resetUse.max, LIMITS.resetUse.windowSec);
+  if (!lim.allowed) return { success: false, message: 'Too many attempts. Try again later.' };
   const r = await consumePasswordReset(parsed.data.token, parsed.data.password);
   if (r.ok) return { success: true, message: 'Password updated. You can sign in now.' };
   return {

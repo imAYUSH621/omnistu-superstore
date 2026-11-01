@@ -12,6 +12,7 @@ import { isPaymentMethodAvailable } from '@/lib/payment-capabilities';
 import { safeCallbackPath } from '@/lib/safe-callback';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { hashPassword } from '../password';
+import { hitLimit, LIMITS } from '../auth-limits';
 import { prisma } from '@/db/prisma';
 import { formatError } from '../utils';
 import { ShippingAddress } from '@/types';
@@ -66,6 +67,8 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
       confirmPassword: formData.get('confirmPassword'),
     });
 
+    const lim = await hitLimit('signup', user.email, LIMITS.signup.max, LIMITS.signup.windowSec);
+    if (!lim.allowed) return { success: false, message: 'Too many attempts. Try again later.' };
     const plainPassword = user.password;
 
     user.password = await hashPassword(user.password);
