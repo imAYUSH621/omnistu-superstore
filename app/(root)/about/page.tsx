@@ -121,8 +121,8 @@ export default function AboutPage() {
                   desc: 'Automatically strips wholesale supplier branding and generates clean, neutral product listings at scale.',
                 },
                 {
-                  title: 'Live Currency Engine',
-                  desc: 'Real-time exchange rate API delivers accurate local pricing in USD, INR, GBP, EUR, AED, CAD, and AUD.',
+                  title: 'Currency Conversion',
+                  desc: 'Prices can be shown in USD, INR, GBP, EUR, AED, CAD, and AUD as estimates from market exchange rates.',
                 },
                 {
                   title: 'Edge Fulfillment Router',
