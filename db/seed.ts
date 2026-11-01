@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import sampleData from './sample-data';
-import { hash } from '@/lib/encrypt';
+import { hashPassword } from '@/lib/password';
 import { seedAllowed } from '@/lib/catalog-import';
 
 // Seed users no longer carry the hardcoded weak password '123456'.
@@ -43,7 +43,7 @@ async function main() {
     const plain = seedPassword(isAdmin ? 'SEED_ADMIN_PASSWORD' : 'SEED_USER_PASSWORD', u.email);
     users.push({
       ...u,
-      password: await hash(plain),
+      password: await hashPassword(plain),
     });
   }
   await prisma.user.createMany({ data: users });

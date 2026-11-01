@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/db/prisma';
-import { hash } from '@/lib/encrypt';
+import { hashPassword } from '@/lib/password';
 import { devOutboxEnabled, writeDevOutbox } from '@/lib/dev-outbox';
 
 // Reset tokens live in the existing VerificationToken table, keyed by a
@@ -58,7 +58,7 @@ export async function consumePasswordReset(rawToken: string, newPassword: string
   const email = row.identifier.slice(RESET_PREFIX.length);
   const updated = await prisma.user.updateMany({
     where: { email },
-    data: { password: await hash(newPassword) },
+    data: { password: await hashPassword(newPassword) },
   });
   return updated.count === 1 ? { ok: true } : { ok: false, reason: 'invalid' };
 }

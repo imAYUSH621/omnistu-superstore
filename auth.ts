@@ -3,7 +3,7 @@ import { authConfig } from './auth.config';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import { cookies } from 'next/headers';
-import { compare } from './lib/encrypt';
+import { hashPassword, verifyPassword } from './lib/password';
 import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
@@ -72,9 +72,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (user && user.password) {
-            const isMatch = await compare(passwordInput, user.password);
+            const check = await verifyPassword(passwordInput, user.password);
 
-            if (isMatch) {
+            if (check.ok) {
+              if (check.needsUpgrade) {
+                // Old keyed-digest hash: rewrite with the slow salted hash now
+                // that we hold the correct plain password.
+                try {
+                  await prisma.user.update({
+                    where: { id: user.id },
+                    data: { password: await hashPassword(passwordInput) },
+                  });
+                } catch (e) {
+                  console.warn('password hash upgrade failed', e instanceof Error ? e.name : 'error');
+                }
+              }
               return {
                 id: user.id,
                 name: user.name,
