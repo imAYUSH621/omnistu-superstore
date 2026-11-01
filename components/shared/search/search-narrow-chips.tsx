@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Sparkles, Zap, Flame, DollarSign, Star, Tag } from 'lucide-react';
+import { Sparkles, DollarSign, Star, Tag } from 'lucide-react';
 
-export default function SearchNarrowChips() {
+export default function SearchNarrowChips({ categories = [] }: { categories?: { category: string; _count?: number | { _all?: number } }[] }) {
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'all';
   const currentPrice = searchParams.get('price') || 'all';
@@ -49,30 +49,14 @@ export default function SearchNarrowChips() {
       active: currentRating === '4',
       href: makeChipUrl({ rating: currentRating === '4' ? 'all' : '4' }),
     },
-    {
-      label: 'Toys & Games',
-      icon: Flame,
-      active: currentCategory === 'Toys & Games',
-      href: makeChipUrl({ category: currentCategory === 'Toys & Games' ? 'all' : 'Toys & Games' }),
-    },
-    {
-      label: 'Electronics & Gadgets',
-      icon: Zap,
-      active: currentCategory === 'Electronics & Gadgets',
-      href: makeChipUrl({ category: currentCategory === 'Electronics & Gadgets' ? 'all' : 'Electronics & Gadgets' }),
-    },
-    {
-      label: 'Apparel & Merch',
-      icon: Sparkles,
-      active: currentCategory === 'Apparel & Merch',
-      href: makeChipUrl({ category: currentCategory === 'Apparel & Merch' ? 'all' : 'Apparel & Merch' }),
-    },
-    {
-      label: 'Home & Kitchen',
+    // Category chips come from the categories that actually exist in the
+    // current catalog, so a chip can never point at an empty category name.
+    ...categories.slice(0, 6).map((c) => ({
+      label: c.category,
       icon: Tag,
-      active: currentCategory === 'Home & Kitchen',
-      href: makeChipUrl({ category: currentCategory === 'Home & Kitchen' ? 'all' : 'Home & Kitchen' }),
-    },
+      active: currentCategory === c.category,
+      href: makeChipUrl({ category: currentCategory === c.category ? 'all' : c.category }),
+    })),
   ];
 
   return (
