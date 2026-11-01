@@ -1,5 +1,6 @@
 'use server';
 import { prisma } from '@/db/prisma';
+import { withVariantSummary } from '@/lib/product-variants';
 import { convertToPlainObject, formatError, isDatabaseAvailable } from '../utils';
 import { LATEST_PRODUCTS_LIMIT, PAGE_SIZE } from '../constants';
 import { revalidatePath } from 'next/cache';
@@ -162,6 +163,7 @@ export async function getAllProducts({
             : { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: { variants: { select: { referenceCost: true } } },
       });
 
       // Count the FILTERED set (it used to count every product, so filtered
@@ -169,7 +171,7 @@ export async function getAllProducts({
       const dataCount = await prisma.product.count({ where });
 
       return {
-        data: convertToPlainObject(data),
+        data: convertToPlainObject(data.map(withVariantSummary)),
         totalPages: Math.ceil(dataCount / limit),
       };
     } catch (err: unknown) {
