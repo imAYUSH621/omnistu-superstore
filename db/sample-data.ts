@@ -244,7 +244,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -262,7 +265,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -280,7 +286,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -298,7 +307,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -316,7 +328,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -334,7 +349,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -352,7 +370,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -370,43 +391,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
-      isFeatured: false,
-      banner: null,
-    },
-    {
-      name: '3-in-1 Foldable Magnetic Fast Wireless Charging Station for iPhone 16/15/14, Apple Watch & AirPods (15W Qi2 Ce',
-      slug: '3-in-1-foldable-magnetic-fast-wireless-charging-station-for-iphone-16-',
-      category: 'Tech & Gadgets',
-      description: '3-in-1 Foldable Magnetic Fast Wireless Charging Station for iPhone 16/15/14, Apple Watch & AirPods (15W Qi2 Certified) Sourced through the Omnistu verified supplier catalog.',
-      images: [
-        '/images/sample-products/3-in-1-foldable-magnetic-fast-wireless-charging-station-for-iphone-16--1.jpg'
-      ],
-      price: 29.99,
-      brand: 'Omnistu Verified',
-      // No reviews collected on this storefront yet - start at zero rather
-      // than importing unverifiable source-site ratings.
-      rating: 0,
-      numReviews: 0,
-      stock: 25,
-      isFeatured: false,
-      banner: null,
-    },
-    {
-      name: '4K Ultra-HD Foldable GPS Camera Drone (Brushless Motor, Obstacle Avoidance, 35 Min Flight Time, Follow-Me Mode',
-      slug: '4k-ultra-hd-foldable-gps-camera-drone-brushless-motor-obstacle-avoidan',
-      category: 'Tech & Gadgets',
-      description: '4K Ultra-HD Foldable GPS Camera Drone (Brushless Motor, Obstacle Avoidance, 35 Min Flight Time, Follow-Me Mode) Sourced through the Omnistu verified supplier catalog.',
-      images: [
-        '/images/sample-products/4k-ultra-hd-foldable-gps-camera-drone-brushless-motor-obstacle-avoidan-1.jpg'
-      ],
-      price: 89.99,
-      brand: 'Omnistu Verified',
-      // No reviews collected on this storefront yet - start at zero rather
-      // than importing unverifiable source-site ratings.
-      rating: 0,
-      numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -424,7 +412,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -442,7 +433,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -460,7 +454,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -478,25 +475,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
-      isFeatured: false,
-      banner: null,
-    },
-    {
-      name: 'Artisan 4mm Round Cut Moissanite Tennis Bracelet (4-Prong Setting, Double Safety Clasp, Platinum Finished Silv',
-      slug: 'artisan-4mm-round-cut-moissanite-tennis-bracelet-4-prong-setting-doubl',
-      category: 'Jewelry & Watches',
-      description: 'Artisan 4mm Round Cut Moissanite Tennis Bracelet (4-Prong Setting, Double Safety Clasp, Platinum Finished Silver, GRA Certified) Sourced through the Omnistu verified supplier catalog.',
-      images: [
-        '/images/sample-products/artisan-4mm-round-cut-moissanite-tennis-bracelet-4-prong-setting-doubl-1.jpg'
-      ],
-      price: 69.99,
-      brand: 'Omnistu Verified',
-      // No reviews collected on this storefront yet - start at zero rather
-      // than importing unverifiable source-site ratings.
-      rating: 0,
-      numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -514,7 +496,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -532,7 +517,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -550,7 +538,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -568,7 +559,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -586,7 +580,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -604,7 +601,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },
@@ -622,7 +622,10 @@ const sampleData = {
       // than importing unverifiable source-site ratings.
       rating: 0,
       numReviews: 0,
-      stock: 25,
+      // STAGED: live availability, variant, price and shipping are not
+      // yet verified with a supplier, so these stay non-purchasable
+      // (stock 0) until validated against a real supplier connection.
+      stock: 0,
       isFeatured: false,
       banner: null,
     },

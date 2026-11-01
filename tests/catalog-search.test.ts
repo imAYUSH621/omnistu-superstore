@@ -12,7 +12,7 @@ describe('unified catalog loader (D15)', () => {
     const a = getUnifiedCatalog();
     const b = getUnifiedCatalog();
     expect(a).toBe(b); // same array reference = no re-read/re-parse per call
-    expect(a.length).toBeGreaterThan(0);
+    expect(a.length).toBe(22); // 4 dead-image items removed
   });
   it('searches by title/category', () => {
     expect(searchUnifiedCatalog('saffron', '').length).toBeGreaterThan(0);
@@ -55,12 +55,14 @@ describe('sample data catalog import (G1)', () => {
     const sd = require('@/db/sample-data').default;
     expect(sd.products.length).toBeGreaterThanOrEqual(30);
     const imported = sd.products.filter((p: any) => p.brand === 'Omnistu Verified');
-    expect(imported.length).toBeGreaterThan(0);
+    expect(imported.length).toBe(19);
     for (const p of imported) {
       expect(p.rating).toBe(0);
       expect(p.numReviews).toBe(0);
       expect(p.slug).toBeTruthy();
       expect(p.price).toBeGreaterThan(0);
+      // Staged, not purchasable: supplier availability unverified.
+      expect(p.stock).toBe(0);
     }
   });
 });
