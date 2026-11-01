@@ -82,7 +82,7 @@ const SearchPage = async (props: {
   return (
     <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-4 space-y-4 font-sans'>
       {/* 1. Top "Narrow your search" Horizontal Category Chips */}
-      <SearchNarrowChips categories={categories} />
+      <SearchNarrowChips categories={categories} facetCounts={facetCounts} />
 
       {/* 2. Main Search Body: Left Faceted Sidebar + Right Results Stream */}
       <div className='flex flex-col md:flex-row gap-6 items-stretch md:items-start'>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Sparkles, DollarSign, Star, Tag } from 'lucide-react';
 
-export default function SearchNarrowChips({ categories = [] }: { categories?: { category: string; _count?: number | { _all?: number } }[] }) {
+export default function SearchNarrowChips({ categories = [], facetCounts }: { facetCounts?: { price: Record<string, number>; rating: Record<string, number> }; categories?: { category: string; _count?: number | { _all?: number } }[] }) {
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'all';
   const currentPrice = searchParams.get('price') || 'all';
@@ -33,18 +33,21 @@ export default function SearchNarrowChips({ categories = [] }: { categories?: { 
     },
     {
       label: 'Under $25',
+      count: facetCounts?.price['0-25'],
       icon: DollarSign,
       active: currentPrice === '0-25',
       href: makeChipUrl({ price: currentPrice === '0-25' ? 'all' : '0-25' }),
     },
     {
       label: '$25 to $50',
+      count: facetCounts?.price['25-50'],
       icon: Tag,
       active: currentPrice === '25-50',
       href: makeChipUrl({ price: currentPrice === '25-50' ? 'all' : '25-50' }),
     },
     {
       label: '4★ & Above',
+      count: facetCounts?.rating['4'],
       icon: Star,
       active: currentRating === '4',
       href: makeChipUrl({ rating: currentRating === '4' ? 'all' : '4' }),
@@ -69,6 +72,20 @@ export default function SearchNarrowChips({ categories = [] }: { categories?: { 
       <div className='flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin no-scrollbar'>
         {chips.map((chip, idx) => {
           const Icon = chip.icon;
+          const count = (chip as { count?: number }).count;
+          if (count === 0 && !chip.active) {
+            return (
+              <span
+                key={idx}
+                data-testid='chip-empty'
+                aria-disabled='true'
+                className='inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full border whitespace-nowrap font-medium border-neutral-200 dark:border-neutral-800 text-muted-foreground/60 bg-neutral-50 dark:bg-neutral-900'
+              >
+                <Icon className='w-3.5 h-3.5 text-neutral-400' />
+                <span>{chip.label} (0)</span>
+              </span>
+            );
+          }
           return (
             <Link
               key={idx}
@@ -80,7 +97,7 @@ export default function SearchNarrowChips({ categories = [] }: { categories?: { 
               }`}
             >
               <Icon className={`w-3.5 h-3.5 ${chip.active ? 'text-amber-400' : 'text-neutral-500'}`} />
-              <span>{chip.label}</span>
+              <span>{chip.label}{count !== undefined ? ` (${count})` : ''}</span>
             </Link>
           );
         })}
