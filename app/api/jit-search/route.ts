@@ -1,22 +1,15 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { searchAllSuppliers } from '@/lib/suppliers/router';
 import { convertUsdToInr } from '@/lib/shipping';
 import { priceFor } from '@/lib/pricing';
-
-interface CatalogRawItem {
-  asin?: string;
-  id?: string;
-  title?: string;
-  name?: string;
-  price?: string | number;
-  category?: string;
-  image?: string;
-  thumbnails?: string[];
-  rating?: string | number;
-  reviews?: string | number;
-}
+import {
+  getUnifiedCatalog,
+  parseCatalogPrice,
+  parseCatalogRating,
+  parseCatalogReviews,
+  searchUnifiedCatalog,
+  type UnifiedCatalogItem,
+} from '@/lib/catalog-unified';
 
 interface JITProduct {
   id: string;
@@ -69,38 +62,25 @@ export async function GET(req: Request) {
   let results: JITProduct[] = [];
   let totalCount = 0;
 
-  // 1. Check local unified catalog first (Zero Token / Zero Cost / <5ms)
+  // 1. Check local unified catalog first (cached in module scope - no
+  // blocking file read per request; fixes D15).
   try {
-    const catalogPath = path.join(process.cwd(), 'public', 'data', 'catalog_unified.json');
-    if (fs.existsSync(catalogPath)) {
-      const rawCatalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
-      const items = Object.values(rawCatalog) as CatalogRawItem[];
+    const matched = searchUnifiedCatalog(query, category);
 
-      const matched = items.filter((item) => {
-        const matchesQuery =
-          !query ||
-          query === 'trending' ||
-          (item.title && item.title.toLowerCase().includes(query.toLowerCase())) ||
-          (item.category && item.category.toLowerCase().includes(query.toLowerCase()));
-        const matchesCategory =
-          !category ||
-          category === 'all' ||
-          (item.category && item.category.toLowerCase() === category.toLowerCase());
-        return matchesQuery && matchesCategory;
-      });
-
-      if (matched.length > 0) {
-        results = matched.map((it) => {
-          const rawPrice = parseFloat(String(it.price || '$19.99').replace(/[^0-9.]/g, '')) || 19.99;
+    if (matched.length > 0) {
+      results = matched
+        .map((it: UnifiedCatalogItem): JITProduct | null => {
+          const rawPrice = parseCatalogPrice(it.price);
+          if (rawPrice === null) return null; // skip items with no usable price
           const wholesale = parseFloat((rawPrice * 0.45).toFixed(2));
           const pricing = calculateCompetitivePricing(wholesale);
 
           return {
-            id: `OMN-${it.asin || it.id || Math.random().toString(36).substring(7)}`,
+            id: `OMN-${it.asin || it.id || 'N/A'}`,
             raw_id: it.asin || it.id || 'N/A',
             vendor: 'OMNISTU_VERIFIED',
             sku: `OMN-SKU-${it.asin || it.id || 'N/A'}`,
-            title: it.title || it.name || 'Curated Product',
+            title: it.title || it.name || 'Untitled product',
             wholesale_cost: pricing.wholesaleCost,
             retail_price: rawPrice,
             retail_price_inr: convertUsdToInr(rawPrice),
@@ -108,18 +88,24 @@ export async function GET(req: Request) {
             savings_usd: parseFloat((pricing.msrpPrice - rawPrice).toFixed(2)),
             gross_margin_usd: pricing.grossMarginUsd,
             gross_margin_pct: pricing.grossMarginPct,
-            category: it.category || 'Curated Essentials',
-            images: it.thumbnails && it.thumbnails.length ? it.thumbnails : [it.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'],
-            rating: parseFloat(String(it.rating || '4.8').split(' ')[0]) || 4.8,
-            reviews_count: parseInt(String(it.reviews || '240').replace(/[^0-9]/g, '')) || 240,
+            category: it.category || 'Uncategorized',
+            images:
+              it.thumbnails && it.thumbnails.length
+                ? it.thumbnails
+                : it.image
+                  ? [it.image]
+                  : [],
+            // Source-catalog claims, not storefront-collected reviews.
+            // 0 when the catalog has none - never an invented default.
+            rating: parseCatalogRating(it.rating),
+            reviews_count: parseCatalogReviews(it.reviews),
             in_stock: true,
-            shipping_estimate: country === 'IN'
-              ? '6-10 Business Days (CJ Packet Fast / India Post EMS)'
-              : '2-5 Business Days (Express Direct)',
+            shipping_estimate:
+              'Estimate only - supplier and carrier not yet confirmed for this item',
           };
-        });
-        totalCount = results.length;
-      }
+        })
+        .filter((r): r is JITProduct => r !== null);
+      totalCount = results.length;
     }
   } catch (err: unknown) {
     console.warn('Local catalog read error:', err instanceof Error ? err.message : String(err));
@@ -152,13 +138,13 @@ export async function GET(req: Request) {
             gross_margin_usd: pricing.grossMarginUsd,
             gross_margin_pct: pricing.grossMarginPct,
             category: sp.supplier === 'PRINTIFY' ? 'Custom Apparel' : 'Direct Sourced',
-            images: sp.images && sp.images.length ? sp.images : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'],
-            rating: 4.8,
-            reviews_count: 140,
+            images: sp.images && sp.images.length ? sp.images : [],
+            // No reviews exist for live supplier results - do not invent any.
+            rating: 0,
+            reviews_count: 0,
             in_stock: true,
-            shipping_estimate: country === 'IN'
-              ? '6-10 Business Days (CJ Packet Fast / India Post EMS)'
-              : '3-6 Business Days (Supplier Direct)',
+            shipping_estimate:
+              'Estimate only - confirmed with the supplier after order',
           });
           existingIds.add(internalId);
         }
