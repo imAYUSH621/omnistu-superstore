@@ -23,7 +23,7 @@ import { prisma } from '@/db/prisma';
 import { updateOrderToPaidCOD } from '@/lib/actions/order.actions';
 import { updateOrderToPaid } from '@/lib/order-settlement';
 import { enqueueFulfillmentTask } from '@/lib/fulfillment-queue';
-import { findPaidOrdersNeedingAttention } from '@/lib/paid-reconciliation';
+import { findPaidOrdersNeedingAttention, findPaidOrdersNeedingAttentionPage } from '@/lib/paid-reconciliation';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB ? describe : describe.skip;
@@ -187,6 +187,25 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     expect(r[1].deduplicated).toBe(true);
     expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id } })).toBe(1);
   }, 20000);
+
+  it('paging reaches a paid order beyond the first page on real rows (no starvation)', async () => {
+    const made: string[] = [];
+    for (let n = 0; n < 4; n++) {
+      const { order } = await makeOrder();
+      await prisma.order.update({ where: { id: order.id }, data: { isPaid: true, paidAt: new Date(Date.now() - 3600_000 - n * 1000) } });
+      made.push(order.id);
+    }
+    const seen: string[] = [];
+    let after = null as { paidAt: string | null; id: string } | null;
+    for (let guard = 0; guard < 1000; guard++) {
+      const page = await findPaidOrdersNeedingAttentionPage(prisma as never, { limit: 2, after });
+      seen.push(...page.items.map((i) => i.orderId));
+      if (!page.nextCursor) break;
+      after = page.nextCursor;
+    }
+    for (const id of made) expect(seen).toContain(id);
+    expect(new Set(seen).size).toBe(seen.length);
+  }, 30000);
 
   // ---- Read-only reconciliation on real rows ----
   it('reconciliation finds a paid order with no dispatch record and changes nothing', async () => {
