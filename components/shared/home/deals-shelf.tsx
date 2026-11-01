@@ -75,7 +75,7 @@ export default function DealsShelf() {
         {/* Shelf Header */}
         <div className='flex items-baseline justify-between mb-4'>
           <div className='flex items-center gap-3'>
-            <h2 className='text-[20px] md:text-[22px] font-bold text-[#0f1111] dark:text-white tracking-tight'>
+            <h2 className='text-[20px] md:text-[22px] font-bold text-[#0f172a] dark:text-white tracking-tight'>
               Today&apos;s Deals
             </h2>
             <span className='hidden sm:inline-block text-[13px] text-[#565959] dark:text-neutral-400 font-normal'>
@@ -84,7 +84,7 @@ export default function DealsShelf() {
           </div>
           <Link
             href='/search?sort=deals'
-            className='text-[13px] text-[#007185] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium'
+            className='text-[13px] text-[#4f46e5] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium'
           >
             See all deals
           </Link>
@@ -111,17 +111,17 @@ export default function DealsShelf() {
               <div>
                 {/* Deal Badge & Status */}
                 <div className='flex items-center gap-1.5 mb-1'>
-                  <span className='bg-[#cc0c39] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-[2px] leading-none'>
+                  <span className='bg-[#b91c1c] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-[2px] leading-none'>
                     {deal.discount}
                   </span>
-                  <span className='text-[11px] font-bold text-[#cc0c39]'>
+                  <span className='text-[11px] font-bold text-[#b91c1c]'>
                     Deal
                   </span>
                 </div>
 
                 {/* Price Display */}
                 <div className='flex items-baseline gap-1.5 mb-1'>
-                  <span className='text-[16px] font-bold text-[#0f1111] dark:text-white'>
+                  <span className='text-[16px] font-bold text-[#0f172a] dark:text-white'>
                     {deal.price}
                   </span>
                   <span className='text-[12px] text-[#565959] dark:text-neutral-400 line-through'>
@@ -130,7 +130,7 @@ export default function DealsShelf() {
                 </div>
 
                 {/* Title */}
-                <p className='text-[12px] text-[#0f1111] dark:text-neutral-300 line-clamp-2 leading-tight group-hover:text-[#c7511f]'>
+                <p className='text-[12px] text-[#0f172a] dark:text-neutral-300 line-clamp-2 leading-tight group-hover:text-[#c7511f]'>
                   {deal.title}
                 </p>
               </div>

@@ -52,7 +52,7 @@ function TrackContent() {
   };
 
   return (
-    <div className='w-full min-h-screen bg-[#eaeded] dark:bg-[#0f1111] py-8 px-4 sm:px-6 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
       <div className='max-w-[900px] mx-auto space-y-6'>
         {/* Search Header Card */}
         <div className='bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8'>

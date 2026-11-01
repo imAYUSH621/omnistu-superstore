@@ -23,7 +23,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Smart Health & Sleep Tracker Rings',
         label: 'Smart Rings',
-        image: '/assets/images/310Ke5y4pBL._SR210,210_.jpg',
+        image: '/images/sample-products/smart-titanium-health-fitness-tracking-ring-continuous-heart-rate-slee-1.jpg',
         url: '/search?category=Electronics %26 Gadgets',
       },
       {
@@ -41,7 +41,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Neodymium Magnetic Desk Orbs',
         label: 'Desk Tech',
-        image: '/assets/images/217Arq+nObL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/product/silicone-magnetic-balls-fidget-toys',
       },
     ],
@@ -67,7 +67,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Tactile Kinetic Fidget Spheres',
         label: 'Pocket EDC',
-        image: '/assets/images/31-zpA1B2zL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/product/silicone-magnetic-balls-fidget-toys',
       },
       {
@@ -105,7 +105,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Kawaii Mochi Squishy Sensory Pack',
         label: 'Squishy Packs',
-        image: '/assets/images/310HkD62s3L._SR210,210_.jpg',
+        image: '/images/tiles/squishy-packs.svg',
         url: '/search?category=Toys %26 Games',
       },
     ],
@@ -125,13 +125,13 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Modular Touch EDC Pens',
         label: 'Stylus Pens',
-        image: '/assets/images/312z6VjcSmL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/search?price=0-25',
       },
       {
         title: 'Tactile Neodymium Spheres',
         label: 'Sensory Gadgets',
-        image: '/assets/images/314AasupNAL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/product/silicone-magnetic-balls-fidget-toys',
       },
       {
@@ -169,7 +169,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Magnetic Cable Management Orbs',
         label: 'Desk Organization',
-        image: '/assets/images/319RC1dCFNL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/search?category=Home %26 Kitchen',
       },
     ],
@@ -215,7 +215,7 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Sensory Magnetic Fidget Toys',
         label: '#1 Best Seller',
-        image: '/assets/images/21xHtP1ZnlL._SR210,210_.jpg',
+        image: '/images/sample-products/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg',
         url: '/bestsellers/toys-and-games',
       },
       {
@@ -247,25 +247,25 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
       {
         title: 'Fast Express Priority Shipping',
         label: 'USPS Priority',
-        image: '/assets/images/21+Ccbv5f5L._SR100,100_.jpg',
+        image: '/images/tiles/usps-priority.svg',
         url: '/orders',
       },
       {
         title: '30-Day Money-Back Guarantee',
         label: '100% Risk-Free',
-        image: '/assets/images/21DOO2U+rQL._SR100,100_.jpg',
+        image: '/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg',
         url: '/orders',
       },
       {
         title: '1-Click CJ Direct Fulfillment',
         label: 'Auto Dispatch',
-        image: '/assets/images/21HndQWZivL._SR100,100_.jpg',
+        image: '/images/tiles/auto-dispatch.svg',
         url: '/admin',
       },
       {
         title: '24/7 Priority Customer Care',
         label: 'Dedicated Support',
-        image: '/assets/images/21X3TF86YFL._SR100,100_.jpg',
+        image: '/images/tiles/dedicated-support.svg',
         url: '/admin',
       },
     ],

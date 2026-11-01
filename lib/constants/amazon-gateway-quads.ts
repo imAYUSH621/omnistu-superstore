@@ -18,23 +18,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Plug in with our electronics",
     "items": [
       {
-        "label": "Headphones",
-        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=85",
+        "label": "Headphones", "image": "/images/sample-products/pro-anc-active-noise-cancelling-wireless-earbuds-spatial-audio-bluetoo-1.jpg",
         "url": "/s?k=headphones"
       },
       {
-        "label": "Tablets",
-        "image": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=85",
+        "label": "Tablets", "image": "/images/tiles/tablets.svg",
         "url": "/s?k=electronics%20tablets"
       },
       {
-        "label": "Gaming",
-        "image": "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=500&auto=format&fit=crop&q=85",
+        "label": "Gaming", "image": "/images/tiles/gaming.svg",
         "url": "/s?k=gaming%20equipment"
       },
       {
-        "label": "Speakers",
-        "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=85",
+        "label": "Speakers", "image": "/images/tiles/speakers.svg",
         "url": "/s?k=speakers"
       }
     ],
@@ -46,23 +42,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Score the top PCs & Accessories",
     "items": [
       {
-        "label": "Desktops",
-        "image": "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=500&auto=format&fit=crop&q=85",
+        "label": "Desktops", "image": "/images/tiles/desktops.svg",
         "url": "/s?k=desktop%20computers"
       },
       {
-        "label": "Laptops",
-        "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&auto=format&fit=crop&q=85",
+        "label": "Laptops", "image": "/images/tiles/laptops.svg",
         "url": "/s?k=laptops"
       },
       {
-        "label": "Hard Drives",
-        "image": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=500&auto=format&fit=crop&q=85",
+        "label": "Hard Drives", "image": "/images/tiles/hard-drives.svg",
         "url": "/s?k=external%20hard%20drives"
       },
       {
-        "label": "PC Accessories",
-        "image": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&auto=format&fit=crop&q=85",
+        "label": "PC Accessories", "image": "/images/tiles/pc-accessories.svg",
         "url": "/s?k=computer%20accessories"
       }
     ],
@@ -74,23 +66,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Gear up to get fit",
     "items": [
       {
-        "label": "Clothing",
-        "image": "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=500&auto=format&fit=crop&q=85",
+        "label": "Clothing", "image": "/images/sample-products/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg",
         "url": "/s?k=fitness%20clothing"
       },
       {
-        "label": "Trackers",
-        "image": "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=500&auto=format&fit=crop&q=85",
+        "label": "Trackers", "image": "/images/sample-products/smart-titanium-health-fitness-tracking-ring-continuous-heart-rate-slee-1.jpg",
         "url": "/s?k=fitness%20trackers"
       },
       {
-        "label": "Equipment",
-        "image": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=85",
+        "label": "Equipment", "image": "/images/tiles/equipment.svg",
         "url": "/s?k=fitness%20equipment"
       },
       {
-        "label": "Deals",
-        "image": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&auto=format&fit=crop&q=85",
+        "label": "Deals", "image": "/images/tiles/deals.svg",
         "url": "/s?k=fitness"
       }
     ],
@@ -102,23 +90,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Apparel under $25",
     "items": [
       {
-        "label": "Women",
-        "image": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=500&auto=format&fit=crop&q=85",
+        "label": "Women", "image": "/images/tiles/women.svg",
         "url": "/s?k=Women%20Clothing"
       },
       {
-        "label": "Men",
-        "image": "https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=500&auto=format&fit=crop&q=85",
+        "label": "Men", "image": "/images/tiles/men.svg",
         "url": "/s?k=Men%20Clothing"
       },
       {
-        "label": "Girls",
-        "image": "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=500&auto=format&fit=crop&q=85",
+        "label": "Girls", "image": "/images/tiles/girls.svg",
         "url": "/s?k=Girls%20Fashion"
       },
       {
-        "label": "Boys",
-        "image": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&auto=format&fit=crop&q=85",
+        "label": "Boys", "image": "/images/tiles/boys.svg",
         "url": "/s?k=Boys%20Fashion"
       }
     ],
@@ -130,23 +114,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Fantastic Finds for Home",
     "items": [
       {
-        "label": "Kitchen",
-        "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&auto=format&fit=crop&q=85",
+        "label": "Kitchen", "image": "/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg",
         "url": "/s?k=kitchen"
       },
       {
-        "label": "Home Decor",
-        "image": "https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?w=500&auto=format&fit=crop&q=85",
+        "label": "Home Decor", "image": "/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg",
         "url": "/s?k=home%20decor"
       },
       {
-        "label": "Dining",
-        "image": "https://images.unsplash.com/photo-1615066390971-03e4e1c36ddf?w=500&auto=format&fit=crop&q=85",
+        "label": "Dining", "image": "/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg",
         "url": "/s?k=kitchen%20and%20dining"
       },
       {
-        "label": "Smart Home",
-        "image": "https://images.unsplash.com/photo-1558002038-1055907df827?w=500&auto=format&fit=crop&q=85",
+        "label": "Smart Home", "image": "/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg",
         "url": "/s?k=smart%20home"
       }
     ],
@@ -158,23 +138,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Shine brighter with your fashion faves",
     "items": [
       {
-        "label": "Jewelry",
-        "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&auto=format&fit=crop&q=85",
+        "label": "Jewelry", "image": "/images/sample-products/italian-18k-gold-plated-925-sterling-silver-miami-cuban-link-chain-nec-1.jpg",
         "url": "/s?k=jewelry"
       },
       {
-        "label": "Handbags",
-        "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=85",
+        "label": "Handbags", "image": "/images/tiles/handbags.svg",
         "url": "/s?k=handbags"
       },
       {
-        "label": "Footwear",
-        "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&auto=format&fit=crop&q=85",
+        "label": "Footwear", "image": "/images/tiles/footwear.svg",
         "url": "/s?k=women%20footwear"
       },
       {
-        "label": "Beauty",
-        "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop&q=85",
+        "label": "Beauty", "image": "/images/tiles/beauty.svg",
         "url": "/s?k=beauty"
       }
     ],
@@ -186,23 +162,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Unveil your radiance",
     "items": [
       {
-        "label": "Hair Care",
-        "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=85",
+        "label": "Hair Care", "image": "/images/tiles/hair-care.svg",
         "url": "/s?k=hair%20care"
       },
       {
-        "label": "Fragrances",
-        "image": "https://images.unsplash.com/photo-1541643600914-78b084683601?w=500&auto=format&fit=crop&q=85",
+        "label": "Fragrances", "image": "/images/tiles/fragrances.svg",
         "url": "/s?k=fragrances"
       },
       {
-        "label": "Make-up",
-        "image": "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=500&auto=format&fit=crop&q=85",
+        "label": "Make-up", "image": "/images/tiles/make-up.svg",
         "url": "/s?k=Make%20up"
       },
       {
-        "label": "Skin Care",
-        "image": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&auto=format&fit=crop&q=85",
+        "label": "Skin Care", "image": "/images/tiles/skin-care.svg",
         "url": "/s?k=skin%20care"
       }
     ],
@@ -214,23 +186,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Level up your PC here",
     "items": [
       {
-        "label": "Laptops",
-        "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&auto=format&fit=crop&q=85",
+        "label": "Laptops", "image": "/images/tiles/laptops.svg",
         "url": "/s?k=laptops"
       },
       {
-        "label": "PCs",
-        "image": "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=500&auto=format&fit=crop&q=85",
+        "label": "PCs", "image": "/images/tiles/pcs.svg",
         "url": "/s?k=desktop%20PCs"
       },
       {
-        "label": "Hard Drives",
-        "image": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=500&auto=format&fit=crop&q=85",
+        "label": "Hard Drives", "image": "/images/tiles/hard-drives.svg",
         "url": "/s?k=hard%20drives"
       },
       {
-        "label": "Monitors",
-        "image": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=85",
+        "label": "Monitors", "image": "/images/tiles/monitors.svg",
         "url": "/s?k=computer%20monitors"
       }
     ],
@@ -242,23 +210,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Fashion trends in Shoes",
     "items": [
       {
-        "label": "Women's",
-        "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=85",
+        "label": "Women's", "image": "/images/tiles/women-s.svg",
         "url": "/s?k=WOmen%20Shoes"
       },
       {
-        "label": "Men's",
-        "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop&q=85",
+        "label": "Men's", "image": "/images/tiles/men-s.svg",
         "url": "/s?k=Men%20Shoes"
       },
       {
-        "label": "Kids'",
-        "image": "https://images.unsplash.com/photo-1471286174890-9c112ffca56a?w=500&auto=format&fit=crop&q=85",
+        "label": "Kids'", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=Kid%20Shoes"
       },
       {
-        "label": "All shoes",
-        "image": "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=500&auto=format&fit=crop&q=85",
+        "label": "All shoes", "image": "/images/tiles/all-shoes.svg",
         "url": "/s?k=Shoes"
       }
     ],
@@ -270,23 +234,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Home harmony",
     "items": [
       {
-        "label": "Kitchen essentials",
-        "image": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500&auto=format&fit=crop&q=85",
+        "label": "Kitchen essentials", "image": "/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg",
         "url": "/s?k=kitchen%20essentials"
       },
       {
-        "label": "Home comfort",
-        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500&auto=format&fit=crop&q=85",
+        "label": "Home comfort", "image": "/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg",
         "url": "/s?k=home%20sofa%20living%20room"
       },
       {
-        "label": "Decorate with elegance",
-        "image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500&auto=format&fit=crop&q=85",
+        "label": "Decorate with elegance", "image": "/images/tiles/decorate-with-elegance.svg",
         "url": "/s?k=home%20decor"
       },
       {
-        "label": "Light it Right",
-        "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=85",
+        "label": "Light it Right", "image": "/images/tiles/light-it-right.svg",
         "url": "/s?k=Home%20decor"
       }
     ],
@@ -298,23 +258,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Shoes Under $50",
     "items": [
       {
-        "label": "Women's",
-        "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=85",
+        "label": "Women's", "image": "/images/tiles/women-s.svg",
         "url": "/s?k=women%20footwear"
       },
       {
-        "label": "Men's",
-        "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop&q=85",
+        "label": "Men's", "image": "/images/tiles/men-s.svg",
         "url": "/s?k=men%20footwear"
       },
       {
-        "label": "Girl's",
-        "image": "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=500&auto=format&fit=crop&q=85",
+        "label": "Girl's", "image": "/images/tiles/girl-s.svg",
         "url": "/s?k=girls%20footwear"
       },
       {
-        "label": "Boy's",
-        "image": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&auto=format&fit=crop&q=85",
+        "label": "Boy's", "image": "/images/tiles/boy-s.svg",
         "url": "/s?k=boys%20footwear"
       }
     ],
@@ -326,23 +282,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "What you need for furry friends",
     "items": [
       {
-        "label": "Dogs",
-        "image": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&auto=format&fit=crop&q=85",
+        "label": "Dogs", "image": "/images/tiles/dogs.svg",
         "url": "/s?k=pet%20dog%20supplies"
       },
       {
-        "label": "Cats",
-        "image": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500&auto=format&fit=crop&q=85",
+        "label": "Cats", "image": "/images/tiles/cats.svg",
         "url": "/s?k=pet%20cat%20supplies"
       },
       {
-        "label": "Small Pets",
-        "image": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=500&auto=format&fit=crop&q=85",
+        "label": "Small Pets", "image": "/images/tiles/small-pets.svg",
         "url": "/s?k=small%20pet%20supplies"
       },
       {
-        "label": "Deals",
-        "image": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&auto=format&fit=crop&q=85",
+        "label": "Deals", "image": "/images/tiles/deals.svg",
         "url": "/s?k=Deals"
       }
     ],
@@ -354,23 +306,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Video games & accessories",
     "items": [
       {
-        "label": "Xbox controllers",
-        "image": "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=500&auto=format&fit=crop&q=85",
+        "label": "Xbox controllers", "image": "/images/tiles/xbox-controllers.svg",
         "url": "/s?k=xbox%20controller"
       },
       {
-        "label": "Nintendo",
-        "image": "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=500&auto=format&fit=crop&q=85",
+        "label": "Nintendo", "image": "/images/tiles/nintendo.svg",
         "url": "/s?k=Nintendo"
       },
       {
-        "label": "VR headsets",
-        "image": "https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?w=500&auto=format&fit=crop&q=85",
+        "label": "VR headsets", "image": "/images/tiles/vr-headsets.svg",
         "url": "/s?k=vr%20headset"
       },
       {
-        "label": "PS5 accessories",
-        "image": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&auto=format&fit=crop&q=85",
+        "label": "PS5 accessories", "image": "/images/tiles/ps5-accessories.svg",
         "url": "/s?k=ps5%20accessories"
       }
     ],
@@ -382,23 +330,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Have more fun with the family",
     "items": [
       {
-        "label": "Outdoor Play Sets",
-        "image": "https://images.unsplash.com/photo-1533230808584-3d094016fb77?w=500&auto=format&fit=crop&q=85",
+        "label": "Outdoor Play Sets", "image": "/images/tiles/outdoor-play-sets.svg",
         "url": "/s?k=outdoor%20play%20toys"
       },
       {
-        "label": "Learning Toys",
-        "image": "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=500&auto=format&fit=crop&q=85",
+        "label": "Learning Toys", "image": "/images/tiles/learning-toys.svg",
         "url": "/s?k=learning%20toys"
       },
       {
-        "label": "Action Figures",
-        "image": "https://images.unsplash.com/photo-1608889175123-8ee362201f81?w=500&auto=format&fit=crop&q=85",
+        "label": "Action Figures", "image": "/images/tiles/action-figures.svg",
         "url": "/s?k=action%20figures"
       },
       {
-        "label": "Pretend Play Toys",
-        "image": "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=500&auto=format&fit=crop&q=85",
+        "label": "Pretend Play Toys", "image": "/images/tiles/pretend-play-toys.svg",
         "url": "/s?k=Pretend%20Play%20Toys"
       }
     ],
@@ -410,23 +354,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Finds in Home",
     "items": [
       {
-        "label": "Bedsheets",
-        "image": "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=500&auto=format&fit=crop&q=85",
+        "label": "Bedsheets", "image": "/images/tiles/bedsheets.svg",
         "url": "/s?k=Bedsheets"
       },
       {
-        "label": "Pillows",
-        "image": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=500&auto=format&fit=crop&q=85",
+        "label": "Pillows", "image": "/images/tiles/pillows.svg",
         "url": "/s?k=Pillows"
       },
       {
-        "label": "Duvet Covers",
-        "image": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=500&auto=format&fit=crop&q=85",
+        "label": "Duvet Covers", "image": "/images/tiles/duvet-covers.svg",
         "url": "/s?k=duvet%20covers"
       },
       {
-        "label": "Throws",
-        "image": "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=500&auto=format&fit=crop&q=85",
+        "label": "Throws", "image": "/images/tiles/throws.svg",
         "url": "/s?k=Throws"
       }
     ],
@@ -438,23 +378,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Deals on top categories",
     "items": [
       {
-        "label": "Books",
-        "image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500&auto=format&fit=crop&q=85",
+        "label": "Books", "image": "/images/tiles/books.svg",
         "url": "/s?k=Books"
       },
       {
-        "label": "Fashion",
-        "image": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&auto=format&fit=crop&q=85",
+        "label": "Fashion", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=Fashion"
       },
       {
-        "label": "PCPC",
-        "image": "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=85",
+        "label": "PCPC", "image": "/images/tiles/pcpc.svg",
         "url": "/s?k=PCPC"
       },
       {
-        "label": "Beauty",
-        "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop&q=85",
+        "label": "Beauty", "image": "/images/tiles/beauty.svg",
         "url": "/s?k=Beauty"
       }
     ],
@@ -466,23 +402,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "New home arrivals under $50",
     "items": [
       {
-        "label": "Kitchen & dining",
-        "image": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500&auto=format&fit=crop&q=85",
+        "label": "Kitchen & dining", "image": "/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg",
         "url": "/s?k=kitchen%20and%20dining"
       },
       {
-        "label": "Home improvement",
-        "image": "https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?w=500&auto=format&fit=crop&q=85",
+        "label": "Home improvement", "image": "/images/tiles/home-improvement.svg",
         "url": "/s?k=home%20improvement"
       },
       {
-        "label": "D\u00e9cor",
-        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=85",
+        "label": "D\u00e9cor", "image": "/images/tiles/d-u00e9cor.svg",
         "url": "/s?k=home%20decor"
       },
       {
-        "label": "Bedding & bath",
-        "image": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&auto=format&fit=crop&q=85",
+        "label": "Bedding & bath", "image": "/images/tiles/bedding-bath.svg",
         "url": "/s?k=bedding%20and%20bath"
       }
     ],
@@ -494,23 +426,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Discover the latest arrivals",
     "items": [
       {
-        "label": "Electronics",
-        "image": "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&auto=format&fit=crop&q=85",
+        "label": "Electronics", "image": "/images/tiles/electronics.svg",
         "url": "/s?k=electronics"
       },
       {
-        "label": "Home",
-        "image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500&auto=format&fit=crop&q=85",
+        "label": "Home", "image": "/images/tiles/home.svg",
         "url": "/s?k=home"
       },
       {
-        "label": "Beauty",
-        "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format&fit=crop&q=85",
+        "label": "Beauty", "image": "/images/tiles/beauty.svg",
         "url": "/s?k=beauty"
       },
       {
-        "label": "Fashion",
-        "image": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&auto=format&fit=crop&q=85",
+        "label": "Fashion", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=fashion"
       }
     ],
@@ -522,23 +450,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Accessorize your life",
     "items": [
       {
-        "label": "Fashion accessories",
-        "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=85",
+        "label": "Fashion accessories", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=fashion%20accessories"
       },
       {
-        "label": "Men's accessories",
-        "image": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500&auto=format&fit=crop&q=85",
+        "label": "Men's accessories", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=men%20accessories"
       },
       {
-        "label": "Health and beauty",
-        "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=85",
+        "label": "Health and beauty", "image": "/images/tiles/health-and-beauty.svg",
         "url": "/s?k=health%20and%20beauty"
       },
       {
-        "label": "Sports",
-        "image": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=500&auto=format&fit=crop&q=85",
+        "label": "Sports", "image": "/images/tiles/sports.svg",
         "url": "/s?k=Sports"
       }
     ],
@@ -550,23 +474,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Step into style",
     "items": [
       {
-        "label": "Women's clothing",
-        "image": "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=500&auto=format&fit=crop&q=85",
+        "label": "Women's clothing", "image": "/images/sample-products/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg",
         "url": "/s?k=women%20apparel"
       },
       {
-        "label": "Women's shoes",
-        "image": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&auto=format&fit=crop&q=85",
+        "label": "Women's shoes", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=Women%20shoes"
       },
       {
-        "label": "Men's clothing",
-        "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=85",
+        "label": "Men's clothing", "image": "/images/sample-products/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg",
         "url": "/s?k=Men%20apparel"
       },
       {
-        "label": "Men's shoes",
-        "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&auto=format&fit=crop&q=85",
+        "label": "Men's shoes", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=Men%20shoes"
       }
     ],
@@ -578,23 +498,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Level up your beauty routine",
     "items": [
       {
-        "label": "Makeup",
-        "image": "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=500&auto=format&fit=crop&q=85",
+        "label": "Makeup", "image": "/images/tiles/makeup.svg",
         "url": "/s?k=makeup"
       },
       {
-        "label": "Brushes",
-        "image": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=500&auto=format&fit=crop&q=85",
+        "label": "Brushes", "image": "/images/tiles/brushes.svg",
         "url": "/s?k=makeup%20brushes"
       },
       {
-        "label": "Sponges",
-        "image": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=500&auto=format&fit=crop&q=85",
+        "label": "Sponges", "image": "/images/tiles/sponges.svg",
         "url": "/s?k=makeup%20sponge"
       },
       {
-        "label": "Mirrors",
-        "image": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=500&auto=format&fit=crop&q=85",
+        "label": "Mirrors", "image": "/images/tiles/mirrors.svg",
         "url": "/s?k=makeup%20mirror"
       }
     ],
@@ -606,23 +522,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Handpicked home theater",
     "items": [
       {
-        "label": "Televisions",
-        "image": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500&auto=format&fit=crop&q=85",
+        "label": "Televisions", "image": "/images/tiles/televisions.svg",
         "url": "/s?k=television"
       },
       {
-        "label": "Speakers",
-        "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=85",
+        "label": "Speakers", "image": "/images/tiles/speakers.svg",
         "url": "/s?k=speakers"
       },
       {
-        "label": "Soundbars",
-        "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&auto=format&fit=crop&q=85",
+        "label": "Soundbars", "image": "/images/tiles/soundbars.svg",
         "url": "/s?k=soundbars"
       },
       {
-        "label": "Projectors",
-        "image": "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=500&auto=format&fit=crop&q=85",
+        "label": "Projectors", "image": "/images/tiles/projectors.svg",
         "url": "/s?k=projectors"
       }
     ],
@@ -634,23 +546,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Curate your space",
     "items": [
       {
-        "label": "Candles",
-        "image": "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=500&auto=format&fit=crop&q=85",
+        "label": "Candles", "image": "/images/tiles/candles.svg",
         "url": "/s?k=Candles"
       },
       {
-        "label": "Stylish pillows",
-        "image": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=500&auto=format&fit=crop&q=85",
+        "label": "Stylish pillows", "image": "/images/tiles/stylish-pillows.svg",
         "url": "/s?k=stylish%20pillows"
       },
       {
-        "label": "Indoor gardening",
-        "image": "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=500&auto=format&fit=crop&q=85",
+        "label": "Indoor gardening", "image": "/images/tiles/indoor-gardening.svg",
         "url": "/s?k=indoor%20gardening"
       },
       {
-        "label": "Storage organization",
-        "image": "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=500&auto=format&fit=crop&q=85",
+        "label": "Storage organization", "image": "/images/tiles/storage-organization.svg",
         "url": "/s?k=Storage%20organization"
       }
     ],
@@ -662,23 +570,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Look your best this season",
     "items": [
       {
-        "label": "For Her",
-        "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=85",
+        "label": "For Her", "image": "/images/tiles/for-her.svg",
         "url": "/s?k=woman%20apparel"
       },
       {
-        "label": "For Him",
-        "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop&q=85",
+        "label": "For Him", "image": "/images/tiles/for-him.svg",
         "url": "/s?k=men%20apparel"
       },
       {
-        "label": "For Teens",
-        "image": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&auto=format&fit=crop&q=85",
+        "label": "For Teens", "image": "/images/tiles/for-teens.svg",
         "url": "/s?k=teen%20apparel"
       },
       {
-        "label": "For Kids",
-        "image": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&auto=format&fit=crop&q=85",
+        "label": "For Kids", "image": "/images/sample-products/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg",
         "url": "/s?k=kids%20apparel"
       }
     ],
@@ -690,23 +594,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Build your own computer",
     "items": [
       {
-        "label": "Processors",
-        "image": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&auto=format&fit=crop&q=85",
+        "label": "Processors", "image": "/images/tiles/processors.svg",
         "url": "/s?k=processors"
       },
       {
-        "label": "Motherboards",
-        "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=85",
+        "label": "Motherboards", "image": "/images/tiles/motherboards.svg",
         "url": "/s?k=motherboards"
       },
       {
-        "label": "Power Supplies",
-        "image": "https://images.unsplash.com/photo-1588797303982-f013d288d752?w=500&auto=format&fit=crop&q=85",
+        "label": "Power Supplies", "image": "/images/tiles/power-supplies.svg",
         "url": "/s?k=power%20supply%20pc"
       },
       {
-        "label": "Cooling",
-        "image": "https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=500&auto=format&fit=crop&q=85",
+        "label": "Cooling", "image": "/images/tiles/cooling.svg",
         "url": "/s?k=pc%20cooling"
       }
     ],
@@ -718,23 +618,19 @@ export const AMAZON_GATEWAY_QUADS: GatewayQuad[] = [
     "title": "Books you can't put down",
     "items": [
       {
-        "label": "Children's",
-        "image": "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=500&auto=format&fit=crop&q=85",
+        "label": "Children's", "image": "/images/tiles/children-s.svg",
         "url": "/s?k=childrens%20books"
       },
       {
-        "label": "Mystery",
-        "image": "https://images.unsplash.com/photo-1509021436665-8f07dbf76c61?w=500&auto=format&fit=crop&q=85",
+        "label": "Mystery", "image": "/images/tiles/mystery.svg",
         "url": "/s?k=Mystery%20books"
       },
       {
-        "label": "Fiction",
-        "image": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=85",
+        "label": "Fiction", "image": "/images/tiles/fiction.svg",
         "url": "/s?k=Fiction%20books"
       },
       {
-        "label": "Motivational books",
-        "image": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=500&auto=format&fit=crop&q=85",
+        "label": "Motivational books", "image": "/images/tiles/motivational-books.svg",
         "url": "/s?k=motivational%20books"
       }
     ],

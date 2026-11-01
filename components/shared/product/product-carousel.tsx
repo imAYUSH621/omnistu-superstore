@@ -42,7 +42,7 @@ const ProductCarousel = ({ data }: { data: Product[] }) => {
                     className='object-cover object-top'
                   />
                   {/* Amazon-style bottom gradient fade */}
-                  <div className='absolute inset-x-0 bottom-0 h-40 md:h-64 bg-gradient-to-t from-[#eaeded] via-[#eaeded]/60 to-transparent dark:from-[#0f1111] dark:via-[#0f1111]/60 pointer-events-none' />
+                  <div className='absolute inset-x-0 bottom-0 h-40 md:h-64 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/60 to-transparent dark:from-[#0f172a] dark:via-[#0f172a]/60 pointer-events-none' />
                 </div>
               </Link>
             </CarouselItem>

@@ -39,13 +39,13 @@ const Search = async () => {
           name='q'
           type='text'
           placeholder='Search Omnistu Superstore'
-          className='flex-1 border-0 h-10 text-[14px] text-[#0f1111] placeholder:text-[#767676] focus-visible:ring-0 bg-white px-3 font-["Amazon_Ember",Arial,sans-serif]'
+          className='flex-1 border-0 h-10 text-[14px] text-[#0f172a] placeholder:text-[#767676] focus-visible:ring-0 bg-white px-3 font-sans'
         />
 
         {/* Search Submit Button */}
         <Button
           type='submit'
-          className='h-10 px-4 rounded-none bg-[#febd69] hover:bg-[#f3a847] active:bg-[#e09838] text-[#111] border-0 transition-colors cursor-pointer'
+          className='h-10 px-4 rounded-none bg-[#4f46e5] hover:bg-[#f3a847] active:bg-[#e09838] text-[#111] border-0 transition-colors cursor-pointer'
           aria-label='Search'
         >
           <SearchIcon className='w-5 h-5 text-[#333]' />

@@ -169,10 +169,10 @@ export default function BestSellersShelf() {
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
             <div>
               <div className='flex items-center gap-2'>
-                <h2 className='text-[20px] md:text-[22px] font-bold text-[#0f1111] dark:text-white tracking-tight'>
+                <h2 className='text-[20px] md:text-[22px] font-bold text-[#0f172a] dark:text-white tracking-tight'>
                   Amazon Top 100 Best Sellers
                 </h2>
-                <span className='bg-[#ff9900] text-black text-[11px] font-extrabold px-1.5 py-0.5 rounded-[2px] uppercase'>
+                <span className='bg-[#4f46e5] text-black text-[11px] font-extrabold px-1.5 py-0.5 rounded-[2px] uppercase'>
                   Live Verified
                 </span>
               </div>
@@ -183,7 +183,7 @@ export default function BestSellersShelf() {
 
             <Link
               href='/bestsellers/toys-and-games'
-              className='text-[13px] text-[#007185] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium'
+              className='text-[13px] text-[#4f46e5] dark:text-[#56b6c2] hover:text-[#c7511f] hover:underline font-medium'
             >
               See complete leaderboard &rarr;
             </Link>
@@ -197,8 +197,8 @@ export default function BestSellersShelf() {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1.5 text-[13px] rounded-full font-medium transition cursor-pointer whitespace-nowrap ${
                   activeCategory === cat
-                    ? 'bg-[#131921] text-white shadow-sm'
-                    : 'bg-[#f7f7f7] dark:bg-neutral-800 text-[#0f1111] dark:text-neutral-300 hover:bg-[#e7e7e7] dark:hover:bg-neutral-700'
+                    ? 'bg-[#1e293b] text-white shadow-sm'
+                    : 'bg-[#f7f7f7] dark:bg-neutral-800 text-[#0f172a] dark:text-neutral-300 hover:bg-[#e7e7e7] dark:hover:bg-neutral-700'
                 }`}
               >
                 {cat}
@@ -239,7 +239,7 @@ export default function BestSellersShelf() {
                 <div>
                   <Link
                     href={`/product/${p.slug}`}
-                    className='text-[13px] text-[#0f1111] dark:text-neutral-200 hover:text-[#c7511f] line-clamp-2 font-normal leading-tight mb-1.5'
+                    className='text-[13px] text-[#0f172a] dark:text-neutral-200 hover:text-[#c7511f] line-clamp-2 font-normal leading-tight mb-1.5'
                   >
                     {p.name}
                   </Link>
@@ -254,13 +254,13 @@ export default function BestSellersShelf() {
                         />
                       ))}
                     </div>
-                    <span className='text-[11px] text-[#007185] dark:text-[#56b6c2]'>
+                    <span className='text-[11px] text-[#4f46e5] dark:text-[#56b6c2]'>
                       {p.numReviews.toLocaleString()}
                     </span>
                   </div>
 
                   {/* Price */}
-                  <div className='text-[17px] font-bold text-[#0f1111] dark:text-white leading-none mb-1'>
+                  <div className='text-[17px] font-bold text-[#0f172a] dark:text-white leading-none mb-1'>
                     {p.price}
                   </div>
 
@@ -299,7 +299,7 @@ export default function BestSellersShelf() {
                       }
                     }
                   }}
-                  className='mt-3 w-full py-1 text-[12px] font-medium bg-[#ffd814] hover:bg-[#f7ca00] active:bg-[#f0b800] border border-[#fcd200] rounded-full text-[#0f1111] shadow-[0_2px_5px_rgba(213,217,217,0.5)] transition cursor-pointer'
+                  className='mt-3 w-full py-1 text-[12px] font-medium bg-[#4f46e5] hover:bg-[#4338ca] active:bg-[#f0b800] border border-[#fcd200] rounded-full text-[#0f172a] shadow-[0_2px_5px_rgba(213,217,217,0.5)] transition cursor-pointer'
                 >
                   Add to Cart
                 </button>

@@ -14,7 +14,7 @@ import GlobalSelector from './global-selector';
 
 const Menu = () => {
   return (
-    <div className='flex justify-end gap-1.5 items-center font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='flex justify-end gap-1.5 items-center font-sans'>
       <nav className='hidden md:flex items-center gap-1.5'>
         {/* 1. Global Language & Currency Picker */}
         <div className='hidden lg:flex'>
@@ -48,7 +48,7 @@ const Menu = () => {
           <SheetTrigger className='p-1.5 align-middle rounded-xs text-white hover:border hover:border-white transition'>
             <EllipsisVertical className='w-5 h-5' />
           </SheetTrigger>
-          <SheetContent className='flex flex-col items-start space-y-4 pt-8 bg-[#131921] text-white border-neutral-800'>
+          <SheetContent className='flex flex-col items-start space-y-4 pt-8 bg-[#1e293b] text-white border-neutral-800'>
             <SheetTitle className='font-bold text-lg text-white'>Menu</SheetTitle>
             <div className='w-full border-b border-neutral-700 pb-3'>
               <UserButton />

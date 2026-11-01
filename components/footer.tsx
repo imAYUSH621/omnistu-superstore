@@ -13,11 +13,11 @@ export default function Footer() {
   };
 
   return (
-    <footer className='w-full bg-[#232f3e] text-white text-[13px] font-["Amazon_Ember",Arial,sans-serif] mt-12'>
+    <footer className='w-full bg-[#334155] text-white text-[13px] font-sans mt-12'>
       {/* 1. Back to Top Bar */}
       <button
         onClick={scrollToTop}
-        className='w-full py-3.5 bg-[#37475a] hover:bg-[#485769] transition text-center text-[13px] font-bold text-white tracking-tight cursor-pointer block focus:outline-none'
+        className='w-full py-3.5 bg-[#475569] hover:bg-[#485769] transition text-center text-[13px] font-bold text-white tracking-tight cursor-pointer block focus:outline-none'
       >
         Back to top
       </button>
@@ -158,7 +158,7 @@ export default function Footer() {
         <div className='max-w-[1000px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4'>
           <Link href='/' className='flex items-center gap-1.5'>
             <span className='font-extrabold text-[22px] tracking-tight text-white'>
-              omnistu<span className='text-[#ff9900] text-[16px] font-black'>.us</span>
+              omnistu<span className='text-[#4f46e5] text-[16px] font-black'>.us</span>
             </span>
           </Link>
 

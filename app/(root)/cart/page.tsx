@@ -11,7 +11,7 @@ export default async function CartPage() {
   const cart = await getMyCart();
 
   return (
-    <div className='w-full bg-[#eaeded] dark:bg-[#0f1111] min-h-[85vh] font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='w-full bg-[#f8fafc] dark:bg-[#0f172a] min-h-[85vh] font-sans'>
       <CartTable cart={cart} />
     </div>
   );

@@ -6,8 +6,8 @@ import { MapPin, Sparkles } from 'lucide-react';
 
 const Header = () => {
   return (
-    <header className='w-full bg-[#131921] text-white relative z-40 select-none font-["Amazon_Ember",Arial,sans-serif]'>
-      {/* 1. Main Navbar Belt (#131921) */}
+    <header className='w-full bg-[#1e293b] text-white relative z-40 select-none font-sans'>
+      {/* 1. Main Navbar Belt (#1e293b) */}
       <div className='max-w-[1520px] mx-auto px-3 sm:px-4 flex items-center justify-between gap-2 sm:gap-4 py-1.5 min-h-[60px]'>
         {/* Left: Brand Logo + Deliver To Widget */}
         <div className='flex items-center gap-1 sm:gap-3 shrink-0'>
@@ -22,26 +22,10 @@ const Header = () => {
                 <span className='font-bold text-[22px] tracking-tight text-white'>
                   omnistu
                 </span>
-                <span className='font-bold text-[12px] text-[#febd69] ml-0.5'>
+                <span className='font-bold text-[12px] text-[#4f46e5] ml-0.5'>
                   .us
                 </span>
               </div>
-              {/* Authentic Amazon curved orange smile arrow SVG */}
-              <svg
-                className='w-16 h-2.5 -mt-0.5 ml-1'
-                viewBox='0 0 60 10'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
-                  d='M2 3 Q30 11 54 2.5'
-                  stroke='#ff9900'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  fill='none'
-                />
-                <path d='M50 0.5 L57 2.5 L51 5 Z' fill='#ff9900' />
-              </svg>
             </div>
           </Link>
 
@@ -71,12 +55,12 @@ const Header = () => {
       </div>
 
       {/* Mobile Search Bar Row */}
-      <div className='md:hidden px-3 pb-2 pt-1 bg-[#131921]'>
+      <div className='md:hidden px-3 pb-2 pt-1 bg-[#1e293b]'>
         <Search />
       </div>
 
-      {/* 2. Amazon-Style Subnav Belt (#232f3e) */}
-      <div className='bg-[#232f3e] text-white text-[13px] font-medium border-t border-[#37475a]/50 shadow-inner'>
+      {/* 2. Amazon-Style Subnav Belt (#334155) */}
+      <div className='bg-[#334155] text-white text-[13px] font-medium border-t border-[#475569]/50 shadow-inner'>
         <div className='max-w-[1520px] mx-auto px-3 sm:px-4 flex items-center justify-between overflow-x-auto py-1 scrollbar-none gap-2'>
           {/* Authentic Subnav Quick Links (Matching Image 2) */}
           <div className='flex items-center gap-1 shrink-0'>
@@ -132,9 +116,9 @@ const Header = () => {
           <div className='flex items-center gap-2 shrink-0'>
             <Link
               href='/admin'
-              className='flex items-center gap-1.5 bg-[#febd69] hover:bg-[#f3a847] text-[#131921] px-2.5 py-1 rounded-xs text-[12px] font-bold transition-colors shadow-xs'
+              className='flex items-center gap-1.5 bg-[#4f46e5] hover:bg-[#f3a847] text-[#1e293b] px-2.5 py-1 rounded-xs text-[12px] font-bold transition-colors shadow-xs'
             >
-              <Sparkles className='w-3.5 h-3.5 text-[#131921]' />
+              <Sparkles className='w-3.5 h-3.5 text-[#1e293b]' />
               <span>Seller Central / Admin</span>
             </Link>
           </div>

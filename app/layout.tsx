@@ -21,16 +21,9 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <head>
-        {/* Authentic Amazon Typography & Layout Stylesheets */}
-        <link rel='stylesheet' href='/assets/css/21WtwhH1EKL.css' />
-        <link rel='stylesheet' href='/assets/css/215CM2Cgm9L._RC%7C51FWJRVXGBL.css_.css' />
-        <link rel='stylesheet' href='/assets/css/asset_3b5a397f7a5e.css' />
-        <link rel='stylesheet' href='/assets/css/asset_e161a8ecc720.css' />
-        <link rel='stylesheet' href='/assets/css/51Kn5IB9d7L.css' />
-        <link rel='stylesheet' href='/assets/css/amazon-homepage-injected.css' />
         <link rel='icon' href='/images/logo.svg' />
       </head>
-      <body className='antialiased bg-[#eaeded] dark:bg-[#0f1111] text-[#0f1111] dark:text-neutral-100 font-["Amazon_Ember",Arial,sans-serif]'>
+      <body className='antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-neutral-100 font-sans'>
         <ThemeProvider
           attribute='class'
           defaultTheme='light'

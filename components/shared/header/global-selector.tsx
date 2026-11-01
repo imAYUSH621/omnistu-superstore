@@ -74,13 +74,13 @@ export default function GlobalSelector() {
       >
         <span className='text-sm leading-none'>{currentFlag}</span>
         <span className='leading-none tracking-tight'>{selectedLang}</span>
-        <span className='text-[11px] text-[#febd69] font-normal ml-0.5'>{currCfg.code}</span>
+        <span className='text-[11px] text-[#4f46e5] font-normal ml-0.5'>{currCfg.code}</span>
         <ChevronDown className='w-3 h-3 text-[#a7acb2]' />
       </button>
 
       {/* Popover Menu */}
       {isOpen && (
-        <div className='absolute right-0 top-full mt-1 w-72 bg-white dark:bg-[#1a202c] text-[#0F1111] dark:text-white rounded-sm shadow-2xl border border-neutral-200 dark:border-neutral-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-100'>
+        <div className='absolute right-0 top-full mt-1 w-72 bg-white dark:bg-[#1a202c] text-[#0f172a] dark:text-white rounded-sm shadow-2xl border border-neutral-200 dark:border-neutral-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-100'>
           {/* Language Section */}
           <div className='border-b border-neutral-200 dark:border-neutral-700 pb-2.5 mb-2.5'>
             <div className='flex items-center gap-1.5 mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>

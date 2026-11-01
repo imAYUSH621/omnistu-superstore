@@ -76,7 +76,7 @@ const SearchPage = async (props: {
   const featuredDeals = await getFeaturedProducts();
 
   return (
-    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-4 space-y-4 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-4 space-y-4 font-sans'>
       {/* 1. Top "Narrow your search" Horizontal Category Chips */}
       <SearchNarrowChips />
 

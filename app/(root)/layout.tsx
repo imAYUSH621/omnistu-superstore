@@ -9,13 +9,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className='flex min-h-screen flex-col w-full bg-[#eaeded] dark:bg-[#0f1111]'>
+    <div className='flex min-h-screen flex-col w-full bg-slate-50 dark:bg-slate-950'>
       <Header />
       <main className='flex-1 w-full'>{children}</main>
       <Footer />
       <CartDrawer />
       <AiConcierge />
-      <script src='/assets/js/amazon-client-core.js' defer />
     </div>
   );
 }
