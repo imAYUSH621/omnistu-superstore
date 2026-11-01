@@ -4,6 +4,7 @@ import CategoryDrawer from './category-drawer';
 import Search from './search';
 import { MapPin, Sparkles } from 'lucide-react';
 import T from '@/components/shared/i18n-text';
+import SiteSwitch from './site-switch';
 
 const Header = () => {
   return (
@@ -42,6 +43,8 @@ const Header = () => {
           </div>
         </div>
 
+        <SiteSwitch className='hidden md:inline-grid shrink-0' />
+
         {/* Center: 3-Piece Rectangular Amazon Search Bar */}
         <div className='hidden md:flex flex-1 justify-center max-w-3xl mx-2'>
           <Search />
@@ -54,7 +57,8 @@ const Header = () => {
       </div>
 
       {/* Mobile Search Bar Row */}
-      <div className='md:hidden px-3 pb-2 pt-1 bg-[#1e293b]'>
+      <div className='md:hidden px-3 pb-2 pt-1 bg-[#1e293b] space-y-2'>
+        <SiteSwitch className='grid w-full' />
         <Search />
       </div>
 

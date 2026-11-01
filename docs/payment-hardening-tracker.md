@@ -26,3 +26,7 @@ Status words: DONE-LOCAL = merged + tested locally (unit and/or disposable Postg
 
 ## SQL candidate caveats (local only, not applied)
 Advisory-lock attempt limit proven under 40 parallel sessions; per-order lockout by anyone who knows an id; attempt-table growth until 15-min purge; knowledge-only auth; SECURITY DEFINER = privilege containment only; rollbacks re-open broad access by design (emergency only).
+
+## 1 Nov 2026 (late): database readiness and Products/Services header
+- /api/health now classifies the DB (ok / not_configured / down / schema_incomplete); verified locally on real Postgres (5 scenarios). Production status is "no DATABASE_URL configured" (see docs/database-setup.md). Local-tested; live-unverified.
+- Header: Products | Services switch (sliding pill) + /services holding page (empty catalog, no invented offerings, noindex while empty). Category naming replaces "Department" in the search picker, drawer, sidebar and i18n. Scaffold: the real service list is not supplied.
