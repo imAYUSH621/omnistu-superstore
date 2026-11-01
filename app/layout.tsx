@@ -22,6 +22,11 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <head>
         <link rel='icon' href='/images/logo.svg' />
+        {/* Pre-hydration form-focus guard: hides the fixed AI concierge
+            launcher (globals.css) while any external form control has focus.
+            Plain static script - must run before hydration. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- must execute synchronously pre-hydration */}
+        <script src='/form-focus-guard.js' />
       </head>
       <body className='antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-neutral-100 font-sans'>
         <ThemeProvider

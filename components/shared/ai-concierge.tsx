@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -15,29 +15,6 @@ export default function AiConcierge() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
-  // The fixed launcher used to float over form controls near the bottom of
-  // short/mobile viewports (seen covering the return-request textarea).
-  // Hide it while any editable element has focus; restore on blur.
-  const [formFocused, setFormFocused] = useState(false);
-  useEffect(() => {
-    const isEditable = (t: EventTarget | null) =>
-      t instanceof HTMLElement &&
-      (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-    const onFocusIn = (e: FocusEvent) => {
-      if (!isEditable(e.target)) return;
-      // Ignore focus inside the concierge itself - its own chat input must
-      // not hide the launcher's Close control.
-      if (rootRef.current && rootRef.current.contains(e.target as Node)) return;
-      setFormFocused(true);
-    };
-    const onFocusOut = (e: FocusEvent) => { if (isEditable(e.target)) setFormFocused(false); };
-    document.addEventListener('focusin', onFocusIn);
-    document.addEventListener('focusout', onFocusOut);
-    return () => {
-      document.removeEventListener('focusin', onFocusIn);
-      document.removeEventListener('focusout', onFocusOut);
-    };
-  }, []);
   const endRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -83,19 +60,16 @@ export default function AiConcierge() {
   }
 
   return (
-    <div ref={rootRef}>
-      {/* Floating Trigger Button - unmounted while an external form control
-          has focus so it cannot cover inputs on short viewports */}
-      {!formFocused && (
+    <div ref={rootRef} data-ai-concierge>
+      {/* Floating Trigger Button */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close shopping assistant' : 'Open 24/7 shopping assistant'}
-        className="fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans"
+        className="ai-concierge-launcher fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans"
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
         <span className="text-[13px] font-bold">{open ? 'Close Assistant' : 'AI Assistant'}</span>
       </button>
-      )}
 
       {/* Slideout Chat Modal */}
       {open && (
