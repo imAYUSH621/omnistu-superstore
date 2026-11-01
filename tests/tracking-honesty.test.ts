@@ -64,3 +64,12 @@ describe('shipping badge honesty (D19)', () => {
     expect(shippingBadgeState({ isDelivered: true, dispatchStatus: 'DISPATCHED', trackingNumber: 'T1' })).toBe('delivered');
   });
 });
+
+describe('/track page shows no simulated status (source check)', () => {
+  it('has no invented carrier, tracking number or delivery estimate', () => {
+    const src = require('fs').readFileSync('app/(root)/track/page.tsx', 'utf8');
+    for (const bad of [/Math\.random/, /IN_TRANSIT/, /USPS/, /92055901649173/, /estimatedDelivery/, /setTimeout/]) {
+      expect(src).not.toMatch(bad);
+    }
+  });
+});

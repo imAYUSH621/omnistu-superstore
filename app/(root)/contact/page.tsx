@@ -61,7 +61,7 @@ export default function ContactPage() {
         >
           <Package className='w-5 h-5 text-amber-500' />
           <h2 className='font-semibold text-sm'>Track an order</h2>
-          <p className='text-xs text-muted-foreground'>Check the status of a demo order.</p>
+          <p className='text-xs text-muted-foreground'>See where to find your order status.</p>
         </Link>
       </div>
 

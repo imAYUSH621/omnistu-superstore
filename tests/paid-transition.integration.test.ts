@@ -52,6 +52,17 @@ maybe('paid transition on REAL Postgres (sandbox, disposable)', () => {
     if (DB) {
       psql(`DROP TRIGGER IF EXISTS pt_fail_stock_trg ON "Product"`);
       psql(`DROP FUNCTION IF EXISTS pt_fail_stock()`);
+      // Remove this run's own rows so reruns on the same disposable DB stay isolated
+      // (reconciliation reads the oldest 200 paid orders).
+      try {
+        psql(`DELETE FROM "FulfillmentTask" WHERE "orderId" IN (SELECT id FROM "Order" WHERE "userId" = '${userId}');
+DELETE FROM "OrderItem" WHERE "orderId" IN (SELECT id FROM "Order" WHERE "userId" = '${userId}');
+DELETE FROM "Order" WHERE "userId" = '${userId}';
+DELETE FROM "Product" WHERE slug LIKE 'pt-${suffix}-%';
+DELETE FROM "User" WHERE id = '${userId}';`);
+      } catch (e) {
+        console.warn('paid-transition test cleanup skipped:', (e as Error).message.slice(0, 120));
+      }
     }
     await prisma.$disconnect();
   }, 30000);
