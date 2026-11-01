@@ -1,57 +1,50 @@
 import { CheckCircle2, Clock, PackageCheck, Truck, Home } from 'lucide-react';
+import { buildOrderTrackingView } from '@/lib/tracking';
 
 interface OrderTrackingProps {
   orderId: string;
   isPaid?: boolean;
   isDelivered?: boolean;
   createdAt?: Date | string;
+  dispatchStatus?: string | null;
+  trackingNumber?: string | null;
+  trackingCarrier?: string | null;
+  dispatchedAt?: Date | string | null;
 }
 
-export default function OrderTrackingStepper({
-  orderId,
-  isPaid = true,
-  isDelivered = false,
-  createdAt,
-}: OrderTrackingProps) {
-  // Format formatted Amazon-style order ID if it's a UUID
+export default function OrderTrackingStepper(props: OrderTrackingProps) {
+  const { orderId, isPaid = true, isDelivered = false } = props;
+  // Format the order ID for display if it's a UUID
   const formattedId = orderId.length > 15
     ? `#114-${orderId.slice(0, 7)}-${orderId.slice(-7)}`
     : `#114-${orderId}`;
 
-  const steps = [
-    {
-      title: 'Order Placed',
-      desc: createdAt ? `Confirmed (${new Date(createdAt).toLocaleDateString()})` : isPaid ? 'Payment Confirmed' : 'Payment Pending',
-      completed: true,
-      icon: CheckCircle2,
-    },
-    {
-      title: 'Processing',
-      desc: 'Assigned to Fulfillment',
-      completed: isPaid,
-      icon: PackageCheck,
-    },
-    {
-      title: 'Shipped',
-      desc: isDelivered ? 'Carrier Transit Complete' : 'In Transit via Express',
-      completed: isPaid && isDelivered,
-      icon: Truck,
-    },
-    {
-      title: 'Delivered',
-      desc: isDelivered ? 'Package Delivered' : 'Estimated Tomorrow by 8 PM',
-      completed: isDelivered,
-      icon: Home,
-    },
-  ];
+  const view = buildOrderTrackingView({
+    isPaid,
+    isDelivered,
+    createdAt: props.createdAt,
+    dispatchStatus: props.dispatchStatus,
+    trackingNumber: props.trackingNumber,
+    trackingCarrier: props.trackingCarrier,
+    dispatchedAt: props.dispatchedAt,
+  });
+
+  const icons = [CheckCircle2, PackageCheck, Truck, Home];
+  const fillWidth =
+    view.progress === 'delivered'
+      ? 'calc(100% - 4rem)'
+      : view.progress === 'shipped'
+        ? 'calc(66% - 2rem)'
+        : view.progress === 'processing'
+          ? '33%'
+          : '15%';
 
   return (
     <div className='p-6 rounded-2xl bg-card border border-neutral-200 dark:border-neutral-800 shadow-sm space-y-6'>
-      {/* Header Banner */}
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800'>
         <div>
           <span className='text-xs uppercase tracking-wider text-muted-foreground font-semibold'>
-            Order Telemetry
+            Order Status
           </span>
           <h3 className='text-lg font-bold text-foreground'>
             Order ID: <span className='text-emerald-600 font-mono'>{formattedId}</span>
@@ -59,19 +52,16 @@ export default function OrderTrackingStepper({
         </div>
       </div>
 
-      {/* 4-Step Stepper Line */}
       <div className='relative py-4'>
-        {/* Background Connecting Line */}
         <div className='absolute top-9 left-8 right-8 h-1 bg-neutral-200 dark:bg-neutral-800 -translate-y-1/2 z-0' />
-        {/* Progress Fill Line */}
         <div
           className='absolute top-9 left-8 h-1 bg-emerald-600 -translate-y-1/2 transition-all duration-500 z-0'
-          style={{ width: isDelivered ? 'calc(100% - 4rem)' : isPaid ? '50%' : '15%' }}
+          style={{ width: fillWidth }}
         />
 
         <div className='grid grid-cols-4 relative z-10 text-center gap-2'>
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
+          {view.steps.map((step, idx) => {
+            const Icon = icons[idx];
             return (
               <div key={idx} className='flex flex-col items-center space-y-2'>
                 <div
@@ -93,23 +83,14 @@ export default function OrderTrackingStepper({
         </div>
       </div>
 
-      {/* Delivery Status Card */}
       <div className='bg-neutral-50 dark:bg-neutral-900/60 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs'>
         <div className='space-y-0.5'>
           <p className='font-semibold text-foreground flex items-center gap-1.5'>
             <Clock className='w-3.5 h-3.5 text-amber-500' />
-            Carrier Status: In Transit
+            Carrier Status: {view.carrierStatus}
           </p>
-          <p className='text-muted-foreground'>
-            Dispatched via <strong className='text-foreground'>Omnistu Express Priority (Tracking #OMN-98421094)</strong>
-          </p>
+          <p className='text-muted-foreground'>{view.carrierDetail}</p>
         </div>
-        <button
-          type='button'
-          className='px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 transition font-medium text-foreground'
-        >
-          Live Map Tracking &rarr;
-        </button>
       </div>
     </div>
   );

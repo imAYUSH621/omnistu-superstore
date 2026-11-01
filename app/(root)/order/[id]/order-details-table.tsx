@@ -55,6 +55,10 @@ const OrderDetailsTable = ({
     isPaid,
     paidAt,
     deliveredAt,
+    dispatchStatus,
+    trackingNumber,
+    trackingCarrier,
+    dispatchedAt,
   } = order;
 
   const { toast } = useToast();
@@ -148,6 +152,10 @@ const OrderDetailsTable = ({
         orderId={id}
         isPaid={isPaid}
         isDelivered={isDelivered}
+        dispatchStatus={dispatchStatus}
+        trackingNumber={trackingNumber}
+        trackingCarrier={trackingCarrier}
+        dispatchedAt={dispatchedAt}
       />
 
       <div className='grid md:grid-cols-3 md:gap-5'>
