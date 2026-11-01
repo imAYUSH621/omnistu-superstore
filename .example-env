@@ -1,26 +1,70 @@
-NEXT_PUBLIC_APP_NAME = "Prostore"
-NEXT_PUBLIC_APP_DESCRIPTION = "A modern ecommerce store built with Next.js"
-NEXT_PUBLIC_SERVER_URL = "http://localhost:3000"
+# Omnistu Super Store - environment template (D14: covers all 43 code-referenced vars)
+# Copy to .env for local dev. Never commit real values.
+# Only DATABASE_URL + an auth secret are required to boot; every other integration
+# degrades gracefully when its keys are absent (build passes with no keys set).
 
-DATABASE_URL=""
+# --- App ---
+NEXT_PUBLIC_APP_NAME="Omnistu Super Store"
+NEXT_PUBLIC_APP_DESCRIPTION="Multi-supplier dropshipping superstore"
+NEXT_PUBLIC_SERVER_URL="http://localhost:3000"
+PAGE_SIZE="12"                 # products per listing page
+LATEST_PRODUCTS_LIMIT="4"      # homepage latest-products count
+USER_ROLES="admin, user"       # comma+space separated
 
-NEXTAUTH_SECRET=""
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_URL_INTERNAL=http://localhost:3000
+# --- Database (Prisma + Neon serverless adapter) ---
+DATABASE_URL=""                # postgres connection string (Neon free tier works)
 
+# --- Auth (NextAuth v5 reads AUTH_SECRET; NEXTAUTH_* kept for compatibility) ---
+AUTH_SECRET=""                 # openssl rand -base64 32
+NEXTAUTH_SECRET=""             # fallback if AUTH_SECRET unset
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL_INTERNAL="http://localhost:3000"
+
+# --- Payments ---
 PAYMENT_METHODS="PayPal, Stripe, CashOnDelivery"
 DEFAULT_PAYMENT_METHOD="PayPal"
-
-PAYPAL_API_URL="https://api-m.sandbox.paypal.com"
+PAYPAL_API_URL="https://api-m.sandbox.paypal.com"  # remove .sandbox for live
 PAYPAL_CLIENT_ID=""
 PAYPAL_APP_SECRET=""
-
-UPLOADTHING_TOKEN=''
-UPLOADTHING_SECRET=""
-UPLOADTHING_APPID=""
-
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
 STRIPE_SECRET_KEY=""
+STRIPE_WEBHOOK_SECRET=""
 
+# --- Suppliers (dispatch adapters; missing key = SIMULATED mode, clearly labeled) ---
+CJ_API_KEY=""                  # CJ Dropshipping (free developer key)
+FULFILLMENT_API_KEY=""         # legacy alias for CJ_API_KEY
+PRINTIFY_API=""                # Printify token (primary name used by fulfillment route)
+PRINTIFY_API_TOKEN=""          # alias used by the Printify adapter
+PRINTIFY_TOKEN=""              # legacy alias
+PRINTIFY_SHOP_ID=""
+BLANKA_API_KEY=""
+TRENDSI_API_KEY=""
+BRANDSGATEWAY_API_KEY=""
+
+# --- Email (Resend; order confirmations skip cleanly when unset) ---
 RESEND_API_KEY=""
 SENDER_EMAIL="onboarding@resend.dev"
+
+# --- AI concierge (503s until one provider key is set) ---
+LLM_PROVIDER="groq"            # groq | nvidia
+GROQ_API_KEY=""
+NVIDIA_API_KEY=""
+
+# --- Supabase order sync (optional off-DB ledger; reports unconfigured honestly) ---
+SUPABASE_URL=""
+SUPABASE_ANON_KEY=""
+SUPABASE_SERVICE_ROLE_KEY=""
+NEXT_PUBLIC_SUPABASE_URL=""
+NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+
+# --- Currency (static fallbacks; live rates fetched when EXCHANGE_RATES_JSON unset) ---
+USD_TO_INR="83.0"
+USD_TO_EUR="0.92"
+USD_TO_GBP="0.79"
+USD_TO_AUD="1.52"
+USD_TO_CAD="1.36"
+USD_TO_JPY="149.0"
+EXCHANGE_RATES_JSON=""         # optional JSON object overriding all USD_TO_* rates
+
+# --- Crypto (PII field encryption) ---
+ENCRYPTION_KEY=""              # 32-byte key for lib/encrypt.ts
