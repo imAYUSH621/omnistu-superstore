@@ -117,15 +117,26 @@ export async function lookupOrder(text: string): Promise<string> {
     return 'ORDER LOOKUP: Too many lookup attempts for that order. Tell the customer our support team will follow up at their email.';
   }
 
+  const base = url.replace(/\/+$/, '');
+  const headers = { apikey: key, Authorization: `Bearer ${key}` };
   try {
-    const res = await fetch(`${url.replace(/\/+$/, '')}/rest/v1/orders?${buildOrderLookupQuery(orderNo, email)}`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    // Preferred: a narrow database function (JSON body, fixed columns, exact match) that lets the
+    // table itself stay closed to the anon role. Falls back to the exact-match table query only
+    // when the function does not exist yet (404), so the code is safe to ship before the DB change.
+    const rpc = await fetch(`${base}/rest/v1/rpc/lookup_order`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_order_id: orderNo, p_email: email }),
     });
-    if (res.ok) {
-      const rows = (await res.json()) as Record<string, unknown>[];
-      if (rows && rows.length > 0) {
-        return `ORDER LOOKUP RESULT (verified): ${JSON.stringify(rows[0])}`;
-      }
+    let rows: Record<string, unknown>[] | null = null;
+    if (rpc.ok) {
+      rows = (await rpc.json()) as Record<string, unknown>[];
+    } else if (rpc.status === 404) {
+      const res = await fetch(`${base}/rest/v1/orders?${buildOrderLookupQuery(orderNo, email)}`, { headers });
+      if (res.ok) rows = (await res.json()) as Record<string, unknown>[];
+    }
+    if (rows && rows.length > 0) {
+      return `ORDER LOOKUP RESULT (verified): ${JSON.stringify(rows[0])}`;
     }
   } catch {
     // fall through to the no-match message

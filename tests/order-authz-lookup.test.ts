@@ -133,3 +133,43 @@ describe('chat order lookup', () => {
     process.env = saved;
   });
 });
+
+describe('chat order lookup: rpc first, table fallback only on 404', () => {
+  const env = () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  };
+  it('posts a JSON body to rpc/lookup_order and returns the row', async () => {
+    env();
+    const f = jest.fn(async () => ({ ok: true, status: 200, json: async () => [{ order_id: 'OMN-RPC-1', status: 'PAID' }] }));
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const r = await lookupOrder('order OMN-RPC-1 for r@z.co');
+    const [u, init] = f.mock.calls[0] as unknown as [string, { method: string; body: string }];
+    expect(u).toBe('https://example.supabase.co/rest/v1/rpc/lookup_order');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ p_order_id: 'OMN-RPC-1', p_email: 'r@z.co' });
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(r).toMatch(/OMN-RPC-1/);
+  });
+  it('falls back to the exact-match table query when the function is missing (404)', async () => {
+    env();
+    const f = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [{ order_id: 'OMN-RPC-2' }] });
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const r = await lookupOrder('order OMN-RPC-2 for r@z.co');
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(String((f.mock.calls[1] as unknown[])[0])).toMatch(/\/rest\/v1\/orders\?.*order_id=eq\.OMN-RPC-2/);
+    expect(r).toMatch(/OMN-RPC-2/);
+  });
+  it('does NOT fall back on other errors (e.g. 401/500) and reports no match', async () => {
+    env();
+    const f = jest.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }));
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const r = await lookupOrder('order OMN-RPC-3 for r@z.co');
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(r).toMatch(/No matching order/);
+  });
+});
