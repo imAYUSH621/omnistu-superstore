@@ -9,37 +9,37 @@ const TOP_CARDS = [
   {
     id: 'card-1',
     title: 'Shop kitchen must-haves',
-    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&auto=format&fit=crop&q=85',
+    image: '/images/sample-products/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg',
     url: '/s?k=kitchen%20must-haves',
   },
   {
     id: 'card-2',
     title: 'Shop all things beauty',
-    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&auto=format&fit=crop&q=85',
+    image: '/images/tiles/shop-all-things-beauty.svg',
     url: '/s?k=beauty',
   },
   {
     id: 'card-3',
     title: 'Start looking sharp',
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&auto=format&fit=crop&q=85',
+    image: '/images/tiles/start-looking-sharp.svg',
     url: '/s?k=fashion%20clothing',
   },
   {
     id: 'card-4',
     title: 'Royal Gourmet & Indian Food',
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&auto=format&fit=crop&q=85',
+    image: '/images/sample-products/artisan-indian-spice-box-kit-7-whole-organic-spices-green-cardamom-sta-1.jpg',
     url: '/s?k=indian%20food',
   },
   {
     id: 'card-5',
     title: 'Level up your Tech & PC',
-    image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=600&auto=format&fit=crop&q=85',
+    image: '/images/tiles/level-up-your-tech-pc.svg',
     url: '/s?k=electronics',
   },
   {
     id: 'card-6',
     title: 'Luxury Watches & Jewelry',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=85',
+    image: '/images/sample-products/p6-1.jpg',
     url: '/s?k=jewelry',
   },
 ];

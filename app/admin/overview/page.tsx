@@ -154,7 +154,7 @@ const AdminOverviewPage = async () => {
                     <TableCell className='text-right'>
                       <Link
                         href={`/order/${order.id}`}
-                        className='text-[#007185] hover:underline font-semibold'
+                        className='text-[#4f46e5] hover:underline font-semibold'
                       >
                         Details
                       </Link>

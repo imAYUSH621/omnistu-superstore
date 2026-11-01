@@ -1,11 +1,7 @@
-import AmazonPageRenderer from '@/components/shared/amazon/amazon-page-renderer';
-import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Omnistu Superstore Checkout',
-  description: 'Secure checkout and order placement.',
-};
-
+// The scraped Amazon checkout page was removed (D2 trade-dress cleanup).
+// The real checkout flow lives at /place-order.
 export default function CheckoutPage() {
-  return <AmazonPageRenderer pageFile="06_checkout_page.html" />;
+  redirect('/place-order');
 }

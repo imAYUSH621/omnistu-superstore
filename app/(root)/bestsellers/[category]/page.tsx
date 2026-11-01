@@ -130,10 +130,10 @@ export default async function BestSellersCategoryPage(props: {
       : LEADERBOARD_ITEMS.filter((i) => i.catSlug === category);
 
   return (
-    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-6 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-6 font-sans'>
       {/* Breadcrumb Header */}
       <div className='border-b border-[#e7e7e7] dark:border-neutral-800 pb-4 mb-6'>
-        <h1 className='text-2xl md:text-3xl font-bold text-[#0f1111] dark:text-white'>
+        <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
           Amazon Best Sellers
         </h1>
         <p className='text-[13px] text-[#565959] dark:text-neutral-400 mt-1'>
@@ -144,7 +144,7 @@ export default async function BestSellersCategoryPage(props: {
       <div className='flex flex-col md:flex-row gap-8 items-start'>
         {/* Left Category Navigation */}
         <div className='w-full md:w-56 flex-shrink-0 bg-white dark:bg-[#1a202c] p-4 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
-          <h3 className='font-bold text-[14px] text-[#0f1111] dark:text-white mb-2'>
+          <h3 className='font-bold text-[14px] text-[#0f172a] dark:text-white mb-2'>
             Any Department
           </h3>
           <ul className='space-y-1.5 text-[13px]'>
@@ -154,7 +154,7 @@ export default async function BestSellersCategoryPage(props: {
                 className={`block py-1 px-2 rounded hover:text-[#c7511f] ${
                   category === 'toys-and-games'
                     ? 'font-bold text-[#c7511f] bg-neutral-100 dark:bg-neutral-800'
-                    : 'text-[#007185] dark:text-[#56b6c2]'
+                    : 'text-[#4f46e5] dark:text-[#56b6c2]'
                 }`}
               >
                 Toys & Games
@@ -166,7 +166,7 @@ export default async function BestSellersCategoryPage(props: {
                 className={`block py-1 px-2 rounded hover:text-[#c7511f] ${
                   category === 'apparel'
                     ? 'font-bold text-[#c7511f] bg-neutral-100 dark:bg-neutral-800'
-                    : 'text-[#007185] dark:text-[#56b6c2]'
+                    : 'text-[#4f46e5] dark:text-[#56b6c2]'
                 }`}
               >
                 Apparel & Merch
@@ -178,7 +178,7 @@ export default async function BestSellersCategoryPage(props: {
                 className={`block py-1 px-2 rounded hover:text-[#c7511f] ${
                   category === 'electronics'
                     ? 'font-bold text-[#c7511f] bg-neutral-100 dark:bg-neutral-800'
-                    : 'text-[#007185] dark:text-[#56b6c2]'
+                    : 'text-[#4f46e5] dark:text-[#56b6c2]'
                 }`}
               >
                 Electronics & Gadgets
@@ -190,7 +190,7 @@ export default async function BestSellersCategoryPage(props: {
                 className={`block py-1 px-2 rounded hover:text-[#c7511f] ${
                   category === 'home'
                     ? 'font-bold text-[#c7511f] bg-neutral-100 dark:bg-neutral-800'
-                    : 'text-[#007185] dark:text-[#56b6c2]'
+                    : 'text-[#4f46e5] dark:text-[#56b6c2]'
                 }`}
               >
                 Home & Kitchen
@@ -202,7 +202,7 @@ export default async function BestSellersCategoryPage(props: {
         {/* Right Leaderboard Grid */}
         <div className='flex-1 w-full bg-white dark:bg-[#1a202c] p-6 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
           <div className='flex items-center justify-between border-b border-[#e7e7e7] dark:border-neutral-800 pb-3 mb-6'>
-            <h2 className='text-lg font-bold text-[#0f1111] dark:text-white'>
+            <h2 className='text-lg font-bold text-[#0f172a] dark:text-white'>
               Best Sellers in {currentCatName}
             </h2>
             <span className='text-xs text-[#565959] dark:text-neutral-400'>
@@ -241,7 +241,7 @@ export default async function BestSellersCategoryPage(props: {
                   <div>
                     <Link
                       href={`/product/${item.slug}`}
-                      className='text-[14px] text-[#0f1111] dark:text-neutral-200 hover:text-[#c7511f] font-normal line-clamp-2 leading-snug mb-1.5'
+                      className='text-[14px] text-[#0f172a] dark:text-neutral-200 hover:text-[#c7511f] font-normal line-clamp-2 leading-snug mb-1.5'
                     >
                       {item.name}
                     </Link>
@@ -256,13 +256,13 @@ export default async function BestSellersCategoryPage(props: {
                           />
                         ))}
                       </div>
-                      <span className='text-xs text-[#007185] dark:text-[#56b6c2]'>
+                      <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
                         {item.reviews.toLocaleString()}
                       </span>
                     </div>
 
                     {/* Price */}
-                    <div className='text-lg font-bold text-[#0f1111] dark:text-white mb-1'>
+                    <div className='text-lg font-bold text-[#0f172a] dark:text-white mb-1'>
                       {item.price}
                     </div>
 
@@ -277,7 +277,7 @@ export default async function BestSellersCategoryPage(props: {
 
                   <Link
                     href={`/product/${item.slug}`}
-                    className='mt-4 block w-full py-1.5 text-center text-xs font-bold bg-[#ffd814] hover:bg-[#f7ca00] active:bg-[#f0b800] border border-[#fcd200] rounded-full text-[#0f1111] shadow-[0_2px_5px_rgba(213,217,217,0.5)] transition'
+                    className='mt-4 block w-full py-1.5 text-center text-xs font-bold bg-[#4f46e5] hover:bg-[#4338ca] active:bg-[#f0b800] border border-[#fcd200] rounded-full text-[#0f172a] shadow-[0_2px_5px_rgba(213,217,217,0.5)] transition'
                   >
                     View Details & Buy Box
                   </Link>

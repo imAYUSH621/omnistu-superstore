@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ShippingPolicyPage() {
   return (
-    <div className='w-full min-h-screen bg-[#eaeded] dark:bg-[#0f1111] py-8 px-4 sm:px-6 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
         {/* Header */}
         <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>

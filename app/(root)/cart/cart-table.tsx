@@ -131,7 +131,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
   const isEmpty = !cart || cart.items.length === 0;
 
   return (
-    <div className='bg-[#eaeded] dark:bg-[#0f1111] min-h-screen py-6 px-4 md:px-8'>
+    <div className='bg-[#f8fafc] dark:bg-[#0f172a] min-h-screen py-6 px-4 md:px-8'>
       <div className='max-w-[1520px] mx-auto'>
         {isEmpty ? (
           /* ========================================================
@@ -146,7 +146,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                     <ShoppingCart className='w-12 h-12' />
                   </div>
                   <div className='space-y-3 text-center sm:text-left'>
-                    <h1 className='text-2xl md:text-3xl font-bold text-[#0f1111] dark:text-white'>
+                    <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
                       Your Omnistu Cart is empty
                     </h1>
                     <p className='text-sm text-neutral-600 dark:text-neutral-400 max-w-xl leading-relaxed'>
@@ -155,7 +155,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                     </p>
                     <div className='flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2'>
                       <Link href='/search?sort=deals'>
-                        <Button className='bg-[#FFD814] hover:bg-[#F7CA00] text-neutral-900 font-bold px-6 h-10 rounded-full shadow-sm'>
+                        <Button className='bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold px-6 h-10 rounded-full shadow-sm'>
                           Shop Today&apos;s Deals
                         </Button>
                       </Link>
@@ -178,7 +178,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
               {/* Right 1 Col: Direct Assurance Sidebar */}
               <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
-                <h3 className='font-bold text-sm text-[#0f1111] dark:text-white flex items-center gap-1.5'>
+                <h3 className='font-bold text-sm text-[#0f172a] dark:text-white flex items-center gap-1.5'>
                   <Sparkles className='w-4 h-4 text-amber-500' /> Omnistu Direct Benefits
                 </h3>
                 <ul className='space-y-3 text-xs text-neutral-600 dark:text-neutral-300'>
@@ -200,7 +200,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
             {/* Recommended Products Carousel Shelf */}
             <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none'>
-              <h2 className='text-lg md:text-xl font-bold text-[#0f1111] dark:text-white mb-4'>
+              <h2 className='text-lg md:text-xl font-bold text-[#0f172a] dark:text-white mb-4'>
                 Customers who viewed items in your browsing history also bought
               </h2>
               <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
@@ -220,7 +220,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                             className='object-cover hover:scale-105 transition-transform duration-200'
                           />
                         </div>
-                        <h4 className='text-xs font-semibold text-[#0f1111] dark:text-neutral-200 line-clamp-2 hover:text-[#c7511f] leading-snug'>
+                        <h4 className='text-xs font-semibold text-[#0f172a] dark:text-neutral-200 line-clamp-2 hover:text-[#c7511f] leading-snug'>
                           {item.name}
                         </h4>
                       </Link>
@@ -228,7 +228,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                         <span>★ {item.rating}</span>
                         <span className='text-neutral-400'>({item.numReviews})</span>
                       </div>
-                      <div className='text-sm font-bold text-[#0f1111] dark:text-white mt-1'>
+                      <div className='text-sm font-bold text-[#0f172a] dark:text-white mt-1'>
                         ${item.price}
                       </div>
                     </div>
@@ -236,7 +236,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                     <Link href={`/product/${item.slug}`} className='mt-3'>
                       <Button
                         size='sm'
-                        className='w-full bg-[#FFD814] hover:bg-[#F7CA00] text-neutral-900 font-bold text-xs h-8 rounded-full'
+                        className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold text-xs h-8 rounded-full'
                       >
                         View Product
                       </Button>
@@ -254,7 +254,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
             {/* Left 3 Columns: Active Cart Items List */}
             <div className='lg:col-span-3 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
               <div className='flex items-baseline justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3'>
-                <h1 className='text-2xl md:text-3xl font-bold text-[#0f1111] dark:text-white'>
+                <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
                   Shopping Cart
                 </h1>
                 <span className='text-xs text-neutral-500 font-medium'>Price</span>
@@ -282,7 +282,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                     <div className='flex-1 space-y-1.5'>
                       <Link
                         href={`/product/${item.slug}`}
-                        className='font-bold text-sm md:text-base text-[#0f1111] dark:text-white hover:text-[#c7511f] line-clamp-2 leading-tight'
+                        className='font-bold text-sm md:text-base text-[#0f172a] dark:text-white hover:text-[#c7511f] line-clamp-2 leading-tight'
                       >
                         {item.name}
                       </Link>
@@ -305,7 +305,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                         <button
                           type='button'
                           onClick={() => removeItemFromCart(item.productId)}
-                          className='text-xs text-[#007185] hover:text-[#c7511f] hover:underline flex items-center gap-1'
+                          className='text-xs text-[#4f46e5] hover:text-[#c7511f] hover:underline flex items-center gap-1'
                         >
                           <Trash2 className='w-3.5 h-3.5' /> Delete
                         </button>
@@ -314,7 +314,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
                     {/* Price */}
                     <div className='text-right'>
-                      <div className='text-base md:text-lg font-bold text-[#0f1111] dark:text-white'>
+                      <div className='text-base md:text-lg font-bold text-[#0f172a] dark:text-white'>
                         ${item.price}
                       </div>
                     </div>
@@ -325,7 +325,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
               {/* Subtotal Bottom Bar */}
               <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 text-right text-base md:text-lg'>
                 Subtotal ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
-                <strong className='text-xl text-[#0f1111] dark:text-white font-extrabold'>
+                <strong className='text-xl text-[#0f172a] dark:text-white font-extrabold'>
                   {formatCurrency(cart.itemsPrice)}
                 </strong>
               </div>
@@ -340,7 +340,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
               <div className='text-lg font-medium'>
                 Subtotal ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
-                <span className='font-extrabold text-xl text-[#0f1111] dark:text-white block pt-1'>
+                <span className='font-extrabold text-xl text-[#0f172a] dark:text-white block pt-1'>
                   {formatCurrency(cart.itemsPrice)}
                 </span>
               </div>
@@ -353,7 +353,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
               </div>
 
               <Button
-                className='w-full bg-[#FFD814] hover:bg-[#F7CA00] text-neutral-900 font-bold h-11 rounded-full shadow-sm text-sm'
+                className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold h-11 rounded-full shadow-sm text-sm'
                 disabled={isPending}
                 onClick={() =>
                   startTransition(() => router.push('/shipping-address'))

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Homepage() {
   return (
-    <div className='w-full min-h-screen bg-[#eaeded] dark:bg-[#0f1111] pb-16 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-16 font-sans'>
       {/* 1. Authentic Top Row: 6 Single-Creative Category Cards with Navigation Paddles */}
       <TopCategoryCards />
 

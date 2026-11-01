@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         asin: body.asin || 'OMN-' + Date.now(),
         title: body.title || 'Product',
         price: body.price || '$19.99',
-        image: body.image || '/assets/images/nav-sprite-global-1x-reorg-privacy._CB779528203_.png',
+        image: body.image || '/images/products/placeholder.svg',
         quantity: body.quantity || 1,
       });
     }

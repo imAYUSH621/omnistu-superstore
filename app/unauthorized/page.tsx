@@ -13,7 +13,7 @@ export default function UnauthorizedPage() {
       <div className='w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 mb-2'>
         <ShieldAlert className='w-8 h-8' />
       </div>
-      <h1 className='text-2xl md:text-3xl font-extrabold text-[#0f1111] dark:text-white'>
+      <h1 className='text-2xl md:text-3xl font-extrabold text-[#0f172a] dark:text-white'>
         Admin Authentication Required
       </h1>
       <p className='text-sm text-neutral-600 dark:text-neutral-400 max-w-md leading-relaxed'>
@@ -22,7 +22,7 @@ export default function UnauthorizedPage() {
 
       <div className='flex flex-wrap items-center justify-center gap-3 pt-2'>
         <Link href='/sign-in?callbackUrl=/admin'>
-          <Button className='bg-[#FFD814] hover:bg-[#F7CA00] text-neutral-900 font-bold px-6 h-11 rounded-full shadow-sm'>
+          <Button className='bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold px-6 h-11 rounded-full shadow-sm'>
             Sign In to Admin Hub
           </Button>
         </Link>

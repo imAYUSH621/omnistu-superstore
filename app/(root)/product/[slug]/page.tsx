@@ -23,7 +23,7 @@ const ProductDetailsPage = async (props: {
   const cart = await getMyCart();
 
   return (
-    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-6 space-y-8 font-["Amazon_Ember",Arial,sans-serif]'>
+    <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-6 space-y-8 font-sans'>
       {/* Breadcrumb Navigation */}
       <nav className='flex items-center gap-1.5 text-xs text-muted-foreground'>
         <Link href='/' className='hover:text-foreground transition'>
@@ -54,7 +54,7 @@ const ProductDetailsPage = async (props: {
           <div className='lg:col-span-4 space-y-5 bg-white dark:bg-[#1a202c] p-6 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
             {/* Best Seller Ribbon & Category */}
             <div className='flex items-center gap-2'>
-              <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-[#ff9900] text-neutral-900 px-2 py-0.5 rounded-sm shadow-xs'>
+              <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-[#4f46e5] text-neutral-900 px-2 py-0.5 rounded-sm shadow-xs'>
                 <Award className='w-3.5 h-3.5' /> #1 Best Seller
               </span>
               <span className='text-xs text-muted-foreground'>
@@ -70,7 +70,7 @@ const ProductDetailsPage = async (props: {
             {/* Brand Link */}
             <p className='text-xs text-muted-foreground'>
               Brand:{' '}
-              <span className='text-[#007185] dark:text-[#56b6c2] font-semibold hover:underline cursor-pointer'>
+              <span className='text-[#4f46e5] dark:text-[#56b6c2] font-semibold hover:underline cursor-pointer'>
                 {product.brand}
               </span>
             </p>
@@ -83,7 +83,7 @@ const ProductDetailsPage = async (props: {
                   {product.rating}
                 </span>
               </div>
-              <span className='text-xs text-[#007185] dark:text-[#56b6c2]'>
+              <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
                 {product.numReviews.toLocaleString()} ratings & reviews
               </span>
             </div>

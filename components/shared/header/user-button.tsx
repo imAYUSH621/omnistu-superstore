@@ -47,10 +47,10 @@ const UserButton = async () => {
           </span>
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className='w-56 font-["Amazon_Ember",Arial,sans-serif]' align='end' forceMount>
+      <DropdownMenuContent className='w-56 font-sans' align='end' forceMount>
         <DropdownMenuLabel className='font-normal py-2'>
           <div className='flex flex-col space-y-1'>
-            <div className='text-sm font-bold leading-none text-[#0f1111]'>
+            <div className='text-sm font-bold leading-none text-[#0f172a]'>
               {session.user?.name}
             </div>
             <div className='text-xs text-muted-foreground leading-none'>
