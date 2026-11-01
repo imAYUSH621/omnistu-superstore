@@ -82,3 +82,19 @@ export function buildOrderTrackingView(input: TrackingInput): TrackingView {
     hasTracking,
   };
 }
+
+export type ShippingBadgeState = 'delivered' | 'in_transit' | 'not_dispatched';
+
+/**
+ * Shipping-address card badge. 'In Transit' must only appear when the order
+ * actually dispatched; an undelivered order with no dispatch is NOT in transit.
+ */
+export function shippingBadgeState(input: {
+  isDelivered?: boolean | null;
+  dispatchStatus?: string | null;
+  trackingNumber?: string | null;
+}): ShippingBadgeState {
+  if (input.isDelivered) return 'delivered';
+  if (input.dispatchStatus === 'DISPATCHED' || input.trackingNumber) return 'in_transit';
+  return 'not_dispatched';
+}

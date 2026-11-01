@@ -1,5 +1,6 @@
 'use client';
 import { Badge } from '@/components/ui/badge';
+import { shippingBadgeState } from '@/lib/tracking';
 import { Card, CardContent } from '@/components/ui/card';
 import ReturnRequestButton from '@/components/shared/order/return-request-button';
 import {
@@ -186,13 +187,17 @@ const OrderDetailsTable = ({
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
                 {shippingAddress.postalCode}, {shippingAddress.country}
               </p>
-              {isDelivered ? (
+              {shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
                 <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
                   Delivered at {formatDateTime(deliveredAt!).dateTime}
                 </Badge>
-              ) : (
+              ) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'in_transit' ? (
                 <Badge variant='outline' className='text-amber-600 border-amber-400'>
-                  In Transit
+                  In Transit{trackingCarrier ? ` via ${trackingCarrier}` : ''}
+                </Badge>
+              ) : (
+                <Badge variant='outline' className='text-muted-foreground'>
+                  Not yet dispatched
                 </Badge>
               )}
             </CardContent>
