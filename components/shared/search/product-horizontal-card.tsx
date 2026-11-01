@@ -161,6 +161,11 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           {isFixture ? (
             <p className='mt-2.5 text-xs text-red-900' data-testid='fixture-card-cost'>
               <span className='font-bold'>Reference only</span> - supplier cost ${priceNum.toFixed(2)}, not a sale price
+              {Number((product as { variantCount?: number }).variantCount) > 1 && (
+                <span data-testid='fixture-variant-count'>
+                  {' '}| {(product as { variantCount?: number }).variantCount} supplier options{(product as { variantCostFrom?: string | null }).variantCostFrom ? `, lowest reference cost $${(product as { variantCostFrom?: string | null }).variantCostFrom}` : ''}
+                </span>
+              )}
             </p>
           ) : (
           <>
