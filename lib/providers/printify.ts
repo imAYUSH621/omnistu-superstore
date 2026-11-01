@@ -8,7 +8,7 @@ export interface PrintifyProductResult {
   slug: string;
   category: string;
   images: string[];
-  brand: string;
+  brand: string | null;
   description: string;
   price: string;
   msrp: string;
@@ -90,8 +90,8 @@ export async function getPrintifyProducts(limit = 12): Promise<PrintifyProductRe
         slug,
         category: 'Apparel & POD',
         images: images.length > 0 ? images : ['/images/sample-products/p1-1.jpg'],
-        brand: 'Omnistu Originals',
-        description: item.description?.replace(/<[^>]*>/g, '') || `${item.title} — Premium direct-to-garment print on ethically sourced fabric.`,
+        brand: null, // not a manufacturer brand; never invented
+        description: item.description?.replace(/<[^>]*>/g, '') || '',
         price: pricing.retailPrice.toFixed(2),
         msrp: pricing.msrp.toFixed(2),
         rating: '4.9',

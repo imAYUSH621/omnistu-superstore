@@ -172,12 +172,12 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
               {/* Right 1 Col: Direct Assurance Sidebar */}
               <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
                 <h3 className='font-bold text-sm text-[#0f172a] dark:text-white flex items-center gap-1.5'>
-                  <Sparkles className='w-4 h-4 text-amber-500' /> Omnistu Direct Benefits
+                  <Sparkles className='w-4 h-4 text-amber-500' /> Shipping and fulfillment
                 </h3>
                 <ul className='space-y-3 text-xs text-neutral-600 dark:text-neutral-300'>
                   <li className='flex items-start gap-2'>
                     <Truck className='w-4 h-4 text-amber-600 shrink-0 mt-0.5' />
-                    <span><strong>Free Express Shipping</strong> on orders over $25 or with FastPass.</span>
+                    <span><strong>Shipping:</strong> $10 flat, free on item totals over $100 (as calculated at checkout).</span>
                   </li>
                   <li className='flex items-start gap-2'>
                     <ShieldCheck className='w-4 h-4 text-emerald-600 shrink-0 mt-0.5' />
@@ -185,7 +185,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                   </li>
                   <li className='flex items-start gap-2'>
                     <CheckCircle2 className='w-4 h-4 text-blue-600 shrink-0 mt-0.5' />
-                    <span><strong>Direct Manufacturer Fulfillment</strong> via CJ Dropshipping & Printify.</span>
+                    <span><strong>Fulfilled by supplier partners</strong> (CJ Dropshipping, Printify). Delivery times vary by item.</span>
                   </li>
                 </ul>
               </div>
