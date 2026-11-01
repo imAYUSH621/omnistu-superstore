@@ -1,11 +1,18 @@
 import React from 'react';
+import T from '@/components/shared/i18n-text';
 import { cn } from '@/lib/utils';
 
 const CheckoutSteps = ({ current = 0 }) => {
   return (
     <div className='flex-between flex-col md:flex-row space-x-2 space-y-2 mb-10'>
-      {['User Login', 'Shipping Address', 'Payment Method', 'Place Order'].map(
-        (step, index) => (
+      {(
+        [
+          ['userLoginLabel', 'User Login'],
+          ['shippingAddressLabel', 'Shipping Address'],
+          ['paymentMethodLabel', 'Payment Method'],
+          ['placeOrder', 'Place Order'],
+        ] as const
+      ).map(([stepKey, step], index) => (
           <React.Fragment key={step}>
             <div
               className={cn(
@@ -13,7 +20,7 @@ const CheckoutSteps = ({ current = 0 }) => {
                 index === current ? 'bg-secondary' : ''
               )}
             >
-              {step}
+              <T k={stepKey} />
             </div>
             {step !== 'Place Order' && (
               <hr className='w-16 border-t border-gray-300 mx-2' />
