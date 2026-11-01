@@ -1,5 +1,5 @@
--- AlterTable
-ALTER TABLE "ReturnRequest" ALTER COLUMN "updatedAt" SET DATA TYPE TIMESTAMP(3);
+-- (ReturnRequest.updatedAt precision change moved to 20261101095700_return_request_rma:
+-- it ran before that table existed, so a fresh database failed to migrate.)
 
 -- CreateTable
 CREATE TABLE "FulfillmentTask" (

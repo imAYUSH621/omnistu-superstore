@@ -27,3 +27,6 @@ ALTER TABLE "ReturnRequest" ADD CONSTRAINT "ReturnRequest_orderId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "ReturnRequest" ADD CONSTRAINT "ReturnRequest_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AlterTable (moved here from 20261101055500_fulfillment_task_queue)
+ALTER TABLE "ReturnRequest" ALTER COLUMN "updatedAt" SET DATA TYPE TIMESTAMP(3);
