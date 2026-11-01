@@ -1,3 +1,4 @@
+import AllDepartments from '@/components/shared/home/all-departments';
 import TopCategoryCards from '@/components/shared/home/top-category-cards';
 import CategoryQuads from '@/components/shared/home/category-quads';
 import LatestArrivals from '@/components/shared/home/latest-arrivals';
@@ -23,6 +24,9 @@ export default function Homepage() {
       <TopCategoryCards />
 
       <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-2'>
+        {/* 3. Every department with its own art; empty ones say so */}
+        <AllDepartments />
+
         {/* 4. Real latest products from the catalog */}
         <LatestArrivals />
 
