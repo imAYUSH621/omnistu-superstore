@@ -144,13 +144,14 @@ export async function getAllProducts({
             }
           : {};
 
+      const where: Prisma.ProductWhereInput = {
+        ...queryFilter,
+        ...categoryFilter,
+        ...priceFilter,
+        ...ratingFilter,
+      };
       const data = await prisma.product.findMany({
-        where: {
-          ...queryFilter,
-          ...categoryFilter,
-          ...priceFilter,
-          ...ratingFilter,
-        },
+        where,
         orderBy:
           sort === 'lowest'
             ? { price: 'asc' }
@@ -163,7 +164,9 @@ export async function getAllProducts({
         take: limit,
       });
 
-      const dataCount = await prisma.product.count();
+      // Count the FILTERED set (it used to count every product, so filtered
+      // searches showed wrong page counts).
+      const dataCount = await prisma.product.count({ where });
 
       return {
         data: convertToPlainObject(data),
