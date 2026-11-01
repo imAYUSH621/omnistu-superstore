@@ -20,7 +20,8 @@ jest.mock('@/lib/fulfillment-persistence', () => ({ persistDispatchSummary: jest
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { prisma } from '@/db/prisma';
-import { updateOrderToPaid, updateOrderToPaidCOD } from '@/lib/actions/order.actions';
+import { updateOrderToPaidCOD } from '@/lib/actions/order.actions';
+import { updateOrderToPaid } from '@/lib/order-settlement';
 import { enqueueFulfillmentTask } from '@/lib/fulfillment-queue';
 import { findPaidOrdersNeedingAttention } from '@/lib/paid-reconciliation';
 

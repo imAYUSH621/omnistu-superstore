@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
 
 /**
@@ -9,6 +10,10 @@ import { prisma } from '@/db/prisma';
  * configured means "credentials present", not "credentials valid".
  */
 export async function GET() {
+  const session = await auth();
+  if (session?.user?.role !== 'admin') {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
   const cjConfigured = Boolean(process.env.CJ_API_KEY || process.env.FULFILLMENT_API_KEY);
   const printifyConfigured = Boolean(process.env.PRINTIFY_API || process.env.PRINTIFY_API_TOKEN);
   const supabaseConfigured = Boolean(process.env.SUPABASE_URL);

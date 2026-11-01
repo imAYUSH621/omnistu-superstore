@@ -4,6 +4,7 @@ import { withVariantSummary } from '@/lib/product-variants';
 import { convertToPlainObject, formatError, isDatabaseAvailable } from '../utils';
 import { LATEST_PRODUCTS_LIMIT, PAGE_SIZE } from '../constants';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '../auth-guard';
 import { insertProductSchema, updateProductSchema } from '../validators';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -225,6 +226,7 @@ export async function getAllProducts({
 
 // Delete a product
 export async function deleteProduct(id: string) {
+  await requireAdmin();
   try {
     const productExists = await prisma.product.findFirst({
       where: { id },
@@ -247,6 +249,7 @@ export async function deleteProduct(id: string) {
 
 // Create a product
 export async function createProduct(data: z.infer<typeof insertProductSchema>) {
+  await requireAdmin();
   try {
     const product = insertProductSchema.parse(data);
     await prisma.product.create({ data: product });
@@ -264,6 +267,7 @@ export async function createProduct(data: z.infer<typeof insertProductSchema>) {
 
 // Update a product
 export async function updateProduct(data: z.infer<typeof updateProductSchema>) {
+  await requireAdmin();
   try {
     const product = updateProductSchema.parse(data);
     const productExists = await prisma.product.findFirst({

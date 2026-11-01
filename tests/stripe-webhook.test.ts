@@ -1,7 +1,7 @@
 const mockConstruct = jest.fn();
 const mockPaid = jest.fn();
 jest.mock('stripe', () => ({ __esModule: true, default: { webhooks: { constructEvent: (...a: unknown[]) => mockConstruct(...a) } } }));
-jest.mock('@/lib/actions/order.actions', () => ({ updateOrderToPaid: (...a: unknown[]) => mockPaid(...a) }));
+jest.mock('@/lib/order-settlement', () => ({ updateOrderToPaid: (...a: unknown[]) => mockPaid(...a) }));
 jest.mock('next/server', () => ({
   NextResponse: { json: (b: unknown, i?: { status?: number }) => ({ body: b, status: i?.status ?? 200 }) },
 }));

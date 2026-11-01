@@ -49,7 +49,8 @@ jest.mock('@/lib/fulfillment-dispatcher', () => ({
 }));
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
-import { createOrder, updateOrderToPaid } from '@/lib/actions/order.actions';
+import { createOrder } from '@/lib/actions/order.actions';
+import { updateOrderToPaid } from '@/lib/order-settlement';
 import { aggregateDispatchStatus, persistDispatchSummary } from '@/lib/fulfillment-persistence';
 
 const CART_REDIRECT = /\/order\//;
