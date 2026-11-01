@@ -10,6 +10,11 @@ export default function CartBadge({ initialCount = 0 }: { initialCount?: number 
   // written anywhere, so the badge silently reset to 0 on navigation.
   const [count, setCount] = useState<number>(initialCount);
 
+  // Re-sync when the server renders a new count (e.g. after an order empties the cart).
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount]);
+
   useEffect(() => {
     const handleCartUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ qty: number }>;
