@@ -103,24 +103,22 @@ export default function PressPage() {
               We built {APP_NAME} to answer the question: <em>what does a shopping platform look like when you build it from first principles in 2026, assuming AI handles sourcing, routing, and support?</em> The answer turned out to be leaner, faster, and dramatically cheaper than anything that came before.
             </p>
             <p>
-              Today, {APP_NAME} operates across seven currency zones, partners with more than 1,200 verified global suppliers, and fulfills orders into 80+ countries — all without a single traditional warehouse or human buyer on the payroll. Our Omnistu Botanics clean beauty line and AI Apparel Lab print division extend that same philosophy into private-label territory.
+              Today, {APP_NAME} is a demo storefront in active development. Supplier, fulfillment, and private-label integrations are planned or in sandbox testing - no live supplier partnerships, fulfillment network, or country footprint exists yet. This page will be updated with verified milestones only after launch.
             </p>
           </section>
 
-          {/* 4. Recent Milestones */}
+          {/* 4. Status &amp; Roadmap */}
           <section>
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
-              <Star className='w-4 h-4 text-amber-500' /> 4. Recent Milestones
+              <Star className='w-4 h-4 text-amber-500' /> 4. Status &amp; Roadmap
             </h2>
             <div className='space-y-3'>
               {[
-                { date: 'Oct 2026', event: 'Platform launch — live across USD, INR, GBP, EUR, AED, CAD, AUD currency zones.' },
-                { date: 'Oct 2026', event: 'Omnistu Botanics LLC white-label clean beauty line goes live via Blanka partnership.' },
-                { date: 'Oct 2026', event: 'AI Apparel Lab (print-on-demand via Printify) opens for consumer orders.' },
-                { date: 'Oct 2026', event: 'CJ Dropshipping verified supplier integration — 1,200+ active SKUs.' },
-                { date: 'Q4 2026', event: 'BrandsGateway premium fashion catalog integration (target: 80,000+ designer SKUs).' },
-                { date: 'Q1 2027', event: 'Trendsi and Faire marketplace integrations planned for independent boutique access.' },
-                { date: 'Q1 2027', event: 'Blind-ship recyclable packaging commitment across all CJ Dropshipping orders.' },
+                { date: 'Nov 2026', event: 'Demo storefront in test mode - sample catalog, simulated orders, no live suppliers or fulfillment.' },
+                { date: 'Planned', event: 'Supplier integrations (CJ Dropshipping, BrandsGateway, Trendsi) - adapters in development, not connected.' },
+                { date: 'Planned', event: 'Print-on-demand via Printify - planned, not connected.' },
+                { date: 'Planned', event: 'Private-label lines (Botanics clean beauty, AI Apparel Lab) - concepts only, not live.' },
+                { date: 'Planned', event: 'Launch across USD, INR, GBP, EUR, AED, CAD, AUD currency zones - pending hosting and provider keys.' },
               ].map((m, i) => (
                 <div key={i} className='flex gap-4 items-start'>
                   <span className='text-amber-600 font-mono text-xs whitespace-nowrap pt-0.5 min-w-[72px]'>{m.date}</span>
