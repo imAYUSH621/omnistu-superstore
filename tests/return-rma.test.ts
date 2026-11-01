@@ -32,6 +32,8 @@ const paidOrder = {
   isPaid: true,
   totalPrice: '42.00',
   dispatchSupplier: null,
+  paymentMethod: 'PayPal',
+  paymentResult: { id: 'ORDER1', purchase_units: [{ payments: { captures: [{ id: 'CAP1' }] } }] },
 };
 
 beforeEach(() => {
@@ -89,7 +91,7 @@ describe('reviewReturn (admin)', () => {
     const update = mockReturnUpdate.mock.calls[0][0];
     expect(update.data.status).toBe('APPROVED');
     expect(update.data.refundStatus).toBe('SIMULATED');
-    expect(update.data.resolutionNote).toMatch(/no provider call/i);
+    expect(update.data.resolutionNote).toMatch(/refund simulated/i);
     expect(update.data.supplierReturnStatus).toBe('NOT_REQUIRED');
   });
 

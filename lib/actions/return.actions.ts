@@ -1,17 +1,19 @@
 'use server';
 
 import { auth } from '@/auth';
+import { executeRefund } from '@/lib/refunds';
 import { prisma } from '@/db/prisma';
 
 /**
- * Returns / RMA flow (G3). Simulation-only by design (2026-11-01):
- * - No payment provider refund calls are made anywhere in this module.
- * - Approving a return records refundStatus 'SIMULATED' and never claims
- *   money moved. Live provider refunds stay blocked until the owner
- *   supplies live keys AND approves the draft refund policy.
- * - Supplier-return handling is tracked as a status, not executed: when an
- *   order was dispatched via a supplier, the supplier RMA must be initiated
- *   manually until supplier API scope is settled.
+ * Returns / RMA flow (G3). Refund execution lives in lib/refunds.ts and is
+ * fail-closed: approving a return runs executeRefund, which only calls a
+ * payment provider when REFUNDS_LIVE_ENABLED=true AND live keys exist AND
+ * the order has a provider reference. Otherwise it records SIMULATED or
+ * FAILED with the exact reason - never a claim that money moved when none
+ * did. Live refunds additionally wait on the owner approving the draft
+ * refund policy. Supplier-return handling is tracked as a status, not
+ * executed: supplier RMA must be initiated manually until supplier API
+ * scope is settled.
  */
 
 type ActionResult = { success: boolean; message: string; returnId?: string };
@@ -71,29 +73,31 @@ export async function reviewReturn(
     return { success: true, message: 'Return rejected.' };
   }
 
-  // Approve = record a SIMULATED refund. No provider call, no money moves.
+  // Approve = run the fail-closed refund path (lib/refunds.ts). Without
+  // live keys + REFUNDS_LIVE_ENABLED this records SIMULATED; a provider
+  // error records FAILED. No path claims money moved when none did.
   const supplierNote = rr.order.dispatchSupplier
     ? 'Supplier RMA must be initiated manually - supplier return API scope not settled.'
     : null;
+  const refund = await executeRefund({
+    paymentMethod: rr.order.paymentMethod,
+    paymentResult: rr.order.paymentResult,
+    amount: Number(rr.order.totalPrice),
+  });
   await prisma.returnRequest.update({
     where: { id: returnId },
     data: {
       status: 'APPROVED',
       refundAmount: rr.order.totalPrice,
-      refundStatus: 'SIMULATED',
+      refundStatus: refund.status,
+      refundProviderRef: refund.providerRef ?? null,
       supplierReturnStatus: rr.order.dispatchSupplier ? 'PENDING_MANUAL' : 'NOT_REQUIRED',
-      resolutionNote: [
-        'Refund simulated only (test mode; no provider call, no money moved).',
-        supplierNote,
-        note?.trim(),
-      ]
-        .filter(Boolean)
-        .join(' '),
+      resolutionNote: [refund.note, supplierNote, note?.trim()].filter(Boolean).join(' '),
     },
   });
   return {
-    success: true,
-    message: 'Return approved with a SIMULATED refund (test mode - no payment provider was called).',
+    success: refund.status !== 'FAILED',
+    message: `Return approved - refund ${refund.status.toLowerCase()}: ${refund.note}`,
     returnId,
   };
 }
