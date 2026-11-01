@@ -73,6 +73,7 @@ export default async function ReconciliationPage({ searchParams }: { searchParam
         <p className="text-sm">
           More paid orders need attention.{' '}
           <a className="underline" href={`/admin/reconciliation?after=${res.nextToken}`}>Next page</a>
+          . Pages follow the order id, not the paid time; each page is sorted by paid time. Orders can change while you page, so start again from page 1 for a fresh list.
         </p>
       )}
       {oversold.success && oversold.items.length > 0 && (
