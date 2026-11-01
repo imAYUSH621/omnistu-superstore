@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import T from '@/components/shared/i18n-text';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
 
@@ -16,6 +16,23 @@ export default function AiConcierge() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  // On phones the launcher tucks away while the page scrolls down so it never
+  // sits on top of card text; it returns on scroll up or when scrolling stops.
+  const [tucked, setTucked] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > last + 4) setTucked(true);
+      else if (y < last - 4) setTucked(false);
+      last = y;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => setTucked(false), 700);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); if (timer) clearTimeout(timer); };
+  }, []);
   const endRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -66,10 +83,10 @@ export default function AiConcierge() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close shopping assistant' : 'Open 24/7 shopping assistant'}
-        className="ai-concierge-launcher fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans"
+        className={`ai-concierge-launcher fixed right-3 bottom-3 sm:right-5 sm:bottom-5 z-50 flex items-center gap-2 p-2.5 sm:px-4 sm:py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans ${tucked && !open ? 'max-sm:translate-x-16 max-sm:opacity-0' : ''}`}
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
-        <span className="text-[13px] font-bold">{open ? <T k='closeAssistant' /> : <T k='aiAssistant' />}</span>
+        <span className="hidden sm:inline text-[13px] font-bold">{open ? <T k='closeAssistant' /> : <T k='aiAssistant' />}</span>
       </button>
 
       {/* Slideout Chat Modal */}
@@ -77,7 +94,7 @@ export default function AiConcierge() {
         <div
           role="dialog"
           aria-label="Omnistu Shopping Assistant"
-          className="fixed right-5 bottom-20 z-50 w-[360px] max-w-[calc(100vw-32px)] h-[480px] flex flex-col bg-white dark:bg-[#1e293b] text-[#0f172a] dark:text-white border border-[#d0d5dd] dark:border-[#475569] rounded-xl shadow-2xl overflow-hidden font-sans"
+          className="fixed right-3 sm:right-5 bottom-16 sm:bottom-20 z-50 w-[360px] max-w-[calc(100vw-32px)] h-[480px] flex flex-col bg-white dark:bg-[#1e293b] text-[#0f172a] dark:text-white border border-[#d0d5dd] dark:border-[#475569] rounded-xl shadow-2xl overflow-hidden font-sans"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-[#1e293b] text-white border-b border-[#334155]">
