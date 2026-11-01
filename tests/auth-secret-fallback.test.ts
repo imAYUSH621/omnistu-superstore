@@ -47,6 +47,29 @@ describe('auth secret fallback (dev/build only, production fails closed)', () =>
     expect(process.env.NEXTAUTH_SECRET).toBeUndefined();
   });
 
+  test('build-phase fallback cannot survive into a later production runtime import', () => {
+    setEnv('production', 'phase-production-build');
+    require('../auth.config');
+    expect(process.env.AUTH_SECRET).toBe('insecure-dev-only-secret-do-not-deploy');
+    // Simulate the separate runtime process: env carries no secret at all.
+    jest.resetModules();
+    setEnv('production');
+    require('../auth.config');
+    expect(process.env.AUTH_SECRET).toBeUndefined();
+  });
+
+  test('production runtime refuses to start if the insecure dev secret is deployed by misconfiguration', () => {
+    setEnv('production');
+    (process.env as any).AUTH_SECRET = 'insecure-dev-only-secret-do-not-deploy';
+    expect(() => require('../auth.config')).toThrow(/insecure dev-only/);
+  });
+
+  test('production runtime also refuses the insecure secret via NEXTAUTH_SECRET', () => {
+    setEnv('production');
+    (process.env as any).NEXTAUTH_SECRET = 'insecure-dev-only-secret-do-not-deploy';
+    expect(() => require('../auth.config')).toThrow(/insecure dev-only/);
+  });
+
   test('a configured secret is never overwritten', () => {
     setEnv('development');
     (process.env as any).AUTH_SECRET = 'real-secret';

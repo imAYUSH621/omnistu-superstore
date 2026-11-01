@@ -6,10 +6,19 @@ import { NextResponse } from 'next/server';
 // the shared config so both middleware.ts and auth.ts pick it up. At real
 // production runtime no fallback is applied and authjs fails closed with
 // its own MissingSecret error.
+const INSECURE_DEV_SECRET = 'insecure-dev-only-secret-do-not-deploy';
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+const isProdRuntime = process.env.NODE_ENV === 'production' && !isBuildPhase;
+
+if (isProdRuntime && (process.env.AUTH_SECRET === INSECURE_DEV_SECRET || process.env.NEXTAUTH_SECRET === INSECURE_DEV_SECRET)) {
+  // The dev fallback must never authenticate real traffic, even if a build
+  // environment or a copied .env leaks it into a production deployment.
+  throw new Error('[auth] insecure dev-only AUTH_SECRET detected in production runtime - refusing to start');
+}
+
 if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
-  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   if (process.env.NODE_ENV !== 'production' || isBuildPhase) {
-    process.env.AUTH_SECRET = 'insecure-dev-only-secret-do-not-deploy';
+    process.env.AUTH_SECRET = INSECURE_DEV_SECRET;
     console.warn('[auth] AUTH_SECRET not set - using an insecure dev/build-only fallback. Set AUTH_SECRET in .env for anything real.');
   }
 }
