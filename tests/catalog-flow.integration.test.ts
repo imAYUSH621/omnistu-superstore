@@ -9,7 +9,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 jest.mock('@/auth', () => ({ auth: jest.fn() }));
 
 import { prisma } from '@/db/prisma';
-import { getAllProducts, getAllCategories, getProductBySlug, getFeaturedProducts } from '@/lib/actions/product.actions';
+import { getAllProducts, getAllCategories, getProductBySlug, getFeaturedProducts, getFacetCounts } from '@/lib/actions/product.actions';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB && process.env.DATABASE_URL === DB ? describe : describe.skip;
@@ -45,8 +45,8 @@ maybe('catalog flow on REAL Postgres (fixtures)', () => {
     const res = await q({ category: cats[1] });
     expect(res.data.map((p: { slug: string }) => p.slug).sort()).toEqual([slug('c'), slug('d')]);
   });
-  it('price bucket 1-25 includes 5.00, 10.00, 24.99 and excludes 30 and 99', async () => {
-    const res = mine((await q({ price: '1-25' })).data);
+  it('price bucket 0-25 includes 5.00, 10.00, 24.99 and excludes 30 and 99', async () => {
+    const res = mine((await q({ price: '0-25' })).data);
     expect(res.map((p) => p.slug).sort()).toEqual([slug('a'), slug('c'), slug('d')]);
   });
   it('search query matches name case-insensitively and combines with category', async () => {
@@ -79,6 +79,26 @@ maybe('catalog flow on REAL Postgres (fixtures)', () => {
     expect(res.every((p: { id: string }) => !p.id.startsWith('featured-'))).toBe(true);
     const dbFeatured = await prisma.product.count({ where: { isFeatured: true } });
     if (dbFeatured === 0) expect(res).toEqual([]);
+  });
+  it('Under $25 bucket includes sub-dollar items', async () => {
+    const id = slug('z');
+    await prisma.product.create({ data: { name: 'Fxt Tiny', slug: id, category: 'FXT Tiny', images: [], brand: 'Fxt', description: 'fixture', stock: 1, price: '0.24', rating: '0' } });
+    const res = await q({ category: 'FXT Tiny', price: '0-25' });
+    expect(res.data.map((p: { slug: string }) => p.slug)).toEqual([id]);
+    expect((await getFacetCounts({ query: 'all', category: 'FXT Tiny' })).price['0-25']).toBe(1);
+  });
+  it('facet counts match what each option actually returns (and empty options show 0)', async () => {
+    const f = await getFacetCounts({ query: 'all', category: cats[1] });
+    expect(f.price['0-25']).toBe(2);
+    expect(f.price['25-50']).toBe(0);
+    expect(f.rating['4']).toBe(0);
+    for (const b of ['0-25', '25-50', '50-100', '100-500']) {
+      const r = await q({ category: cats[1], price: b });
+      expect(r.data.length).toBe(f.price[b]);
+    }
+    const t = await getFacetCounts({ query: 'all', category: cats[0] });
+    expect(t.rating['4']).toBe(1);
+    expect((await q({ category: cats[0], rating: '4' })).data.length).toBe(1);
   });
   it('product page lookup by slug returns the product', async () => {
     const p = await getProductBySlug(slug('b'));

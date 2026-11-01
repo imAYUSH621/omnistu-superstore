@@ -1,6 +1,7 @@
 import {
   getAllProducts,
   getAllCategories,
+  getFacetCounts,
   getFeaturedProducts,
 } from '@/lib/actions/product.actions';
 import SearchNarrowChips from '@/components/shared/search/search-narrow-chips';
@@ -75,6 +76,7 @@ const SearchPage = async (props: {
   });
 
   const categories = await getAllCategories();
+  const facetCounts = await getFacetCounts({ query: q, category });
   const featuredDeals = await getFeaturedProducts();
 
   return (
@@ -93,6 +95,7 @@ const SearchPage = async (props: {
             currentRating={rating}
             currentSort={sort}
             currentQ={q}
+            facetCounts={facetCounts}
             showIdeas={catalogSource() === 'sample'}
           />
         </SearchFiltersCollapsible>

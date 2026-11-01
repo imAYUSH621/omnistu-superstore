@@ -34,8 +34,8 @@ export default function SearchNarrowChips({ categories = [] }: { categories?: { 
     {
       label: 'Under $25',
       icon: DollarSign,
-      active: currentPrice === '1-25',
-      href: makeChipUrl({ price: currentPrice === '1-25' ? 'all' : '1-25' }),
+      active: currentPrice === '0-25',
+      href: makeChipUrl({ price: currentPrice === '0-25' ? 'all' : '0-25' }),
     },
     {
       label: '$25 to $50',

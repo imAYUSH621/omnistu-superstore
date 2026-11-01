@@ -15,6 +15,7 @@ interface FacetedSidebarProps {
   currentSort: string;
   currentQ: string;
   showIdeas?: boolean;
+  facetCounts?: { price: Record<string, number>; rating: Record<string, number> };
 }
 
 export default function SearchFacetedSidebar({
@@ -25,6 +26,7 @@ export default function SearchFacetedSidebar({
   currentSort,
   currentQ,
   showIdeas = false,
+  facetCounts,
 }: FacetedSidebarProps) {
   const router = useRouter();
   const [minPrice, setMinPrice] = useState('');
@@ -66,7 +68,7 @@ export default function SearchFacetedSidebar({
     (currentRating && currentRating !== 'all');
 
   const priceBuckets = [
-    { label: 'Under $25', value: '1-25' },
+    { label: 'Under $25', value: '0-25' },
     { label: '$25 to $50', value: '25-50' },
     { label: '$50 to $100', value: '50-100' },
     { label: '$100 to $500', value: '100-500' },
@@ -168,6 +170,19 @@ export default function SearchFacetedSidebar({
         <ul className='space-y-1.5 text-xs'>
           {ratingOptions.map((r) => {
             const isSelected = currentRating === r.toString();
+            const rn = facetCounts?.rating[String(r)];
+            if (rn === 0 && !isSelected) {
+              return (
+                <li key={r} className='flex items-center gap-2 py-1 px-1.5 text-muted-foreground/60' data-testid='facet-empty'>
+                  <div className='flex items-center'>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className='w-3.5 h-3.5 text-neutral-300 dark:text-neutral-700' />
+                    ))}
+                  </div>
+                  <span className='text-xs'>& Up (0)</span>
+                </li>
+              );
+            }
             return (
               <li key={r}>
                 <Link
@@ -190,7 +205,7 @@ export default function SearchFacetedSidebar({
                       />
                     ))}
                   </div>
-                  <span className='text-xs'>& Up</span>
+                  <span className='text-xs'>& Up{rn !== undefined ? ` (${rn})` : ''}</span>
                 </Link>
               </li>
             );
@@ -218,6 +233,14 @@ export default function SearchFacetedSidebar({
           </li>
           {priceBuckets.map((bucket) => {
             const isSelected = currentPrice === bucket.value;
+            const pn = facetCounts?.price[bucket.value];
+            if (pn === 0 && !isSelected) {
+              return (
+                <li key={bucket.value} className='block py-1 px-1.5 text-muted-foreground/60' data-testid='facet-empty'>
+                  {bucket.label} (0)
+                </li>
+              );
+            }
             return (
               <li key={bucket.value}>
                 <Link
@@ -228,7 +251,7 @@ export default function SearchFacetedSidebar({
                       : 'hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800'
                   }`}
                 >
-                  {bucket.label}
+                  {bucket.label}{pn !== undefined ? ` (${pn})` : ''}
                 </Link>
               </li>
             );
