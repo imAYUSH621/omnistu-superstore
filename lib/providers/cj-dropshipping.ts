@@ -40,7 +40,7 @@ export interface JITProductResult {
   slug: string;
   category: string;
   images: string[];
-  brand: string;
+  brand: string | null;
   description: string;
   price: string;
   msrp: string;
@@ -100,8 +100,8 @@ export async function searchCJProducts(keyword: string, limit = 12): Promise<JIT
         slug,
         category: item.categoryName || 'General',
         images: [item.productImage, ...(item.productImageSet || [])].filter((img): img is string => Boolean(img)),
-        brand: 'Omnistu Direct',
-        description: item.description || `${item.productNameEn} — Verified high-quality supplier fulfillment with express USPS delivery.`,
+        brand: null, // CJ supplies no manufacturer brand; never invented
+        description: item.description || '',
         price: pricing.retailPrice.toFixed(2),
         msrp: pricing.msrp.toFixed(2),
         rating: (4.6 + (item.pid.charCodeAt(0) % 4) * 0.1).toFixed(1),
