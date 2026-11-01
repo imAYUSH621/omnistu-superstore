@@ -58,3 +58,55 @@ export async function verifyPassword(
   }
   return { ok: false, needsUpgrade: false };
 }
+
+
+/** Thrown when too many password checks are already running or waiting. */
+export class HashBusyError extends Error {
+  constructor() {
+    super('hash capacity exceeded');
+    this.name = 'HashBusyError';
+  }
+}
+
+/**
+ * Bounded concurrency for slow hashing. Per server instance only (not shared
+ * across serverless instances) and not per client: it protects CPU during a
+ * flood and makes excess attempts fail fast. It also fails real sign-ins for
+ * the length of a flood on that instance.
+ */
+export function createGate(maxActive: number, maxQueue: number) {
+  let active = 0;
+  const waiters: Array<() => void> = [];
+  return async function run<T>(fn: () => Promise<T>): Promise<T> {
+    if (active >= maxActive) {
+      if (waiters.length >= maxQueue) throw new HashBusyError();
+      await new Promise<void>((resolve) => waiters.push(resolve));
+    } else {
+      active++;
+    }
+    try {
+      return await fn();
+    } finally {
+      const next = waiters.shift();
+      if (next) next(); // hand the slot over
+      else active--;
+    }
+  };
+}
+
+const gate = createGate(4, 32);
+
+/** Verify behind the gate. */
+export function verifyPasswordGated(plain: string, stored: string) {
+  return gate(() => verifyPassword(plain, stored));
+}
+
+// Fixed throwaway salt: used only to spend the same work for accounts that do
+// not exist (or have no password) so the response time does not depend on it.
+const DUMMY_SALT = Buffer.from('omnistu-dummy-salt-0000000000000');
+/** Spends one scrypt verification worth of work and returns nothing useful. */
+export function dummyVerify(plain: string): Promise<void> {
+  return gate(async () => {
+    await scrypt(plain, DUMMY_SALT, KEYLEN, { N, r: R, p: P, maxmem: 64 * 1024 * 1024 });
+  });
+}
