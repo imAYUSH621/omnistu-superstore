@@ -66,7 +66,7 @@ export default function CartDrawer() {
             <div className='flex items-start gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800'>
               <div className='relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-white border'>
                 <ProductImage
-                  src={latestItem.image || '/images/sample-products/p1-1.jpg'}
+                  src={latestItem.image || '/images/products/placeholder.svg'}
                   alt={latestItem.name}
                   sizes='80px'
                   className='object-contain p-1'

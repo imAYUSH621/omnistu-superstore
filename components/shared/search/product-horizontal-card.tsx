@@ -37,7 +37,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
         slug: product.slug,
         price: product.price,
         qty: 1,
-        image: product.images[0] || '/images/products/silicone-magnetic-balls-1.svg',
+        image: product.images[0] || '/images/products/placeholder.svg',
       });
 
       if (!res.success) {
@@ -105,7 +105,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
 
         <Link href={`/product/${product.slug}`} className='relative w-full h-full block'>
           <ProductImage
-            src={product.images[0] || '/images/products/silicone-magnetic-balls-1.svg'}
+            src={product.images[0] || '/images/products/placeholder.svg'}
             alt={product.name}
             sizes='(max-width: 768px) 100vw, 224px'
             className='object-contain group-hover:scale-105 transition-transform duration-300'

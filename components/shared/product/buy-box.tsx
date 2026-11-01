@@ -54,7 +54,7 @@ export default function BuyBox({
         slug: product.slug,
         price: product.price,
         qty: qty,
-        image: product.images[0] || '/images/sample-products/p1-1.jpg',
+        image: product.images[0] || '/images/products/placeholder.svg',
       });
 
       if (!res.success) {

@@ -276,10 +276,6 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                         {item.name}
                       </Link>
 
-                      <div className='text-xs text-[#007600] font-semibold'>In Stock</div>
-                      <div className='text-xs text-neutral-500'>
-                        Eligible for <strong>FREE Express Shipping</strong>
-                      </div>
 
                       {/* Quantity & Actions */}
                       <div className='flex flex-wrap items-center gap-3 pt-2 text-xs'>
