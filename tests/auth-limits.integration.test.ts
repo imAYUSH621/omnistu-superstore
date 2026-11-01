@@ -2,6 +2,7 @@
  * Real Postgres test (disposable DB with the 20261102003000 migration applied).
  * Skipped without DATABASE_URL or when the tables are missing.
  */
+export {};
 const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
 
 (RUN ? describe : describe.skip)('auth limits and session version (real DB)', () => {
