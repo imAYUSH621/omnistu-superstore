@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth';
 import { executeRefund } from '@/lib/refunds';
+import { reportEvent } from '@/lib/monitoring';
 import { prisma } from '@/db/prisma';
 
 /**
@@ -120,8 +121,15 @@ export async function reviewReturn(
     },
   });
   // UNKNOWN means the provider call's outcome is uncertain (possible
-  // timeout after success). Surface it for manual reconciliation - never
-  // blind-retry.
+  // timeout after success). Alert monitoring (no-op unless configured)
+  // and surface it for manual reconciliation - never blind-retry.
+  if (refund.status === 'UNKNOWN' || refund.status === 'FAILED') {
+    await reportEvent({
+      event: 'refund.uncertain',
+      level: refund.status === 'UNKNOWN' ? 'critical' : 'warning',
+      detail: `return ${returnId}: ${refund.note}`,
+    });
+  }
   return {
     success: refund.status !== 'FAILED',
     message: `Return approved - refund ${refund.status.toLowerCase()}: ${refund.note}`,

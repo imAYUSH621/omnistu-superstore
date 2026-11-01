@@ -81,3 +81,7 @@ FULFILLMENT_MAX_ITEM_QTY=
 # provider is called. Set to true only with live keys AND an approved
 # refund policy - real money moves when this is on.
 # REFUNDS_LIVE_ENABLED=false
+
+# Monitoring (G6): optional webhook that receives operational alerts
+# (e.g. refund.uncertain). Leave empty to disable - reporting is a no-op.
+# MONITORING_WEBHOOK_URL=
