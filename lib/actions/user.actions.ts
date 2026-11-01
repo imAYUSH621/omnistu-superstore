@@ -8,6 +8,7 @@ import {
   updateUserSchema,
 } from '../validators';
 import { auth, signIn, signOut } from '@/auth';
+import { isPaymentMethodAvailable } from '@/lib/payment-capabilities';
 import { safeCallbackPath } from '@/lib/safe-callback';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { hash } from '../encrypt';
@@ -141,6 +142,7 @@ export async function updateUserPaymentMethod(
     if (!currentUser) throw new Error('User not found');
 
     const paymentMethod = paymentMethodSchema.parse(data);
+    if (!isPaymentMethodAvailable(paymentMethod.type)) throw new Error('That payment method is not available yet');
 
     await prisma.user.update({
       where: { id: currentUser.id },

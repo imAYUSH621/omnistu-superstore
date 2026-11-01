@@ -1,5 +1,6 @@
 'use server';
 
+import { isPaymentMethodAvailable } from '@/lib/payment-capabilities';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE } from '@/lib/test-fixture';
 import { convertToPlainObject, formatError } from '../utils';
@@ -56,6 +57,14 @@ export async function createOrder(idempotencyKey?: string) {
       return {
         success: false,
         message: 'No payment method',
+        redirectTo: '/payment-method',
+      };
+    }
+
+    if (!isPaymentMethodAvailable(user.paymentMethod)) {
+      return {
+        success: false,
+        message: 'That payment method is not available yet. Please choose another.',
         redirectTo: '/payment-method',
       };
     }
