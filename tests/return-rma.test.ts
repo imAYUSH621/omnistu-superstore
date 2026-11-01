@@ -10,10 +10,11 @@ const mockReturnUpdate = jest.fn();
 const mockReturnFindMany = jest.fn();
 const mockReturnUpdateMany = jest.fn();
 const mockAuth = jest.fn();
+const mockQueryRaw = jest.fn();
 
-jest.mock('@/db/prisma', () => ({
-  prisma: {
-    order: { findUnique: (...a: unknown[]) => mockOrderFindUnique(...a) },
+jest.mock('@/db/prisma', () => {
+  const tx = {
+    $queryRaw: (...a: unknown[]) => mockQueryRaw(...a),
     returnRequest: {
       findFirst: (...a: unknown[]) => mockReturnFindFirst(...a),
       findUnique: (...a: unknown[]) => mockReturnFindUnique(...a),
@@ -22,8 +23,18 @@ jest.mock('@/db/prisma', () => ({
       updateMany: (...a: unknown[]) => mockReturnUpdateMany(...a),
       findMany: (...a: unknown[]) => mockReturnFindMany(...a),
     },
-  },
-}));
+  };
+  return {
+    prisma: {
+      order: { findUnique: (...a: unknown[]) => mockOrderFindUnique(...a) },
+      returnRequest: tx.returnRequest,
+      $queryRaw: (...a: unknown[]) => mockQueryRaw(...a),
+      // run the interactive-transaction callback against the same mocked
+      // delegates; the advisory lock is a no-op in unit tests
+      $transaction: (fn: (t: typeof tx) => unknown) => fn(tx),
+    },
+  };
+});
 jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
 
 import { requestReturn, reviewReturn } from '@/lib/actions/return.actions';
@@ -40,6 +51,7 @@ const paidOrder = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockQueryRaw.mockResolvedValue(undefined);
   mockAuth.mockResolvedValue({ user: { id: 'user-1', role: 'user' } });
   // default: the atomic REQUESTED -> PROCESSING claim succeeds, and no
   // refunds were executed on this order before
@@ -59,6 +71,16 @@ describe('requestReturn', () => {
     expect((await requestReturn('order-1', 'Item arrived damaged and unusable')).success).toBe(false);
     mockOrderFindUnique.mockResolvedValueOnce({ ...paidOrder, userId: 'someone-else' });
     expect((await requestReturn('order-1', 'Item arrived damaged and unusable')).success).toBe(false);
+  });
+
+  test('blocks a new return while one is stuck PROCESSING (mid-refund)', async () => {
+    mockOrderFindUnique.mockResolvedValueOnce(paidOrder);
+    mockReturnFindFirst.mockResolvedValueOnce({ id: 'rr-stuck', status: 'PROCESSING' });
+    const res = await requestReturn('order-1', 'Item arrived damaged and unusable');
+    expect(res.success).toBe(false);
+    expect(mockReturnFindFirst).toHaveBeenCalledWith({
+      where: { orderId: 'order-1', status: { in: ['REQUESTED', 'PROCESSING', 'APPROVED'] } },
+    });
   });
 
   test('rejects duplicate open requests', async () => {

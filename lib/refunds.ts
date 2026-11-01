@@ -37,6 +37,13 @@ function paypalCaptureId(paymentResult: unknown): string | null {
   return pr?.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? pr?.id ?? null;
 }
 
+function paypalCurrency(paymentResult: unknown): string | null {
+  const pr = paymentResult as {
+    purchase_units?: { payments?: { captures?: { amount?: { currency_code?: string } }[] } }[];
+  } | null;
+  return pr?.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.currency_code ?? null;
+}
+
 async function paypalRefund(captureId: string, amount: number, idempotencyKey: string): Promise<RefundResult> {
   const { PAYPAL_CLIENT_ID, PAYPAL_APP_SECRET } = process.env;
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_APP_SECRET}`).toString('base64');
@@ -78,6 +85,7 @@ async function stripeRefund(paymentIntentId: string, amount: number, idempotency
 export async function executeRefund({ paymentMethod, paymentResult, amount, orderTotal, alreadyRefunded, idempotencyKey }: RefundInput): Promise<RefundResult> {
   const method = (paymentMethod || '').toLowerCase();
   const live = process.env.REFUNDS_LIVE_ENABLED === 'true';
+  const ORDER_CURRENCY = 'USD';
 
   // Amount validation before any provider contact: refunds must be
   // positive and the order's cumulative refunds must never exceed its
@@ -96,6 +104,14 @@ export async function executeRefund({ paymentMethod, paymentResult, amount, orde
     const captureId = paypalCaptureId(paymentResult);
     if (!captureId) return { status: 'FAILED', note: 'No PayPal capture reference on the order - cannot refund.' };
     const hasKeys = !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_APP_SECRET);
+    if (live && hasKeys) {
+      // Currency must be derived from the original payment and match the
+      // order currency - never assume. Mismatch or absence rejects before
+      // any provider call.
+      const ccy = paypalCurrency(paymentResult);
+      if (!ccy) return { status: 'FAILED', note: 'Cannot confirm the original payment currency from the capture record - refusing to refund.' };
+      if (ccy.toUpperCase() !== ORDER_CURRENCY) return { status: 'FAILED', note: `Currency mismatch: payment was ${ccy}, order currency is ${ORDER_CURRENCY} - refusing to refund.` };
+    }
     if (!live || !hasKeys) {
       return { status: 'SIMULATED', note: `Refund simulated (live refunds ${live ? 'enabled but PayPal keys missing' : 'disabled - set REFUNDS_LIVE_ENABLED=true with live keys'}).` };
     }
@@ -109,11 +125,14 @@ export async function executeRefund({ paymentMethod, paymentResult, amount, orde
   }
 
   if (method.includes('stripe')) {
-    const pi = (paymentResult as { id?: string } | null)?.id;
+    const pr = paymentResult as { id?: string; currency?: string } | null;
+    const pi = pr?.id;
     if (!pi) return { status: 'FAILED', note: 'No Stripe payment intent reference on the order - cannot refund.' };
     if (!live || !process.env.STRIPE_SECRET_KEY) {
       return { status: 'SIMULATED', note: `Refund simulated (live refunds ${live ? 'enabled but Stripe key missing' : 'disabled - set REFUNDS_LIVE_ENABLED=true with live keys'}).` };
     }
+    if (!pr?.currency) return { status: 'FAILED', note: 'Cannot confirm the original payment currency - refusing to refund.' };
+    if (pr.currency.toLowerCase() !== ORDER_CURRENCY.toLowerCase()) return { status: 'FAILED', note: `Currency mismatch: payment was ${pr.currency}, order currency is ${ORDER_CURRENCY} - refusing to refund.` };
     try {
       return await stripeRefund(pi, amount, idempotencyKey);
     } catch (e) {
