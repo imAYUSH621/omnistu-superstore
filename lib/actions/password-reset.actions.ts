@@ -1,13 +1,15 @@
 'use server';
 
 import { z } from 'zod';
+import { devOutboxEnabled } from '@/lib/dev-outbox';
 import { consumePasswordReset, requestPasswordReset } from '@/lib/password-reset';
 
 const emailSchema = z.string().trim().toLowerCase().email();
-const GENERIC =
-  'Password reset emails are not being sent yet. If you cannot sign in, please contact support and we will help you reset it.';
+const GENERIC = 'If an account exists for that email, a reset link has been prepared in the development outbox.';
+const UNAVAILABLE = 'Password reset is not available yet.';
 
 export async function requestReset(_prev: unknown, formData: FormData) {
+  if (!devOutboxEnabled()) return { success: false, message: UNAVAILABLE };
   const parsed = emailSchema.safeParse(formData.get('email'));
   if (parsed.success) {
     try {

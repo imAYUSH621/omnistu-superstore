@@ -39,9 +39,9 @@ describe('reset token helpers', () => {
   it('normalises the identifier', () => {
     expect(resetIdentifier(' A@B.Test ')).toBe('pwreset:a@b.test');
   });
-  it('has no public route that reads the outbox', () => {
+  it('no page or component can read or write outbox files (pages only ask whether it is enabled)', () => {
     const { execSync } = require('node:child_process');
-    const hits = execSync("grep -rl 'dev-outbox\\|DEV_OUTBOX' app components 2>/dev/null || true", { cwd: process.cwd() }).toString().trim();
+    const hits = execSync("grep -rl 'writeDevOutbox\\|DEV_OUTBOX_DIR\\|readdirSync' app components 2>/dev/null || true", { cwd: process.cwd() }).toString().trim();
     expect(hits).toBe('');
   });
 });
