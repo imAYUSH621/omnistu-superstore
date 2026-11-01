@@ -192,3 +192,15 @@ model FulfillmentTask {
 
   @@index([status, nextAttemptAt])
 }
+
+model ServiceEnquiry {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serviceSlug String?
+  name        String
+  email       String
+  message     String
+  status      String   @default("NEW")
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+
+  @@index([status, createdAt])
+}
