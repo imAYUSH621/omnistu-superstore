@@ -27,4 +27,9 @@ describe('exchange rate labelling', () => {
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
     for (const k of ['default_safe', 'env_override', 'live_api']) expect(src).toContain(k);
   });
+  it('selector says what is translated and keeps readable footer text (source check)', () => {
+    const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
+    expect(src).toContain('Only menus and checkout labels are translated');
+    expect(src).not.toMatch(/text-\[10px\] text-neutral-400/);
+  });
 });
