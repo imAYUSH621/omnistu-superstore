@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 const CJ_BASE_URL = 'https://developers.cjdropshipping.com/api2.0/v1';
 
@@ -32,6 +33,16 @@ async function getCJToken(apiKey?: string): Promise<string | null> {
 
 export async function POST(req: Request) {
   try {
+    // Admin-only: this route dispatches supplier orders. It must never be
+    // reachable by the public, even before supplier keys exist.
+    const session = await auth();
+    if ((session?.user as { role?: string } | undefined)?.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, message: 'Admin access required.' },
+        { status: 403 }
+      );
+    }
+
     // 0. Rate limiting: Max 5 orders per IP per hour
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
     const now = Date.now();
@@ -63,9 +74,26 @@ export async function POST(req: Request) {
       quantity = 1,
     } = body;
 
+    // D18: never fabricate customer or address data for a supplier order.
+    // Reject with the missing fields instead of silently shipping to a
+    // placeholder address.
+    const requiredFields: Record<string, unknown> = {
+      customer_name, customer_email, shipping_address, city, state_zip,
+      phone: (body as Record<string, unknown>).phone,
+    };
+    const missing = Object.entries(requiredFields)
+      .filter(([, v]) => !v || String(v).trim().length === 0)
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { success: false, message: `Missing required fulfillment fields: ${missing.join(', ')}. Collect the real customer address before dispatch.`, missing },
+        { status: 400 }
+      );
+    }
+
     const fulfillmentReceipt: Record<string, unknown> = {
       order_id: order_id || `OMN-${Date.now().toString(36).toUpperCase()}`,
-      customer_name: customer_name || 'Valued Customer',
+      customer_name,
       vendor,
       timestamp: new Date().toISOString(),
       status: 'PROCESSING',
@@ -74,12 +102,18 @@ export async function POST(req: Request) {
     // 1. If PRINTIFY Print-on-Demand Item (Custom Apparel & Merch)
     if (vendor === 'PRINTIFY') {
       const printifyToken = process.env.PRINTIFY_API;
-      const printifyShopId = process.env.PRINTIFY_SHOP_ID || '29044718';
+      const printifyShopId = process.env.PRINTIFY_SHOP_ID;
 
-      if (!printifyToken) {
+      if (!printifyToken || !printifyShopId) {
         fulfillmentReceipt.status = 'HELD_IN_QUEUE';
-        fulfillmentReceipt.message = 'Printify API token pending configuration; order logged to queue.';
+        fulfillmentReceipt.message = 'Printify API token/shop pending configuration; order logged to queue.';
         return NextResponse.json({ success: true, receipt: fulfillmentReceipt });
+      }
+      if (!product_id || !variant_id) {
+        return NextResponse.json(
+          { success: false, message: 'product_id and variant_id are required for Printify fulfillment; no default catalog item is assumed.' },
+          { status: 400 }
+        );
       }
 
       const orderPayload = {
@@ -89,22 +123,22 @@ export async function POST(req: Request) {
         send_packing_slip: false, // Blind shipping: no Printify branding
         line_items: [
           {
-            product_id: product_id || '6ae20089e5cd851f5d0f80ec',
-            variant_id: variant_id ? parseInt(variant_id) : 11812,
+            product_id,
+            variant_id: parseInt(variant_id),
             quantity: parseInt(quantity) || 1,
           },
         ],
         shipping_method: 1,
         address_to: {
-          first_name: customer_name ? customer_name.split(' ')[0] : 'Valued',
-          last_name: customer_name && customer_name.split(' ')[1] ? customer_name.split(' ')[1] : 'Customer',
-          email: customer_email || 'billing@omnistu.com',
-          phone: body.phone || '5551234567',
+          first_name: customer_name.split(' ')[0],
+          last_name: customer_name.split(' ').slice(1).join(' ') || '-',
+          email: customer_email,
+          phone: body.phone,
           country: country_code,
           region: state_zip ? state_zip.split(' ')[0] : 'CA',
-          address1: shipping_address || '123 Main St',
-          city: city || 'San Francisco',
-          zip: state_zip && state_zip.split(' ')[1] ? state_zip.split(' ')[1] : '94105',
+          address1: shipping_address,
+          city,
+          zip: state_zip.split(' ').slice(1).join(' '),
         },
       };
 
@@ -141,10 +175,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, receipt: fulfillmentReceipt });
       }
 
-      const [firstName, ...lastParts] = (customer_name || 'Valued Customer').split(' ');
-      const lastName = lastParts.join(' ') || 'Customer';
-      const zipCode = (state_zip || '94105').split(' ').pop() || '94105';
-      const stateName = (state_zip || 'CA').split(' ')[0] || 'CA';
+      const [firstName, ...lastParts] = customer_name.split(' ');
+      const lastName = lastParts.join(' ') || '-';
+      const zipCode = state_zip.split(' ').pop()!;
+      const stateName = state_zip.split(' ')[0];
 
       const blankaOrderPayload = {
         external_id: fulfillmentReceipt.order_id,
@@ -158,16 +192,17 @@ export async function POST(req: Request) {
         shipping_address: {
           first_name: firstName,
           last_name: lastName,
-          address1: shipping_address || '548 Market St',
-          city: city || 'San Francisco',
+          address1: shipping_address,
+          city,
           province: stateName,
           zip: zipCode,
           country: country_code || 'US',
-          email: customer_email || 'support@omnistu.com',
+          email: customer_email,
         },
         custom_branding: {
           brand_name: 'Omnistu Botanics',
-          return_address: '548 Market St, Suite 38000, San Francisco, CA 94104',
+          // No return_address until a real Omnistu return address is configured;
+          // the previous value was a fabricated placeholder.
         },
       };
 
@@ -215,8 +250,8 @@ export async function POST(req: Request) {
       const token = await getCJToken(cjApiKey);
 
       if (token) {
-        const zipCode = (state_zip || 'CA 94105').split(' ').pop();
-        const stateName = (state_zip || 'CA 94105').split(' ')[0];
+        const zipCode = state_zip.split(' ').pop();
+        const stateName = state_zip.split(' ')[0];
 
         const cjOrderBody = {
           orderNumber: fulfillmentReceipt.order_id,
@@ -225,9 +260,9 @@ export async function POST(req: Request) {
           shippingCountryCode: country_code,
           fromCountryCode: 'US',
           logisticName: 'USPS',
-          shippingCustomerName: customer_name || 'Valued Customer',
-          shippingAddress: shipping_address || '548 Market St, Suite 38000',
-          shippingCity: city || 'San Francisco',
+          shippingCustomerName: customer_name,
+          shippingAddress: shipping_address,
+          shippingCity: city,
           shippingProvince: stateName,
           remark: 'Omnistu Direct Blind Shipping Order',
           products: [
@@ -285,22 +320,22 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, receipt: fulfillmentReceipt });
       }
 
-      const [firstName, ...lastParts] = (customer_name || 'Valued Customer').split(' ');
-      const lastName = lastParts.join(' ') || 'Customer';
-      const zipCode = (state_zip || 'CA 94105').split(' ').pop() || '94105';
-      const stateName = (state_zip || 'CA 94105').split(' ')[0] || 'CA';
+      const [firstName, ...lastParts] = customer_name.split(' ');
+      const lastName = lastParts.join(' ') || '-';
+      const zipCode = state_zip.split(' ').pop();
+      const stateName = state_zip.split(' ')[0];
 
       const trendsiOrderPayload = {
         order_number: fulfillmentReceipt.order_id,
         shipping_address: {
           first_name: firstName,
           last_name: lastName,
-          address1: shipping_address || '123 Main St',
-          city: city || 'San Francisco',
+          address1: shipping_address,
+          city,
           province: stateName,
           zip: zipCode,
           country: country_code || 'US',
-          email: customer_email || 'support@omnistu.com',
+          email: customer_email,
         },
         items: [
           {
@@ -352,26 +387,33 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, receipt: fulfillmentReceipt });
       }
 
-      const [firstName, ...lastParts] = (customer_name || 'Valued Customer').split(' ');
-      const lastName = lastParts.join(' ') || 'Customer';
-      const zipCode = (state_zip || 'CA 94105').split(' ').pop() || '94105';
-      const stateName = (state_zip || 'CA 94105').split(' ')[0] || 'CA';
+      if (!sku && !product_id) {
+        return NextResponse.json(
+          { success: false, message: 'sku or product_id is required for BrandsGateway fulfillment; no default catalog item is assumed.' },
+          { status: 400 }
+        );
+      }
+
+      const [firstName, ...lastParts] = customer_name.split(' ');
+      const lastName = lastParts.join(' ') || '-';
+      const zipCode = state_zip.split(' ').pop();
+      const stateName = state_zip.split(' ')[0];
 
       const bgOrderPayload = {
         external_order_id: fulfillmentReceipt.order_id,
         customer: {
           first_name: firstName,
           last_name: lastName,
-          email: customer_email || 'support@omnistu.com',
-          street_address: shipping_address || '123 Main St',
-          city: city || 'San Francisco',
+          email: customer_email,
+          street_address: shipping_address,
+          city,
           state: stateName,
           postal_code: zipCode,
           country: country_code || 'US',
         },
         items: [
           {
-            sku: sku || (product_id ? `BG-${product_id}` : 'BG-LUX-001'),
+            sku: sku || `BG-${product_id}`,
             quantity: parseInt(String(quantity)) || 1,
           },
         ],
