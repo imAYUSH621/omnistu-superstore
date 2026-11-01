@@ -113,6 +113,15 @@ model Order {
   isDelivered     Boolean     @default(false)
   deliveredAt     DateTime?   @db.Timestamp(6)
   createdAt       DateTime    @default(now()) @db.Timestamp(6)
+  idempotencyKey  String?     @unique
+  paymentNote     String?
+  dispatchStatus  String?
+  dispatchSupplier String?
+  supplierOrderId String?
+  trackingNumber  String?
+  trackingCarrier String?
+  dispatchedAt    DateTime?   @db.Timestamp(6)
+  dispatchError   String?
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderitems      OrderItem[]
 }

@@ -1,28 +1,40 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFormStatus } from 'react-dom';
 import { createOrder } from '@/lib/actions/order.actions';
 
 const PlaceOrderForm = () => {
   const router = useRouter();
+  const [pending, setPending] = useState(false);
+  // One idempotency key per mounted form: retries and accidental double
+  // submits reuse it, so the server returns the original order (D11).
+  const idempotencyKey = useRef<string>(crypto.randomUUID());
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (pending) return;
+    setPending(true);
+    try {
+      const res = await createOrder(idempotencyKey.current);
 
-    const res = await createOrder();
-
-    if (res.redirectTo) {
-      router.push(res.redirectTo);
+      if (res.redirectTo) {
+        router.push(res.redirectTo);
+        return;
+      }
+      // No redirect means a validation failure before insert: safe to retry
+      // with a fresh key after the user fixes the issue.
+      idempotencyKey.current = crypto.randomUUID();
+    } finally {
+      setPending(false);
     }
   };
 
-  const PlaceOrderButton = () => {
-    const { pending } = useFormStatus();
-    return (
-      <Button disabled={pending} className='w-full'>
+  return (
+    <form onSubmit={handleSubmit} className='w-full'>
+      <Button disabled={pending} className='w-full' type='submit'>
         {pending ? (
           <Loader className='w-4 h-4 animate-spin' />
         ) : (
@@ -30,12 +42,6 @@ const PlaceOrderForm = () => {
         )}{' '}
         Place Order
       </Button>
-    );
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className='w-full'>
-      <PlaceOrderButton />
     </form>
   );
 };

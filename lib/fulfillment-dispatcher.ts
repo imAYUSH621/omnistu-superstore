@@ -37,12 +37,36 @@ export interface DispatchOrderInput {
 
 export interface SupplierDispatchResult {
   supplier: 'CJ_DROPSHIPPING' | 'PRINTIFY' | 'SPECIALTY_GOURMET' | 'DIRECT_WAREHOUSE';
-  status: 'DISPATCHED' | 'QUEUED' | 'SIMULATED';
-  supplierOrderId: string;
-  trackingNumber: string;
-  carrier: string;
+  // DISPATCHED = supplier API accepted the order. QUEUED = API attempt failed,
+  // retry needed. SIMULATED = no supplier key configured, nothing was shipped.
+  // UNROUTED = no supplier integration exists for this item group.
+  status: 'DISPATCHED' | 'QUEUED' | 'SIMULATED' | 'UNROUTED' | 'ADDRESS_INCOMPLETE';
+  supplierOrderId: string | null;
+  // Real tracking numbers only ever come from the supplier. Anything else is
+  // null (unknown yet) - never an invented number (D3).
+  trackingNumber: string | null;
+  carrier: string | null;
   message: string;
   timestamp: string;
+}
+
+export interface AddressValidation {
+  ok: boolean;
+  missing: string[];
+}
+
+/**
+ * D5: a supplier dispatch requires a complete, real shipping address.
+ * Returns the list of missing fields instead of silently substituting
+ * fabricated defaults like '123 Main St' or '5551234567'.
+ */
+export function validateDispatchAddress(shipping: DispatchAddress | undefined | null): AddressValidation {
+  const required: (keyof DispatchAddress)[] = ['streetAddress', 'city', 'postalCode', 'country', 'phone'];
+  const missing = required.filter((f) => {
+    const v = shipping?.[f];
+    return !v || String(v).trim().length === 0;
+  });
+  return { ok: missing.length === 0, missing };
 }
 
 export interface FulfillmentSummary {
@@ -103,8 +127,28 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
   }
 
   const shipping = order.shippingAddress || {};
-  const customerName = shipping.fullName || order.user?.name || 'Valued Customer';
-  const customerEmail = order.user?.email || 'orders@omnistu.com';
+
+  // D5: refuse to dispatch against an incomplete address rather than
+  // falling back to fabricated placeholders.
+  const addressCheck = validateDispatchAddress(shipping);
+  if (!addressCheck.ok) {
+    return {
+      orderId: order.id,
+      success: false,
+      dispatches: [{
+        supplier: 'DIRECT_WAREHOUSE',
+        status: 'ADDRESS_INCOMPLETE',
+        supplierOrderId: null,
+        trackingNumber: null,
+        carrier: null,
+        message: `Dispatch blocked: shipping address is missing ${addressCheck.missing.join(', ')}. Collect the real address from the customer before dispatch.`,
+        timestamp: new Date().toISOString(),
+      }],
+    };
+  }
+
+  const customerName = shipping.fullName || order.user?.name || 'Customer';
+  const customerEmail = order.user?.email || '';
 
   // 1. Dispatch Printify on-demand items
   if (printifyItems.length > 0) {
@@ -148,20 +192,22 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
         dispatches.push({
           supplier: 'PRINTIFY',
           status: res.ok ? 'DISPATCHED' : 'QUEUED',
-          supplierOrderId: pData.id || `PRT-${Date.now().toString(36).toUpperCase()}`,
-          trackingNumber: `PRT${Math.floor(10000000 + Math.random() * 90000000)}US`,
-          carrier: 'USPS Priority Print Delivery',
-          message: res.ok ? 'Order submitted to Printify print lab' : `Printify Queued: ${pData.message || 'Queued'}`,
+          supplierOrderId: pData.id || null,
+          trackingNumber: null, // Printify assigns tracking later; fetched by the sync job
+          carrier: null,
+          message: res.ok
+            ? 'Order submitted to Printify print lab; tracking appears once Printify assigns it'
+            : `Printify dispatch failed, queued for retry: ${pData.message || res.status}`,
           timestamp: new Date().toISOString(),
         });
       } catch (err: unknown) {
         dispatches.push({
           supplier: 'PRINTIFY',
           status: 'QUEUED',
-          supplierOrderId: `PRT-QUEUE-${Date.now().toString(36).toUpperCase()}`,
-          trackingNumber: `PRT${Math.floor(10000000 + Math.random() * 90000000)}US`,
-          carrier: 'USPS Priority Print Delivery',
-          message: `Network queue: ${err instanceof Error ? err.message : String(err)}`,
+          supplierOrderId: null,
+          trackingNumber: null,
+          carrier: null,
+          message: `Printify dispatch error, queued for retry: ${err instanceof Error ? err.message : String(err)}`,
           timestamp: new Date().toISOString(),
         });
       }
@@ -169,10 +215,10 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
       dispatches.push({
         supplier: 'PRINTIFY',
         status: 'SIMULATED',
-        supplierOrderId: `SIM-PRT-${order.id.slice(-6)}`,
-        trackingNumber: `PRT${Math.floor(10000000 + Math.random() * 90000000)}US`,
-        carrier: 'USPS Priority / Printify Express',
-        message: 'Order recorded; ready for automated Printify batch dispatch.',
+        supplierOrderId: null,
+        trackingNumber: null,
+        carrier: null,
+        message: 'SIMULATED only: no Printify credentials configured, so nothing was ordered or shipped. Set PRINTIFY_API and PRINTIFY_SHOP_ID for real dispatch.',
         timestamp: new Date().toISOString(),
       });
     }
@@ -214,20 +260,22 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
         dispatches.push({
           supplier: 'CJ_DROPSHIPPING',
           status: cData.result ? 'DISPATCHED' : 'QUEUED',
-          supplierOrderId: cData.data?.orderId || `CJ-${Date.now().toString(36).toUpperCase()}`,
-          trackingNumber: `CJ${Math.floor(100000000 + Math.random() * 900000000)}YQ`,
-          carrier: shipping.country === 'IN' ? 'India Post / CJ Packet' : 'USPS Ground Advantage',
-          message: cData.result ? 'Order placed in CJ Dropshipping system' : `CJ API: ${cData.message || 'Queued'}`,
+          supplierOrderId: cData.data?.orderId || null,
+          trackingNumber: cData.data?.trackingNumber || null, // real value only, when CJ returns one
+          carrier: cData.result ? (shipping.country === 'IN' ? 'CJ Packet' : 'USPS') : null,
+          message: cData.result
+            ? 'Order placed in CJ Dropshipping system; tracking syncs once CJ assigns it'
+            : `CJ dispatch failed, queued for retry: ${cData.message || res.status}`,
           timestamp: new Date().toISOString(),
         });
       } catch (cjErr: unknown) {
         dispatches.push({
           supplier: 'CJ_DROPSHIPPING',
           status: 'QUEUED',
-          supplierOrderId: `CJ-QUEUE-${order.id.slice(-6)}`,
-          trackingNumber: `CJ${Math.floor(100000000 + Math.random() * 900000000)}YQ`,
-          carrier: 'USPS Ground Advantage',
-          message: `Network queue: ${cjErr instanceof Error ? cjErr.message : String(cjErr)}`,
+          supplierOrderId: null,
+          trackingNumber: null,
+          carrier: null,
+          message: `CJ dispatch error, queued for retry: ${cjErr instanceof Error ? cjErr.message : String(cjErr)}`,
           timestamp: new Date().toISOString(),
         });
       }
@@ -235,31 +283,32 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
       dispatches.push({
         supplier: 'CJ_DROPSHIPPING',
         status: 'SIMULATED',
-        supplierOrderId: `SIM-CJ-${order.id.slice(-6)}`,
-        trackingNumber: `OMNUS${Math.floor(100000000 + Math.random() * 900000000)}XP`,
-        carrier: shipping.country === 'IN' ? 'India Post Speed Post / Blue Dart' : 'USPS Ground Advantage',
-        message: 'Order verified and queued for automated CJ Dropshipping dispatch.',
+        supplierOrderId: null,
+        trackingNumber: null,
+        carrier: null,
+        message: 'SIMULATED only: no CJ API key configured, so nothing was ordered or shipped. Set CJ_API_KEY for real dispatch.',
         timestamp: new Date().toISOString(),
       });
     }
   }
 
-  // 3. Dispatch Gourmet & Indian Food items
+  // 3. Gourmet & Indian Food items: no supplier integration exists for this
+  // group, so report it honestly instead of fabricating a dispatch (D3).
   if (gourmetItems.length > 0) {
     dispatches.push({
       supplier: 'SPECIALTY_GOURMET',
-      status: 'DISPATCHED',
-      supplierOrderId: `GRM-${Date.now().toString(36).toUpperCase()}`,
-      trackingNumber: `INP${Math.floor(10000000 + Math.random() * 90000000)}IN`,
-      carrier: shipping.country === 'IN' ? 'Blue Dart Express (Domestic India)' : 'DHL Express International (Food Grade Certified)',
-      message: 'Order routed to certified temperature-controlled gourmet packaging facility.',
+      status: 'UNROUTED',
+      supplierOrderId: null,
+      trackingNumber: null,
+      carrier: null,
+      message: 'No fulfillment integration exists for gourmet items yet; route manually or wire a supplier before launch.',
       timestamp: new Date().toISOString(),
     });
   }
 
   return {
     orderId: order.id,
-    success: true,
+    success: dispatches.every((d) => d.status === 'DISPATCHED'),
     dispatches,
   };
 }

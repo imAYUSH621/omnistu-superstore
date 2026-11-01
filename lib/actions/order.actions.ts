@@ -9,6 +9,7 @@ import { insertOrderSchema } from '../validators';
 import { prisma } from '@/db/prisma';
 import { CartItem, PaymentResult, ShippingAddress } from '@/types';
 import { paypal } from '../paypal';
+import { isAmountMismatch, sameLineItems } from '../payment-guards';
 import { revalidatePath } from 'next/cache';
 import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
@@ -16,9 +17,10 @@ import { sendPurchaseReceipt } from '@/email';
 import { sendOrderConfirmationEmail } from '../mailer';
 import { syncOrderToSupabase } from '../providers/supabase-sync';
 import { dispatchOrderFulfillment } from '../fulfillment-dispatcher';
+import { persistDispatchSummary } from '../fulfillment-persistence';
 
 // Create order and create the order items
-export async function createOrder() {
+export async function createOrder(idempotencyKey?: string) {
   try {
     const session = await auth();
     if (!session) throw new Error('User is not authenticated');
@@ -53,6 +55,47 @@ export async function createOrder() {
       };
     }
 
+    // D11 duplicate-submit guard: a client-supplied idempotency key makes
+    // retries return the original order instead of charging twice.
+    if (idempotencyKey) {
+      const existing = await prisma.order.findUnique({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        return {
+          success: true,
+          message: 'Order already created',
+          redirectTo: `/order/${existing.id}`,
+        };
+      }
+    } else {
+      // Fallback when no key is supplied: block an identical order (same
+      // user, same total, same items) created in the last 30 seconds.
+      const since = new Date(Date.now() - 30_000);
+      const recent = await prisma.order.findFirst({
+        where: {
+          userId: user.id,
+          totalPrice: cart.totalPrice,
+          createdAt: { gte: since },
+        },
+        include: { orderitems: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (recent) {
+        const sameItems = sameLineItems(
+          recent.orderitems,
+          cart.items as CartItem[]
+        );
+        if (sameItems) {
+          return {
+            success: true,
+            message: 'Order already created',
+            redirectTo: `/order/${recent.id}`,
+          };
+        }
+      }
+    }
+
     // Create order object
     const order = insertOrderSchema.parse({
       userId: user.id,
@@ -64,10 +107,14 @@ export async function createOrder() {
       totalPrice: cart.totalPrice,
     });
 
+    const orderData = idempotencyKey
+      ? { ...order, idempotencyKey }
+      : order;
+
     // Create a transaction to create order and order items in database
     const insertedOrderId = await prisma.$transaction(async (tx) => {
       // Create order
-      const insertedOrder = await tx.order.create({ data: order });
+      const insertedOrder = await tx.order.create({ data: orderData });
       // Create order items from the cart items
       for (const item of cart.items as CartItem[]) {
         await tx.orderItem.create({
@@ -102,6 +149,24 @@ export async function createOrder() {
     };
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    // Lost the idempotency race: another request created it first.
+    if (
+      idempotencyKey &&
+      typeof error === 'object' &&
+      error !== null &&
+      (error as { code?: string }).code === 'P2002'
+    ) {
+      const existing = await prisma.order.findUnique({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        return {
+          success: true,
+          message: 'Order already created',
+          redirectTo: `/order/${existing.id}`,
+        };
+      }
+    }
     return { success: false, message: formatError(error) };
   }
 }
@@ -231,6 +296,25 @@ export async function updateOrderToPaid({
 
   if (order.isPaid) throw new Error('Order is already paid');
 
+  // D12: never mark paid when the captured amount disagrees with the
+  // order total. The mismatch is recorded on the order and surfaced as an
+  // error instead of silently accepting an under- or over-charge.
+  if (paymentResult?.pricePaid != null && paymentResult.pricePaid !== '') {
+    const expected = Number(order.totalPrice);
+    if (isAmountMismatch(paymentResult.pricePaid, expected)) {
+      const note = `AMOUNT_MISMATCH: captured ${paymentResult.pricePaid}, expected ${expected.toFixed(2)}`;
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentNote: note,
+          paymentResult: { ...paymentResult, status: 'AMOUNT_MISMATCH' },
+        },
+      });
+      console.error(`[payments] ${note} on order ${orderId} - not marking paid`);
+      throw new Error('Captured amount does not match the order total');
+    }
+  }
+
   // Transaction to update order and account for product stock
   await prisma.$transaction(async (tx) => {
     // Iterate over products and update stock
@@ -311,7 +395,9 @@ export async function updateOrderToPaid({
     shippingAddress: (updatedOrder.shippingAddress || {}) as Record<string, unknown>,
     user: updatedOrder.user ? { name: updatedOrder.user.name, email: updatedOrder.user.email } : undefined,
     totalPrice: String(updatedOrder.totalPrice),
-  }).catch((e) => console.error('Supplier auto-fulfillment background error:', e));
+  })
+    .then((summary) => persistDispatchSummary(updatedOrder.id, summary))
+    .catch((e) => console.error('Supplier auto-fulfillment background error:', e));
 }
 
 // Get user's orders
