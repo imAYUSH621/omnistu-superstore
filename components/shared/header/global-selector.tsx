@@ -108,6 +108,9 @@ export default function GlobalSelector() {
                 </button>
               ))}
             </div>
+            <p className='mt-2 text-[11px] leading-snug text-neutral-700 dark:text-neutral-200'>
+              Only menus and checkout labels are translated. Product details and policy pages stay in English.
+            </p>
           </div>
 
           {/* Currency Section */}
@@ -135,7 +138,7 @@ export default function GlobalSelector() {
             </div>
           </div>
 
-          <div className='mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-[10px] text-neutral-400 text-center'>
+          <div className='mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-[11px] leading-snug text-neutral-700 dark:text-neutral-200 text-center'>
             {ratesSource === 'default_safe'
               ? 'Converted amounts are estimates (fixed fallback rates; live rates unavailable).'
               : ratesSource === 'env_override'

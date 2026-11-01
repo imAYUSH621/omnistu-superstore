@@ -191,7 +191,14 @@ export async function createOrder(idempotencyKey?: string) {
 }
 
 // Get order by id
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// This is a server action, so anyone can call it directly. It returns an order only to its
+// owner or an admin. Everyone else, and any id that is not a UUID, gets null (the page shows 404).
 export async function getOrderById(orderId: string) {
+  if (typeof orderId !== 'string' || !UUID_RE.test(orderId)) return null;
+  const session = await auth();
+  if (!session?.user?.id) return null;
   const data = await prisma.order.findFirst({
     where: {
       id: orderId,
@@ -201,6 +208,8 @@ export async function getOrderById(orderId: string) {
       user: { select: { name: true, email: true } },
     },
   });
+  if (!data) return null;
+  if (data.userId !== session.user.id && session.user.role !== 'admin') return null;
 
   return convertToPlainObject(data);
 }

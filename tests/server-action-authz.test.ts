@@ -5,7 +5,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 import { auth } from '@/auth';
-import { getOrderSummary, getAllOrders, deleteOrder } from '@/lib/actions/order.actions';
+import { getOrderSummary, getAllOrders, deleteOrder, getOrderById } from '@/lib/actions/order.actions';
 import { deleteProduct, createProduct, updateProduct } from '@/lib/actions/product.actions';
 import { getAllUsers, deleteUser, updateUser } from '@/lib/actions/user.actions';
 import { GET as supplierHealth } from '@/app/api/supplier-health/route';
@@ -49,4 +49,17 @@ it('updateOrderToPaid is not exported from a server-action file', () => {
   expect(actions).not.toMatch(/export (async )?function updateOrderToPaid\(/);
   const settle = fs.readFileSync('lib/order-settlement.ts', 'utf8');
   expect(settle).not.toMatch(/^['"]use server['"]/m);
+});
+
+describe('getOrderById (callable as a server action)', () => {
+  const ID = '123e4567-e89b-42d3-a456-426614174000';
+  it('returns null for a non-UUID id without touching the database or the session', async () => {
+    asUser();
+    expect(await getOrderById('not-an-id')).toBeNull();
+    expect(await getOrderById('')).toBeNull();
+  });
+  it('returns null for an anonymous caller before touching the database', async () => {
+    asNobody();
+    expect(await getOrderById(ID)).toBeNull();
+  });
 });
