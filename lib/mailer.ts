@@ -2,7 +2,16 @@ import { Resend } from 'resend';
 import { OrderConfirmationEmail } from '@/email/order-confirmation';
 import { SENDER_EMAIL, SERVER_URL } from '@/lib/constants';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+// Lazy: constructing Resend without a key throws, which crashed `next build`
+// page-data collection whenever RESEND_API_KEY was absent (D13).
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  if (!resend) resend = new Resend(apiKey);
+  return resend;
+}
 
 interface OrderEmailData {
   customerName: string;
@@ -16,13 +25,14 @@ interface OrderEmailData {
 }
 
 export async function sendOrderConfirmationEmail(data: OrderEmailData): Promise<void> {
-  if (!process.env.RESEND_API_KEY) {
+  const client = getResend();
+  if (!client) {
     console.warn('[mailer] RESEND_API_KEY not set — skipping order confirmation email');
     return;
   }
 
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: `Omnistu Superstore <${SENDER_EMAIL}>`,
       to: [data.customerEmail],
       subject: `✅ Order Confirmed: ${data.orderId} — Omnistu Direct`,
