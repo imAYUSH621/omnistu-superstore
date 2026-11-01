@@ -26,6 +26,18 @@ if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
 export const authConfig = {
   providers: [], // Required by NextAuthConfig type
   callbacks: {
+    // Middleware (middleware.ts) instantiates NextAuth with THIS config only,
+    // so the session callback in auth.ts never runs there. Without mapping the
+    // JWT claims here, authorized() saw auth.user.role as undefined and every
+    // /admin page redirected even for a real signed-in admin.
+    async session({ session, token }: { session: any; token: any }) {
+      if (session.user) {
+        session.user.id = token.sub as string;
+        session.user.role = token.role as string;
+        session.user.name = token.name as string;
+      }
+      return session;
+    },
     authorized({ request, auth }) {
       // Array of regex patterns of paths we want to protect
       const protectedPaths = [
