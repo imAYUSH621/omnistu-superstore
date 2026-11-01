@@ -36,3 +36,22 @@ describe('contact route (G5)', () => {
     if (savedKey !== undefined) process.env.RESEND_API_KEY = savedKey;
   });
 });
+
+describe('contact route recipient', () => {
+  test('defaults the recipient inbox to the owner-confirmed team@omnistu.com', async () => {
+    const savedEmail = process.env.SUPPORT_EMAIL;
+    delete process.env.SUPPORT_EMAIL;
+    process.env.RESEND_API_KEY = 'test-key';
+    const send = jest.fn().mockResolvedValue({ id: 'x' });
+    jest.doMock('resend', () => ({ Resend: jest.fn().mockImplementation(() => ({ emails: { send } })) }), { virtual: true });
+    jest.resetModules();
+    const { POST: PostWithMock } = await import('@/app/api/contact/route');
+    const res = await PostWithMock(req({ name: 'Ayush Anand', email: 'ayush@example.com', message: 'Where is my demo order?' }));
+    expect(res.status).toBe(200);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].to).toEqual(['team@omnistu.com']);
+    if (savedEmail !== undefined) process.env.SUPPORT_EMAIL = savedEmail; else delete process.env.SUPPORT_EMAIL;
+    delete process.env.RESEND_API_KEY;
+    jest.dontMock('resend');
+  });
+});
