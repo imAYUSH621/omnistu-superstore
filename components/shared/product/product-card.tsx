@@ -18,6 +18,7 @@ const ProductCard = ({ product }: { product: Product }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const priceNum = Number(product.price);
+  const isFixture = isTestFixtureSlug(product.slug);
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,6 +102,11 @@ const ProductCard = ({ product }: { product: Product }) => {
             className='object-contain p-4 group-hover:scale-105 transition-transform duration-300'
             priority={false}
           />
+          {isFixture && (
+            <span className='absolute bottom-0 left-0 right-0 bg-red-700/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white' data-testid='placeholder-image-label'>
+              Placeholder image - not a photo of this product
+            </span>
+          )}
         </Link>
       </CardHeader>
 
@@ -109,7 +115,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         <div className='space-y-1.5'>
           <div className='flex items-center justify-between text-[11px] text-muted-foreground uppercase tracking-wider font-semibold'>
             <span>{product.brand ?? ''}</span>
-            {isTestFixtureSlug(product.slug) && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>TEST FIXTURE</span>}
+            {isFixture && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>TEST FIXTURE</span>}
             <span className='truncate max-w-[120px]'>{product.category}</span>
           </div>
 
@@ -134,6 +140,11 @@ const ProductCard = ({ product }: { product: Product }) => {
 
         {/* Pricing Block & Prime Delivery */}
         <div className='space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800/80'>
+          {isFixture ? (
+            <p className='text-xs text-red-900' data-testid='fixture-card-cost'>
+              <span className='font-bold'>Reference only</span> - supplier cost ${priceNum.toFixed(2)}, not a sale price
+            </p>
+          ) : (
           <div className='flex items-baseline gap-2'>
             <span className='text-xl font-extrabold text-foreground tracking-tight'>
               <sup className='text-xs align-super font-normal'>$</sup>
@@ -143,10 +154,12 @@ const ProductCard = ({ product }: { product: Product }) => {
               </sup>
             </span>
           </div>
-
+          )}
 
           {/* Quick Add To Cart Button */}
-          {product.stock > 0 ? (
+          {isFixture ? (
+            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>Test fixture - not for sale</p>
+          ) : product.stock > 0 ? (
             <Button
               type='button'
               onClick={handleQuickAdd}
