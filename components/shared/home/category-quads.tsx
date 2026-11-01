@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { AMAZON_GATEWAY_QUADS, GatewayQuad } from '@/lib/constants/amazon-gateway-quads';
+import { ProductImage } from '@/components/shared/product/product-image';
 import { ChevronRight } from 'lucide-react';
 
 function QuadCard({ quad }: { quad: GatewayQuad }) {
@@ -30,10 +30,9 @@ function QuadCard({ quad }: { quad: GatewayQuad }) {
               className='group/item block cursor-pointer text-left'
             >
               <div className='aspect-square relative w-full overflow-hidden bg-white dark:bg-neutral-800 rounded-none mb-1'>
-                <Image
+                <ProductImage
                   src={item.image}
                   alt={item.label}
-                  fill
                   sizes='(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 14vw'
                   className='object-cover group-hover/item:scale-103 transition-transform duration-200'
                 />

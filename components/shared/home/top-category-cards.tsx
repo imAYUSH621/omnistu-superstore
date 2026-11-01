@@ -2,8 +2,8 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ProductImage } from '@/components/shared/product/product-image';
 
 const TOP_CARDS = [
   {
@@ -71,10 +71,9 @@ export default function TopCategoryCards() {
               </h2>
             </div>
             <div className='relative w-full h-[280px] sm:h-[300px] md:h-[320px] overflow-hidden bg-neutral-100 dark:bg-neutral-800'>
-              <Image
+              <ProductImage
                 src={card.image}
                 alt={card.title}
-                fill
                 sizes='(max-width: 768px) 260px, 285px'
                 className='object-cover group-hover/card:scale-102 transition-transform duration-300'
                 priority

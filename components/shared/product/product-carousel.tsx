@@ -11,6 +11,7 @@ import { Product } from '@/types';
 import Autoplay from 'embla-carousel-autoplay';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ProductImage } from '@/components/shared/product/product-image';
 
 const ProductCarousel = ({ data }: { data: Product[] }) => {
   return (
@@ -33,10 +34,9 @@ const ProductCarousel = ({ data }: { data: Product[] }) => {
             <CarouselItem key={product.id}>
               <Link href={`/product/${product.slug}`} className='block relative group'>
                 <div className='relative w-full aspect-[16/7] md:aspect-[21/8] max-h-[580px] overflow-hidden bg-neutral-200 dark:bg-neutral-800'>
-                  <Image
+                  <ProductImage
                     src={product.banner!}
                     alt={product.name}
-                    fill
                     priority
                     sizes='100vw'
                     className='object-cover object-top'
