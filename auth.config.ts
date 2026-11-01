@@ -1,6 +1,19 @@
 import type { NextAuthConfig } from 'next-auth';
 import { NextResponse } from 'next/server';
 
+// Local development without a configured AUTH_SECRET should still boot:
+// fall back to a fixed dev-only secret with a clear warning. This lives in
+// the shared config so both middleware.ts and auth.ts pick it up. At real
+// production runtime no fallback is applied and authjs fails closed with
+// its own MissingSecret error.
+if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+  if (process.env.NODE_ENV !== 'production' || isBuildPhase) {
+    process.env.AUTH_SECRET = 'insecure-dev-only-secret-do-not-deploy';
+    console.warn('[auth] AUTH_SECRET not set - using an insecure dev/build-only fallback. Set AUTH_SECRET in .env for anything real.');
+  }
+}
+
 export const authConfig = {
   providers: [], // Required by NextAuthConfig type
   callbacks: {

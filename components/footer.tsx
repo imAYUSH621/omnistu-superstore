@@ -30,27 +30,22 @@ export default function Footer() {
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/' className='hover:underline hover:text-white'>
-                About {APP_NAME} Direct
-              </Link>
-            </li>
-            <li>
-              <Link href='/search?sort=trending' className='hover:underline hover:text-white'>
-                Direct Sourcing Advantage
-              </Link>
-            </li>
-            <li>
-              <Link href='/search?sort=deals' className='hover:underline hover:text-white'>
-                Price Undercut Guarantee
+                About {APP_NAME}
               </Link>
             </li>
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
-                Verified Global Suppliers
+                Shipping Policy
               </Link>
             </li>
             <li>
               <Link href='/refund-policy' className='hover:underline hover:text-white'>
-                24/7 AI Concierge Support
+                Refund Policy
+              </Link>
+            </li>
+            <li>
+              <Link href='/sustainability' className='hover:underline hover:text-white'>
+                Sustainability
               </Link>
             </li>
           </ul>
@@ -90,31 +85,21 @@ export default function Footer() {
 
         {/* Column 3 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Buyer Guarantees</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'>Policies</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/refund-policy' className='hover:underline hover:text-white'>
-                30-Day Money-Back Guarantee
-              </Link>
-            </li>
-            <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
-                Worldwide Tracked Shipping
+                Shipping Policy
               </Link>
             </li>
             <li>
-              <Link href='/cart' className='hover:underline hover:text-white'>
-                Encrypted Checkout (Stripe/PayPal/UPI)
-              </Link>
-            </li>
-            <li>
-              <Link href='/search?sort=deals' className='hover:underline hover:text-white'>
-                Zero-Fee Direct Pricing
+              <Link href='/privacy' className='hover:underline hover:text-white'>
+                Privacy Notice
               </Link>
             </li>
             <li>
               <Link href='/terms' className='hover:underline hover:text-white'>
-                Anti-Counterfeit Protection
+                Conditions of Use
               </Link>
             </li>
           </ul>
@@ -187,7 +172,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className='text-[#999] pt-1'>
-            © 1996–{new Date().getFullYear()}, Omnistu Superstore, Inc. or its affiliates. Direct Sourcing & Automated Fulfillment.
+            © {new Date().getFullYear()} Omnistu Superstore. Demo catalog in test mode.
           </p>
         </div>
       </div>

@@ -143,7 +143,7 @@ function TrackContent() {
 
             <div className='flex items-center gap-2 text-xs text-gray-500 pt-2'>
               <ShieldCheck className='w-4 h-4 text-green-600' />
-              <span>Protected by Omnistu Direct 30-Day Money-Back Guarantee. <Link href='/refund-policy' className='text-amber-600 underline'>Learn more</Link>.</span>
+              <span>Returns are handled under our <Link href='/refund-policy' className='text-amber-600 underline'>refund policy (draft)</Link>.</span>
             </div>
           </div>
         )}
