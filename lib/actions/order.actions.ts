@@ -17,6 +17,7 @@ import { sendPurchaseReceipt } from '@/email';
 import { sendOrderConfirmationEmail } from '../mailer';
 import { syncOrderToSupabase } from '../providers/supabase-sync';
 import { dispatchOrderFulfillment } from '../fulfillment-dispatcher';
+import { persistDispatchSummary } from '../fulfillment-persistence';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
@@ -394,7 +395,9 @@ export async function updateOrderToPaid({
     shippingAddress: (updatedOrder.shippingAddress || {}) as Record<string, unknown>,
     user: updatedOrder.user ? { name: updatedOrder.user.name, email: updatedOrder.user.email } : undefined,
     totalPrice: String(updatedOrder.totalPrice),
-  }).catch((e) => console.error('Supplier auto-fulfillment background error:', e));
+  })
+    .then((summary) => persistDispatchSummary(updatedOrder.id, summary))
+    .catch((e) => console.error('Supplier auto-fulfillment background error:', e));
 }
 
 // Get user's orders
