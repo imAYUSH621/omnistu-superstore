@@ -265,6 +265,16 @@ export async function approvePayPalOrder(
     }
 
     const capture = captureData.purchase_units[0]?.payments?.captures[0];
+    // Fail closed: without a COMPLETED capture carrying an amount, the amount check in
+    // updateOrderToPaid would be skipped (it only compares when pricePaid is present).
+    if (
+      !capture ||
+      capture.status !== 'COMPLETED' ||
+      capture.amount?.value == null ||
+      capture.amount.value === ''
+    ) {
+      throw new Error('PayPal capture is missing, incomplete or has no amount');
+    }
     if (!isExpectedCurrency(capture?.amount?.currency_code)) {
       const note = `CURRENCY_MISMATCH: captured ${capture?.amount?.currency_code ?? 'unknown'}, expected USD`;
       await prisma.order.update({ where: { id: orderId }, data: { paymentNote: note } });

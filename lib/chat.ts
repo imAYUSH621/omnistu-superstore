@@ -131,7 +131,7 @@ export async function lookupOrder(text: string): Promise<string> {
     let rows: Record<string, unknown>[] | null = null;
     if (rpc.ok) {
       rows = (await rpc.json()) as Record<string, unknown>[];
-    } else if (rpc.status === 404) {
+    } else if (rpc.status === 404 && (await isMissingLookupFunction(rpc))) {
       const res = await fetch(`${base}/rest/v1/orders?${buildOrderLookupQuery(orderNo, email)}`, { headers });
       if (res.ok) rows = (await res.json()) as Record<string, unknown>[];
     }
@@ -151,3 +151,17 @@ Rules:
 - Only state order information that appears in an ORDER LOOKUP RESULT. Never guess tracking numbers or delivery dates.
 - You cannot issue refunds, replacements or cancellations. For those, tell the customer our support team handles return authorizations and ask them to contact support@omnistu.com.
 - Be brief, helpful, and friendly. Do not invent policies, prices, or unauthorized discount codes.`;
+
+/**
+ * PostgREST answers PGRST202 ("could not find the function ... in the schema cache") when an RPC
+ * does not exist. Only that exact case may fall back to the table query; any other 404 or error
+ * must not trigger a data fallback.
+ */
+async function isMissingLookupFunction(res: Response): Promise<boolean> {
+  try {
+    const body = (await res.json()) as { code?: string; message?: string; details?: string };
+    return body?.code === 'PGRST202' && `${body.message ?? ''} ${body.details ?? ''}`.includes('lookup_order');
+  } catch {
+    return false;
+  }
+}

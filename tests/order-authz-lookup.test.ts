@@ -156,7 +156,7 @@ describe('chat order lookup: rpc first, table fallback only on 404', () => {
     env();
     const f = jest
       .fn()
-      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({ code: 'PGRST202', message: 'Could not find the function public.lookup_order(p_email, p_order_id) in the schema cache' }) })
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [{ order_id: 'OMN-RPC-2' }] });
     (global as unknown as { fetch: unknown }).fetch = f;
     const r = await lookupOrder('order OMN-RPC-2 for r@z.co');
@@ -171,5 +171,36 @@ describe('chat order lookup: rpc first, table fallback only on 404', () => {
     const r = await lookupOrder('order OMN-RPC-3 for r@z.co');
     expect(f).toHaveBeenCalledTimes(1);
     expect(r).toMatch(/No matching order/);
+  });
+});
+
+describe('chat order lookup: fallback is limited to the missing-function signature', () => {
+  const setup = (first: unknown) => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const f = jest.fn().mockResolvedValueOnce(first).mockResolvedValue({ ok: true, status: 200, json: async () => [{ order_id: 'LEAK' }] });
+    (global as unknown as { fetch: unknown }).fetch = f;
+    return f;
+  };
+  it('arbitrary 404 (different body) does not fall back', async () => {
+    const f = setup({ ok: false, status: 404, json: async () => ({ message: 'not found' }) });
+    expect(await lookupOrder('order OMN-A-1 for r@z.co')).toMatch(/No matching order/);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it('404 for a different function does not fall back', async () => {
+    const f = setup({ ok: false, status: 404, json: async () => ({ code: 'PGRST202', message: 'Could not find the function public.other' }) });
+    expect(await lookupOrder('order OMN-A-2 for r@z.co')).toMatch(/No matching order/);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it('404 with unparseable body does not fall back', async () => {
+    const f = setup({ ok: false, status: 404, json: async () => { throw new Error('x'); } });
+    expect(await lookupOrder('order OMN-A-3 for r@z.co')).toMatch(/No matching order/);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it('empty rpc result is a no-match without table fallback', async () => {
+    const f = setup({ ok: true, status: 200, json: async () => [] });
+    expect(await lookupOrder('order OMN-A-4 for r@z.co')).toMatch(/No matching order/);
+    expect(f).toHaveBeenCalledTimes(1);
   });
 });
