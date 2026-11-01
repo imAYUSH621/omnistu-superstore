@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AMAZON_GATEWAY_QUADS, GatewayQuad } from '@/lib/constants/amazon-gateway-quads';
 import { ProductImage } from '@/components/shared/product/product-image';
 import { ChevronRight } from 'lucide-react';
+import { catalogSource } from '@/lib/utils';
 
 function QuadCard({ quad }: { quad: GatewayQuad }) {
   return (
@@ -49,6 +50,9 @@ function QuadCard({ quad }: { quad: GatewayQuad }) {
 }
 
 export default function CategoryQuads() {
+  // The quads are bundled sample-catalog links. In database mode they would
+  // point at products that do not exist there, so they are not rendered.
+  if (catalogSource() !== 'sample') return null;
   return (
     <div className='relative z-20 px-3 sm:px-4 md:px-6 max-w-[1520px] mx-auto pt-2 pb-12 font-sans'>
       {/* Continuous 4-Column Category Grid Matching Authentic Amazon (26 Quads) */}
