@@ -43,7 +43,7 @@ export default function TopCategoryCards() {
   };
 
   return (
-    <div className='relative w-full max-w-[1520px] mx-auto pt-3 pb-2 px-3 sm:px-4 md:px-6 font-["Amazon_Ember",Arial,sans-serif] group'>
+    <div className='relative w-full max-w-[1520px] mx-auto pt-3 pb-2 px-3 sm:px-4 md:px-6 font-sans group'>
       {/* Left Paddle */}
       <button
         onClick={() => scroll('left')}
