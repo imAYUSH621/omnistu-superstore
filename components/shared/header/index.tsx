@@ -43,10 +43,10 @@ const Header = () => {
           </div>
         </div>
 
-        <SiteSwitch className='hidden md:inline-grid shrink-0' />
+        <SiteSwitch className='hidden xl:inline-grid shrink-0' />
 
         {/* Center: 3-Piece Rectangular Amazon Search Bar */}
-        <div className='hidden md:flex flex-1 min-w-0 justify-center max-w-3xl mx-2'>
+        <div className='hidden xl:flex flex-1 min-w-0 justify-center max-w-3xl mx-2'>
           <Search />
         </div>
 
@@ -57,16 +57,16 @@ const Header = () => {
       </div>
 
       {/* Mobile Search Bar Row */}
-      <div className='md:hidden px-3 pb-2 pt-1 bg-[#1e293b] space-y-2'>
+      <div className='xl:hidden px-3 pb-2 pt-1 bg-[#1e293b] space-y-2'>
         <SiteSwitch className='grid w-full' />
         <Search />
       </div>
 
       {/* 2. Amazon-Style Subnav Belt (#334155) */}
       <div className='bg-[#334155] text-white text-[13px] font-medium border-t border-[#475569]/50 shadow-inner'>
-        <div className='max-w-[1520px] mx-auto px-3 sm:px-4 flex items-center justify-between overflow-x-auto py-1 scrollbar-none gap-2'>
+        <div className='max-w-[1520px] mx-auto px-3 sm:px-4 flex items-center justify-between py-1 gap-2'>
           {/* Authentic Subnav Quick Links (Matching Image 2) */}
-          <div className='flex items-center gap-1 shrink-0'>
+          <div className='flex items-center gap-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
             <div className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer font-bold transition-colors'>
               <CategoryDrawer />
             </div>

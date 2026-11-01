@@ -69,9 +69,9 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
   };
 
   return (
-    <div className='group relative border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card hover:shadow-md transition-all duration-200 p-4 flex flex-col md:flex-row gap-5 items-stretch'>
+    <div className='group relative border border-neutral-200 dark:border-neutral-800 rounded-xl bg-card hover:shadow-md transition-all duration-200 p-4 flex flex-col lg:flex-row gap-5 items-stretch'>
       {/* 1. Left Thumbnail Area */}
-      <div className='relative w-full md:w-56 h-56 flex-shrink-0 bg-neutral-50 dark:bg-neutral-900/60 rounded-lg overflow-hidden flex items-center justify-center p-3'>
+      <div className='relative w-full lg:w-56 h-56 flex-shrink-0 bg-neutral-50 dark:bg-neutral-900/60 rounded-lg overflow-hidden flex items-center justify-center p-3'>
         {/* Badges */}
         <div className='absolute top-2 left-2 z-10 flex flex-col gap-1'>
           {product.isFeatured && (
@@ -200,7 +200,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
       </div>
 
       {/* 3. Right Action Box */}
-      <div className='w-full md:w-48 flex-shrink-0 flex flex-col justify-between border-t md:border-t-0 md:border-l border-neutral-100 dark:border-neutral-800 pt-3 md:pt-0 md:pl-5 space-y-3'>
+      <div className='w-full lg:w-48 flex-shrink-0 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-neutral-100 dark:border-neutral-800 pt-3 lg:pt-0 lg:pl-5 space-y-3'>
 
         <div className='space-y-2 pt-2'>
           {isFixture ? (
