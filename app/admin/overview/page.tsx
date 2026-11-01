@@ -122,7 +122,7 @@ const AdminOverviewPage = async () => {
 
         <Card className='col-span-3 shadow-sm'>
           <CardHeader>
-            <CardTitle className='text-sm font-bold'>Recent Direct Orders</CardTitle>
+            <CardTitle className='text-sm font-bold'>Recent orders</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
