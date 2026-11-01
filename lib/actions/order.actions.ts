@@ -405,6 +405,7 @@ export async function getOrderSummary() {
     if (isRedirectError(error)) throw error;
     console.error('[admin] getOrderSummary failed:', formatError(error));
     return {
+      unavailable: true as const,
       ordersCount: 0,
       productsCount: 0,
       usersCount: 0,
