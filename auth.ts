@@ -4,6 +4,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import { cookies } from 'next/headers';
 import { compare } from './lib/encrypt';
+import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -28,40 +29,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const emailInput = (credentials.email as string)?.trim().toLowerCase();
         const passwordInput = (credentials.password as string)?.trim();
 
-        // 1. MASTER ADMIN EMERGENCY BYPASS (Guarantees zero-lockout for admin testing)
-        const allowedAdminEmails = [
-          'admin@example.com',
-          'admin@omnistu.com',
-          'ayush@omnistu.com',
-          'ayushjee2155@gmail.com',
-          'admin',
-        ];
-        const validAdminPasswords = [
-          '123456',
-          'admin123456',
-          'Admin@Omnistu2026',
-          '2026',
-          'admin',
-        ];
-
-        if (
-          allowedAdminEmails.includes(emailInput) &&
-          validAdminPasswords.includes(passwordInput)
-        ) {
+        // 1. DEV-ONLY admin bypass: active solely outside production when
+        // DEV_ADMIN_BYPASS=true and a >=12-char DEV_ADMIN_PASSWORD is set.
+        // No credentials are hardcoded; production always skips this path.
+        if (checkDevBypassCredentials(emailInput, passwordInput)) {
           try {
-            // Find existing admin or admin@example.com
-            const adminEmail = emailInput.includes('@') ? emailInput : 'admin@example.com';
             let dbAdmin = await prisma.user.findFirst({
-              where: {
-                OR: [{ email: adminEmail }, { role: 'admin' }],
-              },
+              where: { role: 'admin' },
             });
 
             if (!dbAdmin) {
               dbAdmin = await prisma.user.create({
                 data: {
-                  name: 'Omnistu SuperAdmin',
-                  email: adminEmail,
+                  name: 'Omnistu Dev Admin',
+                  email: emailInput,
                   role: 'admin',
                 },
               });
@@ -70,21 +51,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (dbAdmin) {
               return {
                 id: dbAdmin.id,
-                name: dbAdmin.name || 'Omnistu SuperAdmin',
+                name: dbAdmin.name || 'Omnistu Dev Admin',
                 email: dbAdmin.email,
                 role: 'admin',
               };
             }
           } catch (e) {
-            console.warn('Prisma DB lookup error during admin bypass:', e);
+            console.warn('Prisma DB lookup error during dev admin bypass:', e);
           }
-
-          return {
-            id: 'master-admin-001',
-            name: 'Omnistu SuperAdmin',
-            email: emailInput.includes('@') ? emailInput : 'admin@example.com',
-            role: 'admin',
-          };
         }
 
         // 2. Standard Database User Lookup

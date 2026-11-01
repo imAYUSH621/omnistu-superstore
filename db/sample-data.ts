@@ -3,13 +3,13 @@ const sampleData = {
     {
       name: 'John',
       email: 'admin@example.com',
-      password: '123456',
+      password: '', // replaced at seed time - see db/seed.ts
       role: 'admin',
     },
     {
       name: 'Jane',
       email: 'user@example.com',
-      password: '123456',
+      password: '', // replaced at seed time - see db/seed.ts
       role: 'user',
     },
   ],
