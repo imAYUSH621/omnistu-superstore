@@ -14,7 +14,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Charts from './charts';
 import { requireAdmin } from '@/lib/auth-guard';
-import AdminInteractiveHub from './admin-interactive-hub';
 
 export const metadata: Metadata = {
   title: 'Seller Executive Center | Omnistu Superstore Admin',
@@ -105,8 +104,6 @@ const AdminOverviewPage = async () => {
         </Card>
       </div>
 
-      {/* Interactive Hub: Suppliers, 1-Click Dispatch, Analytics & Margins */}
-      <AdminInteractiveHub />
 
       {/* Revenue Charts & Recent Sales Table */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
