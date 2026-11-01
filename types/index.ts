@@ -31,6 +31,12 @@ export type Order = z.infer<typeof insertOrderSchema> & {
   orderitems: OrderItem[];
   user: { name: string; email: string };
   paymentResult: PaymentResult;
+  dispatchStatus?: string | null;
+  dispatchSupplier?: string | null;
+  supplierOrderId?: string | null;
+  trackingNumber?: string | null;
+  trackingCarrier?: string | null;
+  dispatchedAt?: Date | null;
 };
 export type PaymentResult = z.infer<typeof paymentResultSchema>;
 export type Review = z.infer<typeof insertReviewSchema> & {
