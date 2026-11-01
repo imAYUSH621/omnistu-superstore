@@ -18,7 +18,8 @@ const drawer = readFileSync('components/shared/header/category-drawer.tsx', 'utf
 
 describe('premium category-first homepage', () => {
   it('composes personalization, departments, categories, arrivals, trust, quads', () => {
-    for (const c of ['PersonalHero', 'DepartmentRibbon', 'TopCategoryCards', 'LatestArrivals', 'TrustRibbon', 'CategoryQuads']) {
+    expect(page).not.toContain('DepartmentRibbon'); // one category navigation: the illustrated rail
+    for (const c of ['PersonalHero', 'TopCategoryCards', 'LatestArrivals', 'TrustRibbon', 'CategoryQuads']) {
       expect(page).toContain(c);
     }
   });
@@ -61,7 +62,7 @@ describe('premium category-first homepage', () => {
 
   it('signed-out hero does not repeat the department links (the ribbon below owns them)', () => {
     expect(hero).not.toContain('getAllCategories');
-    expect(readFileSync('components/shared/home/department-ribbon.tsx', 'utf8')).toContain('/search?category=');
+    expect(cards).toContain('/search?category=');
   });
 
   it('header renders the All drawer label exactly once', () => {

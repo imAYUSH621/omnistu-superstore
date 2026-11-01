@@ -67,6 +67,9 @@ export default function SearchNarrowChips({ categories = [], facetCounts }: { fa
       <div className='flex items-center gap-2 mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider'>
         <Sparkles className='w-3.5 h-3.5 text-amber-500' />
         <span>Narrow your search</span>
+        <span data-testid='chip-price-note' className='normal-case font-normal tracking-normal'>
+          (price chips use reference cost for test fixtures)
+        </span>
       </div>
 
       <div className='flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin no-scrollbar'>
