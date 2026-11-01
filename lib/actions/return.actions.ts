@@ -65,6 +65,20 @@ export async function reviewReturn(
     return { success: false, message: `Return already ${rr.status.toLowerCase()}.` };
   }
 
+  if (approve) {
+    // Atomic claim: exactly one concurrent approval can flip REQUESTED ->
+    // PROCESSING. A second concurrent call sees count 0 and stops here, so
+    // a double-click or parallel admin sessions can never issue two
+    // refunds for the same return.
+    const claimed = await prisma.returnRequest.updateMany({
+      where: { id: returnId, status: 'REQUESTED' },
+      data: { status: 'PROCESSING' },
+    });
+    if (claimed.count === 0) {
+      return { success: false, message: 'Return already being processed by another approval.' };
+    }
+  }
+
   if (!approve) {
     await prisma.returnRequest.update({
       where: { id: returnId },
@@ -79,10 +93,20 @@ export async function reviewReturn(
   const supplierNote = rr.order.dispatchSupplier
     ? 'Supplier RMA must be initiated manually - supplier return API scope not settled.'
     : null;
+  // Cumulative-refund guard: sum refunds already EXECUTED on this order so
+  // sequential returns can never refund more than the order total.
+  const prior = await prisma.returnRequest.findMany({
+    where: { orderId: rr.orderId, refundStatus: 'EXECUTED' },
+    select: { refundAmount: true },
+  });
+  const alreadyRefunded = prior.reduce((a, r) => a + Number(r.refundAmount ?? 0), 0);
   const refund = await executeRefund({
     paymentMethod: rr.order.paymentMethod,
     paymentResult: rr.order.paymentResult,
     amount: Number(rr.order.totalPrice),
+    orderTotal: Number(rr.order.totalPrice),
+    alreadyRefunded,
+    idempotencyKey: `return-${returnId}`,
   });
   await prisma.returnRequest.update({
     where: { id: returnId },
@@ -95,6 +119,9 @@ export async function reviewReturn(
       resolutionNote: [refund.note, supplierNote, note?.trim()].filter(Boolean).join(' '),
     },
   });
+  // UNKNOWN means the provider call's outcome is uncertain (possible
+  // timeout after success). Surface it for manual reconciliation - never
+  // blind-retry.
   return {
     success: refund.status !== 'FAILED',
     message: `Return approved - refund ${refund.status.toLowerCase()}: ${refund.note}`,

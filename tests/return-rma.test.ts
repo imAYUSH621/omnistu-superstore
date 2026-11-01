@@ -8,6 +8,7 @@ const mockReturnFindUnique = jest.fn();
 const mockReturnCreate = jest.fn();
 const mockReturnUpdate = jest.fn();
 const mockReturnFindMany = jest.fn();
+const mockReturnUpdateMany = jest.fn();
 const mockAuth = jest.fn();
 
 jest.mock('@/db/prisma', () => ({
@@ -18,6 +19,7 @@ jest.mock('@/db/prisma', () => ({
       findUnique: (...a: unknown[]) => mockReturnFindUnique(...a),
       create: (...a: unknown[]) => mockReturnCreate(...a),
       update: (...a: unknown[]) => mockReturnUpdate(...a),
+      updateMany: (...a: unknown[]) => mockReturnUpdateMany(...a),
       findMany: (...a: unknown[]) => mockReturnFindMany(...a),
     },
   },
@@ -39,6 +41,10 @@ const paidOrder = {
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth.mockResolvedValue({ user: { id: 'user-1', role: 'user' } });
+  // default: the atomic REQUESTED -> PROCESSING claim succeeds, and no
+  // refunds were executed on this order before
+  mockReturnUpdateMany.mockResolvedValue({ count: 1 });
+  mockReturnFindMany.mockResolvedValue([]);
 });
 
 describe('requestReturn', () => {
@@ -144,5 +150,31 @@ describe('admin returns page (source scan)', () => {
     expect(src).toMatch(/requireAdmin/);
     expect(src).toMatch(/SIMULATED/);
     expect(src).not.toMatch(/processRefund|stripe\.refunds|paypal.*refund/i);
+  });
+});
+
+describe('reviewReturn concurrency and cumulative guards (G3 hardening)', () => {
+  it('rejects a second concurrent approval when the atomic claim fails', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
+    mockReturnFindUnique.mockResolvedValueOnce({ id: 'rr-1', status: 'REQUESTED', orderId: 'order-1', order: paidOrder });
+    mockReturnUpdateMany.mockResolvedValueOnce({ count: 0 });
+    const res = await reviewReturn('rr-1', true);
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/already being processed/i);
+    expect(mockReturnUpdate).not.toHaveBeenCalled();
+  });
+
+  it('passes prior EXECUTED refunds into the cumulative cap check', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
+    mockReturnFindUnique.mockResolvedValueOnce({ id: 'rr-1', status: 'REQUESTED', orderId: 'order-1', order: paidOrder });
+    mockReturnFindMany.mockResolvedValueOnce([{ refundAmount: '42.00' }]);
+    const res = await reviewReturn('rr-1', true);
+    // already refunded the full total -> cumulative cap FAILS the refund
+    expect(res.success).toBe(false);
+    expect(res.message).toMatch(/cumulative/i);
+    expect(mockReturnUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'rr-1', status: 'REQUESTED' },
+      data: { status: 'PROCESSING' },
+    });
   });
 });
