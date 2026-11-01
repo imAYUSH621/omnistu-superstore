@@ -126,6 +126,7 @@ model Order {
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderitems      OrderItem[]
   returnRequests  ReturnRequest[]
+  fulfillmentTasks FulfillmentTask[]
 }
 
 model OrderItem {
@@ -173,4 +174,21 @@ model ReturnRequest {
 
   @@index([orderId])
   @@index([userId])
+}
+
+model FulfillmentTask {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId       String   @db.Uuid
+  supplier      String
+  payload       Json     @db.Json
+  status        String   @default("PENDING")
+  attempts      Int      @default(0)
+  maxAttempts   Int      @default(5)
+  nextAttemptAt DateTime @default(now()) @db.Timestamp(6)
+  lastError     String?
+  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime @updatedAt
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
 }
