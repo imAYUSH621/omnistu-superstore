@@ -21,7 +21,7 @@ const CategoryDrawer = async () => {
           id='nav-hamburger-menu'
           variant='ghost'
           className='flex items-center gap-1.5 px-3 font-bold text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg'
-          aria-label='All Departments'
+          aria-label='All Categories'
         >
           <Menu className='w-5 h-5 text-foreground' />
           <span className='font-bold text-[14px] leading-none'>All</span>
@@ -31,7 +31,7 @@ const CategoryDrawer = async () => {
         <DrawerHeader className='text-left pb-4 border-b border-neutral-200 dark:border-neutral-800 px-0'>
           <DrawerTitle className='flex items-center gap-2 text-lg font-bold'>
             <Sparkles className='w-4 h-4 text-amber-500' />
-            Shop by Department
+            Shop by Category
           </DrawerTitle>
         </DrawerHeader>
         <div className='space-y-1.5 mt-4 overflow-y-auto max-h-[calc(100vh-140px)]'>
@@ -42,7 +42,7 @@ const CategoryDrawer = async () => {
           >
             <DrawerClose asChild>
               <Link href='/search?category=all'>
-                <span>All Departments</span>
+                <span>All Categories</span>
                 <span className='text-muted-foreground'>View All</span>
               </Link>
             </DrawerClose>

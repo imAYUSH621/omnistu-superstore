@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/db/prisma';
+import { prisma, databaseConfigured } from '@/db/prisma';
+import { classifyDatabase } from '@/lib/db-status';
+
+export const dynamic = 'force-dynamic';
 
 /**
- * Health endpoint (G6 groundwork). Reports liveness + real DB reachability.
+ * Health endpoint. Reports liveness + a coarse database classification:
+ * ok | not_configured | down | schema_incomplete.
  * No sensitive data: no counts, no config values, no env names.
  */
 export async function GET() {
-  let db: 'ok' | 'down' = 'ok';
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-  } catch {
-    db = 'down';
-  }
+  const db = await classifyDatabase(databaseConfigured, (s, ...v) =>
+    prisma.$queryRaw(s, ...v) as never
+  );
   return NextResponse.json(
     { status: db === 'ok' ? 'ok' : 'degraded', db, time: new Date().toISOString() },
     { status: db === 'ok' ? 200 : 503 }

@@ -119,7 +119,7 @@ export default function SearchFacetedSidebar({
 
       {/* 2. Department / Categories */}
       <div className='space-y-2'>
-        <h3 className='font-bold text-sm text-foreground'>Department</h3>
+        <h3 className='font-bold text-sm text-foreground'>Category</h3>
         <ul className='space-y-1 text-xs'>
           <li>
             <Link
@@ -130,7 +130,7 @@ export default function SearchFacetedSidebar({
                   : 'hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              <span>All Departments</span>
+              <span>All Categories</span>
             </Link>
           </li>
           {categories.map((c) => {

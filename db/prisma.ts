@@ -4,6 +4,10 @@ import { PrismaClient } from '@prisma/client';
 import ws from 'ws';
 
 // Dynamic database adapter: Neon Serverless WebSockets or standard PostgreSQL (Supabase/RDS/Railway)
+// Captured BEFORE the local-dev fallback below so /api/health can report an
+// unconfigured database honestly instead of a misleading connection error.
+export const databaseConfigured = Boolean(process.env.DATABASE_URL);
+
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/omnistu?schema=public';
 }
