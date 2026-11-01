@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 
-// Contact intake. Honest by construction: until a real support mailbox is
-// configured (RESEND_API_KEY + SUPPORT_EMAIL), the endpoint tells the
-// caller support is not reachable by email yet instead of pretending a
-// message was delivered. Never claims delivery it cannot perform.
+// Contact intake. Honest by construction: until email sending is
+// configured (RESEND_API_KEY), the endpoint tells the caller support is
+// not reachable by email yet instead of pretending a message was
+// delivered. Never claims delivery it cannot perform.
+//
+// Recipient: team@omnistu.com, the owner's confirmed store contact inbox
+// (Ayush, 2026-11-01). SUPPORT_EMAIL overrides it if ops ever want a
+// different inbox. The From identity stays env-gated (SENDER_EMAIL)
+// pending Resend domain verification - no sender claim is made here.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,9 +34,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const supportEmail = process.env.SUPPORT_EMAIL;
+  const supportEmail = process.env.SUPPORT_EMAIL || 'team@omnistu.com';
   const resendKey = process.env.RESEND_API_KEY;
-  if (!supportEmail || !resendKey) {
+  if (!resendKey) {
     return NextResponse.json(
       {
         success: false,
