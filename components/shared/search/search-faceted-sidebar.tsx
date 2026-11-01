@@ -218,6 +218,9 @@ export default function SearchFacetedSidebar({
       {/* 4. Price & Deals */}
       <div className='space-y-2.5'>
         <h3 className='font-bold text-sm text-foreground'>Price</h3>
+        <p data-testid='price-filter-note' className='text-[11px] text-muted-foreground'>
+          Test fixtures are matched by supplier reference cost, not a retail price.
+        </p>
         <ul className='space-y-1 text-xs'>
           <li>
             <Link

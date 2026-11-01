@@ -1,6 +1,5 @@
 import TopCategoryCards from '@/components/shared/home/top-category-cards';
 import CategoryQuads from '@/components/shared/home/category-quads';
-import DepartmentRibbon from '@/components/shared/home/department-ribbon';
 import LatestArrivals from '@/components/shared/home/latest-arrivals';
 import PersonalHero from '@/components/shared/home/personal-hero';
 import TrustRibbon from '@/components/shared/home/trust-ribbon';
@@ -18,12 +17,9 @@ export default function Homepage() {
       <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-3'>
         {/* 1. Signed-in personalization / honest sign-in CTA */}
         <PersonalHero />
-
-        {/* 2. Category-first: real departments with real counts */}
-        <DepartmentRibbon />
       </div>
 
-      {/* 3. Top category cards with paddles (real categories, verified imagery) */}
+      {/* 2. The illustrated category rail is the single category navigation */}
       <TopCategoryCards />
 
       <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-2'>
