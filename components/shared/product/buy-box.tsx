@@ -97,6 +97,21 @@ export default function BuyBox({
     });
   };
 
+  if (isTestFixtureSlug(product.slug)) {
+    return (
+      <Card className='border border-red-300 shadow-md rounded-xl bg-card text-card-foreground'>
+        <CardContent className='p-5 space-y-3'>
+          <div className='rounded-md border border-red-300 bg-red-50 px-3 py-2.5 text-sm font-bold text-red-900' data-testid='test-fixture-note'>
+            TEST FIXTURE - not for sale
+          </div>
+          <p className='text-xs text-muted-foreground'>
+            Reference only: supplier cost ${priceNum.toFixed(2)} (not a retail price). Supplier warehouse stock total {product.stock} (not an availability promise). No checkout is available for this item.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className='border border-neutral-200 dark:border-neutral-800 shadow-md rounded-xl bg-card text-card-foreground'>
       <CardContent className='p-5 space-y-4'>

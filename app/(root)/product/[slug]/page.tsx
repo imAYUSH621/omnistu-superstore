@@ -1,4 +1,5 @@
 import { getProductBySlug } from '@/lib/actions/product.actions';
+import { isTestFixtureSlug } from '@/lib/test-fixture';
 import T from '@/components/shared/i18n-text';
 import { notFound } from 'next/navigation';
 import ProductImages from '@/components/shared/product/product-images';
@@ -48,7 +49,7 @@ const ProductDetailsPage = async (props: {
         <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
           {/* Images Column (5 Cols) */}
           <div className='lg:col-span-5 bg-white dark:bg-[#1a202c] p-4 border border-[#e7e7e7] dark:border-neutral-800 rounded-sm shadow-xs'>
-            <ProductImages images={product.images} />
+            <ProductImages images={product.images} placeholder={isTestFixtureSlug(product.slug)} />
           </div>
 
           {/* Details & Specs Column (4 Cols) */}
