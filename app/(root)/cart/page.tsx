@@ -3,7 +3,7 @@ import { getMyCart } from '@/lib/actions/cart.actions';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Amazon.com Shopping Cart',
+  title: 'Shopping Cart',
   description: 'Review your items and proceed to checkout.',
 };
 

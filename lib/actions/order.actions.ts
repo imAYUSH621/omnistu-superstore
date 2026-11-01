@@ -444,6 +444,7 @@ export async function getOrderSummary() {
       _sum: { totalPrice: true },
     });
 
+    // D8: an empty database reports real zeros, never invented numbers.
     let salesData: SalesDataType = [];
     try {
       const salesDataRaw = await prisma.$queryRaw<
@@ -455,11 +456,7 @@ export async function getOrderSummary() {
         totalSales: Number(entry.totalSales),
       }));
     } catch {
-      salesData = [
-        { month: '08/26', totalSales: 8420 },
-        { month: '09/26', totalSales: 12650 },
-        { month: '10/26', totalSales: 24890 },
-      ];
+      salesData = [];
     }
 
     const latestSales = await prisma.order.findMany({
@@ -471,76 +468,23 @@ export async function getOrderSummary() {
     });
 
     return {
-      ordersCount: ordersCount || 1248,
-      productsCount: productsCount || 6,
-      usersCount: usersCount || 428,
-      totalSales: totalSales._sum.totalPrice
-        ? totalSales
-        : { _sum: { totalPrice: new Prisma.Decimal(24892.40) } },
-      latestSales:
-        latestSales.length > 0
-          ? latestSales
-          : [
-              {
-                id: 'ord-omn-101',
-                createdAt: new Date(),
-                totalPrice: new Prisma.Decimal(39.98),
-                user: { name: 'Ayush Anand' },
-              },
-              {
-                id: 'ord-omn-102',
-                createdAt: new Date(Date.now() - 3600000),
-                totalPrice: new Prisma.Decimal(89.00),
-                user: { name: 'Elena Rostova' },
-              },
-              {
-                id: 'ord-omn-103',
-                createdAt: new Date(Date.now() - 7200000),
-                totalPrice: new Prisma.Decimal(24.95),
-                user: { name: 'Marcus Vance' },
-              },
-            ],
-      salesData:
-        salesData.length > 0
-          ? salesData
-          : [
-              { month: '08/26', totalSales: 8420 },
-              { month: '09/26', totalSales: 12650 },
-              { month: '10/26', totalSales: 24890 },
-            ],
+      ordersCount,
+      productsCount,
+      usersCount,
+      totalSales,
+      salesData,
+      latestSales,
     };
   } catch (error) {
-    console.warn('Prisma getOrderSummary fallback activated:', error);
+    if (isRedirectError(error)) throw error;
+    console.error('[admin] getOrderSummary failed:', formatError(error));
     return {
-      ordersCount: 1248,
-      productsCount: 6,
-      usersCount: 428,
-      totalSales: { _sum: { totalPrice: new Prisma.Decimal(24892.40) } },
-      latestSales: [
-        {
-          id: 'ord-omn-101',
-          createdAt: new Date(),
-          totalPrice: new Prisma.Decimal(39.98),
-          user: { name: 'Ayush Anand' },
-        },
-        {
-          id: 'ord-omn-102',
-          createdAt: new Date(Date.now() - 3600000),
-          totalPrice: new Prisma.Decimal(89.00),
-          user: { name: 'Elena Rostova' },
-        },
-        {
-          id: 'ord-omn-103',
-          createdAt: new Date(Date.now() - 7200000),
-          totalPrice: new Prisma.Decimal(24.95),
-          user: { name: 'Marcus Vance' },
-        },
-      ],
-      salesData: [
-        { month: '08/26', totalSales: 8420 },
-        { month: '09/26', totalSales: 12650 },
-        { month: '10/26', totalSales: 24890 },
-      ],
+      ordersCount: 0,
+      productsCount: 0,
+      usersCount: 0,
+      totalSales: { _sum: { totalPrice: null } },
+      salesData: [],
+      latestSales: [],
     };
   }
 }

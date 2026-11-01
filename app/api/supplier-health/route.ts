@@ -1,9 +1,31 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/db/prisma';
 
+/**
+ * Supplier + sales health for the admin dashboard.
+ * Only verifiable values are reported (D6/D7): env configuration flags and
+ * real database aggregates. No fabricated ping times, quotas, revenue or
+ * keyword numbers. Live supplier reachability is NOT probed here, so
+ * configured means "credentials present", not "credentials valid".
+ */
 export async function GET() {
-  const cjConfigured = Boolean(process.env.CJ_API_KEY);
-  const printifyConfigured = Boolean(process.env.PRINTIFY_API);
+  const cjConfigured = Boolean(process.env.CJ_API_KEY || process.env.FULFILLMENT_API_KEY);
+  const printifyConfigured = Boolean(process.env.PRINTIFY_API || process.env.PRINTIFY_API_TOKEN);
   const supabaseConfigured = Boolean(process.env.SUPABASE_URL);
+
+  let sales: { totalRevenue: number; totalOrders: number } | null = null;
+  try {
+    const [revenue, orders] = await Promise.all([
+      prisma.order.aggregate({ _sum: { totalPrice: true }, where: { isPaid: true } }),
+      prisma.order.count(),
+    ]);
+    sales = {
+      totalRevenue: Number(revenue._sum.totalPrice ?? 0),
+      totalOrders: orders,
+    };
+  } catch (e) {
+    console.error('[supplier-health] DB aggregate failed:', e instanceof Error ? e.message : e);
+  }
 
   return NextResponse.json({
     success: true,
@@ -11,44 +33,23 @@ export async function GET() {
     suppliers: {
       cjDropshipping: {
         name: 'CJ Dropshipping REST API v2.0',
-        status: 'Operational',
         configured: cjConfigured,
-        tokenValid: true,
-        pingMs: 142,
+        status: cjConfigured ? 'UNVERIFIED' : 'NOT_CONFIGURED',
+        note: 'Configured only proves an env key is present; live dispatch is unverified until a real order succeeds.',
         endpoint: 'https://developers.cjdropshipping.com/api2.0/v1',
       },
       printify: {
         name: 'Printify Direct POD Hub',
-        status: 'Connected',
         configured: printifyConfigured,
-        shopId: process.env.PRINTIFY_SHOP_ID || '29044718',
-        activeApparelProducts: 12,
-        blueprintCount: 4,
+        shopId: process.env.PRINTIFY_SHOP_ID || null,
+        status: printifyConfigured ? 'UNVERIFIED' : 'NOT_CONFIGURED',
       },
       supabase: {
         name: 'Supabase PostgreSQL Storage Hub',
-        status: 'Healthy',
         configured: supabaseConfigured,
-        storageQuotaTotalMb: 500,
-        storageQuotaUsedMb: 18.4,
-        storageFreeMb: 481.6,
-        headroomPercentage: 96.3,
+        status: supabaseConfigured ? 'UNVERIFIED' : 'NOT_CONFIGURED',
       },
     },
-    analytics: {
-      totalRevenue: '$24,892.40',
-      netMarginDollars: '$17,026.40',
-      netMarginPercent: '68.4%',
-      totalOrders: 1248,
-      activeAbandonedCarts: 14,
-      conversionRate: '12.4%',
-      topKeywords: [
-        { keyword: 'magnetic balls', searches: 432 },
-        { keyword: 'turmeric soap', searches: 389 },
-        { keyword: 'smart ring', searches: 295 },
-        { keyword: 'hoodie', searches: 218 },
-        { keyword: 'fidget cube', searches: 174 },
-      ],
-    },
+    sales,
   });
 }
