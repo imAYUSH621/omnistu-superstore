@@ -14,15 +14,15 @@ const TOP_CARDS = [
   },
   {
     id: 'card-2',
-    title: 'Shop all things beauty',
-    image: '/images/tiles/shop-all-things-beauty.svg',
-    url: '/s?k=beauty',
+    title: 'Home & living essentials',
+    image: '/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg',
+    url: '/search?category=Home%20%26%20Kitchen',
   },
   {
     id: 'card-3',
     title: 'Start looking sharp',
-    image: '/images/tiles/start-looking-sharp.svg',
-    url: '/s?k=fashion%20clothing',
+    image: '/images/sample-products/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg',
+    url: '/search?category=Apparel%20%26%20Merch',
   },
   {
     id: 'card-4',
@@ -32,9 +32,9 @@ const TOP_CARDS = [
   },
   {
     id: 'card-5',
-    title: 'Level up your Tech & PC',
-    image: '/images/tiles/level-up-your-tech-pc.svg',
-    url: '/s?k=electronics',
+    title: 'Level up your Tech & Gadgets',
+    image: '/images/sample-products/pro-anc-active-noise-cancelling-wireless-earbuds-spatial-audio-bluetoo-1.jpg',
+    url: '/search?category=Electronics%20%26%20Gadgets',
   },
   {
     id: 'card-6',
