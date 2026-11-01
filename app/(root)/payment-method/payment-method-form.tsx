@@ -6,7 +6,8 @@ import { paymentMethodSchema } from '@/lib/validators';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DEFAULT_PAYMENT_METHOD, PAYMENT_METHODS } from '@/lib/constants';
+import { DEFAULT_PAYMENT_METHOD } from '@/lib/constants';
+import type { PaymentMethodStatus } from '@/lib/payment-capabilities';
 import {
   Form,
   FormControl,
@@ -23,8 +24,10 @@ import T from '@/components/shared/i18n-text';
 
 const PaymentMethodForm = ({
   preferredPaymentMethod,
+  methods,
 }: {
   preferredPaymentMethod: string | null;
+  methods: PaymentMethodStatus[];
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -32,7 +35,11 @@ const PaymentMethodForm = ({
   const form = useForm<z.infer<typeof paymentMethodSchema>>({
     resolver: zodResolver(paymentMethodSchema),
     defaultValues: {
-      type: preferredPaymentMethod || DEFAULT_PAYMENT_METHOD,
+      type: (() => {
+        const on = methods.filter((m) => m.enabled).map((m) => m.method);
+        const want = preferredPaymentMethod || DEFAULT_PAYMENT_METHOD;
+        return on.includes(want) ? want : on[0] ?? '';
+      })(),
     },
   });
 
@@ -78,7 +85,7 @@ const PaymentMethodForm = ({
                         onValueChange={field.onChange}
                         className='flex flex-col space-y-2'
                       >
-                        {PAYMENT_METHODS.map((paymentMethod) => (
+                        {methods.map((m) => { const paymentMethod = m.method; return (
                           <FormItem
                             key={paymentMethod}
                             className='flex items-center space-x-3 space-y-0'
@@ -86,14 +93,20 @@ const PaymentMethodForm = ({
                             <FormControl>
                               <RadioGroupItem
                                 value={paymentMethod}
+                                disabled={!m.enabled}
                                 checked={field.value === paymentMethod}
                               />
                             </FormControl>
                             <FormLabel className='font-normal'>
                               {paymentMethod}
+                              {!m.enabled && (
+                                <span className='ml-2 text-xs text-muted-foreground' data-testid='method-unavailable'>
+                                  ({m.reason ?? 'Not available yet'})
+                                </span>
+                              )}
                             </FormLabel>
                           </FormItem>
-                        ))}
+                        ); })}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -102,8 +115,13 @@ const PaymentMethodForm = ({
               />
             </div>
 
+            {!methods.some((m) => m.enabled) && (
+              <p className='text-sm text-destructive' data-testid='no-payment-methods'>
+                No payment method is available yet, so checkout is paused.
+              </p>
+            )}
             <div className='flex gap-2'>
-              <Button type='submit' disabled={isPending}>
+              <Button type='submit' disabled={isPending || !methods.some((m) => m.enabled)}>
                 {isPending ? (
                   <Loader className='w-4 h-4 animate-spin' />
                 ) : (

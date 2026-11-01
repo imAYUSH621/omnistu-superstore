@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { auth } from '@/auth';
 import { getUserById } from '@/lib/actions/user.actions';
+import { getPaymentMethodStatuses } from '@/lib/payment-capabilities';
 import PaymentMethodForm from './payment-method-form';
 import CheckoutSteps from '@/components/shared/checkout-steps';
 
@@ -19,7 +20,7 @@ const PaymentMethodPage = async () => {
   return (
     <>
       <CheckoutSteps current={2} />
-      <PaymentMethodForm preferredPaymentMethod={user.paymentMethod} />
+      <PaymentMethodForm preferredPaymentMethod={user.paymentMethod} methods={getPaymentMethodStatuses()} />
     </>
   );
 };
