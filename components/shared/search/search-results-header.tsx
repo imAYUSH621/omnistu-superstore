@@ -15,6 +15,13 @@ interface SearchResultsHeaderProps {
   onViewChange: (mode: 'grid' | 'list') => void;
 }
 
+// Headline for the results strip. With zero results "Showing 1-0 of 0" is
+// nonsense - say so plainly instead.
+export function formatResultsCount(totalResults: number): string {
+  if (totalResults <= 0) return 'No results';
+  return `Showing 1-${totalResults} of ${totalResults} results`;
+}
+
 export default function SearchResultsHeader({
   totalResults,
   currentQ,
@@ -61,7 +68,7 @@ export default function SearchResultsHeader({
         <div>
           <h1 className='text-sm sm:text-base text-foreground'>
             <span className='font-normal text-muted-foreground'>
-              Showing 1-{totalResults} of {totalResults} results
+              {formatResultsCount(totalResults)}
             </span>{' '}
             {currentQ && currentQ !== 'all' && (
               <span>
