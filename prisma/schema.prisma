@@ -45,6 +45,7 @@ model User {
   Order         Order[]
   Review        Review[]
   returnRequests ReturnRequest[]
+  enquiries     ServiceEnquiry[]
 }
 
 model Account {
@@ -201,6 +202,9 @@ model ServiceEnquiry {
   message     String
   status      String   @default("NEW")
   createdAt   DateTime @default(now()) @db.Timestamp(6)
+  userId      String?  @db.Uuid
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
+  @@index([userId])
 }

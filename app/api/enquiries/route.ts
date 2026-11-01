@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, databaseConfigured } from '@/db/prisma';
+import { auth } from '@/auth';
 import { rateLimited, validateEnquiry } from '@/lib/enquiries';
 
 // Service enquiry intake. The enquiry is stored in the database FIRST; that
@@ -29,8 +30,18 @@ export async function POST(req: Request) {
       { status: 503 }
     );
   }
+  // Link to the account only when the visitor is signed in right now. Guests
+  // stay guests: no lookup or linking by email, so no history is attached to an
+  // account without proof of ownership. A session lookup failure means guest.
+  let userId: string | null = null;
   try {
-    await prisma.serviceEnquiry.create({ data: check.value });
+    const session = await auth();
+    userId = session?.user?.id ?? null;
+  } catch {
+    userId = null;
+  }
+  try {
+    await prisma.serviceEnquiry.create({ data: { ...check.value, userId } });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[enquiries] save failed:', err instanceof Error ? err.name : 'error');
