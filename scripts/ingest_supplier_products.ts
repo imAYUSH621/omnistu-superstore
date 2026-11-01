@@ -29,12 +29,14 @@ async function main() {
     for (const p of products) {
       if (seen.has(p.id)) continue;
       seen.add(p.id);
-      const price = priceFor(p.wholesaleCost, 4);
+      // Shipping is never guessed: without a verified per-item quote (SHIPPING_COST_USD) no retail price is computed.
+      const shipping = Number(process.env.SHIPPING_COST_USD);
+      const price = Number.isFinite(shipping) && process.env.SHIPPING_COST_USD ? priceFor(p.wholesaleCost, shipping) : null;
       staged.push({
         ...p,
-        retailPrice: p.supplier === 'PRINTIFY' ? p.retailPrice : price.retailPrice,
-        estimatedMarginPct: price.marginPct,
-        retailPriceInr: usdToInr ? Math.round(price.retailPrice * usdToInr) : null,
+        retailPrice: p.supplier === 'PRINTIFY' ? p.retailPrice : price?.retailPrice ?? null,
+        estimatedMarginPct: price?.marginPct ?? null,
+        retailPriceInr: usdToInr && price ? Math.round(price.retailPrice * usdToInr) : null,
         sourceQuery: q,
         status: 'pending_review',
         reviewChecklist: ['specs verified', 'images licensed/usable', 'ships to target country', 'shipping cost confirmed'],
