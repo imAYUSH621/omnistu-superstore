@@ -366,7 +366,9 @@ export async function getOrderSummary() {
     const productsCount = await prisma.product.count();
     const usersCount = await prisma.user.count();
 
+    // Only orders marked paid count as revenue (before any refunds).
     const totalSales = await prisma.order.aggregate({
+      where: { isPaid: true },
       _sum: { totalPrice: true },
     });
 
@@ -375,7 +377,7 @@ export async function getOrderSummary() {
     try {
       const salesDataRaw = await prisma.$queryRaw<
         Array<{ month: string; totalSales: Prisma.Decimal }>
-      >`SELECT to_char("createdAt", 'MM/YY') as "month", sum("totalPrice") as "totalSales" FROM "Order" GROUP BY to_char("createdAt", 'MM/YY')`;
+      >`SELECT to_char("createdAt", 'MM/YY') as "month", sum("totalPrice") as "totalSales" FROM "Order" WHERE "isPaid" = true GROUP BY to_char("createdAt", 'MM/YY')`;
 
       salesData = salesDataRaw.map((entry) => ({
         month: entry.month,

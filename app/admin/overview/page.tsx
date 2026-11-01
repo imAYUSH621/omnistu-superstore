@@ -55,7 +55,7 @@ const AdminOverviewPage = async () => {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Gross Revenue</CardTitle>
+            <CardTitle className='text-sm font-medium'>Paid orders total (before refunds)</CardTitle>
             <BadgeDollarSign className='w-4 h-4 text-emerald-600' />
           </CardHeader>
           <CardContent>
@@ -69,7 +69,7 @@ const AdminOverviewPage = async () => {
 
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Orders Captured</CardTitle>
+            <CardTitle className='text-sm font-medium'>Orders placed (paid and unpaid)</CardTitle>
             <CreditCard className='w-4 h-4 text-blue-600' />
           </CardHeader>
           <CardContent>
@@ -93,7 +93,7 @@ const AdminOverviewPage = async () => {
 
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Live Catalog SKUs</CardTitle>
+            <CardTitle className='text-sm font-medium'>Products in database</CardTitle>
             <Barcode className='w-4 h-4 text-purple-600' />
           </CardHeader>
           <CardContent>
@@ -109,7 +109,7 @@ const AdminOverviewPage = async () => {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
         <Card className='col-span-4 shadow-sm'>
           <CardHeader>
-            <CardTitle className='text-sm font-bold'>Monthly Revenue Velocity</CardTitle>
+            <CardTitle className='text-sm font-bold'>Paid orders total by month</CardTitle>
           </CardHeader>
           <CardContent>
             <Charts
