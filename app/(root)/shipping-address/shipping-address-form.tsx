@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader } from 'lucide-react';
 import { updateUserAddress } from '@/lib/actions/user.actions';
 import { shippingAddressDefaultValues } from '@/lib/constants';
+import T from '@/components/shared/i18n-text';
 
 const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
   const router = useRouter();
@@ -77,7 +78,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel><T k='fullName' /></FormLabel>
                     <FormControl>
                       <Input placeholder='Enter full name' {...field} />
                     </FormControl>
@@ -99,7 +100,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel><T k='addressLabel' /></FormLabel>
                     <FormControl>
                       <Input placeholder='Enter address' {...field} />
                     </FormControl>
@@ -121,7 +122,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel><T k='city' /></FormLabel>
                     <FormControl>
                       <Input placeholder='Enter city' {...field} />
                     </FormControl>
@@ -143,7 +144,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel>Postal Code</FormLabel>
+                    <FormLabel><T k='postalCode' /></FormLabel>
                     <FormControl>
                       <Input placeholder='Enter postal code' {...field} />
                     </FormControl>
@@ -165,7 +166,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel>Country</FormLabel>
+                    <FormLabel><T k='country' /></FormLabel>
                     <FormControl>
                       <Input placeholder='Enter country' {...field} />
                     </FormControl>

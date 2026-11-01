@@ -27,7 +27,7 @@ export default function Footer() {
       <div className='max-w-[1000px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-4 gap-8'>
         {/* Column 1 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Get to Know Us</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'><T k='getToKnowUs' /></h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/' className='hover:underline hover:text-white'>
@@ -54,7 +54,7 @@ export default function Footer() {
 
         {/* Column 2 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Make Money with Us</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'><T k='makeMoneyWithUs' /></h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/admin' className='hover:underline text-amber-400 font-bold'>
@@ -86,7 +86,7 @@ export default function Footer() {
 
         {/* Column 3 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Policies</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'><T k='policies' /></h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
@@ -108,7 +108,7 @@ export default function Footer() {
 
         {/* Column 4 */}
         <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'>Let Us Help You</h3>
+          <h3 className='font-bold text-[15px] mb-3 text-white'><T k='letUsHelpYou' /></h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/user/profile' className='hover:underline hover:text-white'>

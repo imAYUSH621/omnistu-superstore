@@ -19,6 +19,7 @@ import {
 import Image from 'next/image';
 import { formatCurrency } from '@/lib/utils';
 import PlaceOrderForm from './place-order-form';
+import T from '@/components/shared/i18n-text';
 
 export const metadata: Metadata = {
   title: 'Place Order',
@@ -42,7 +43,7 @@ const PlaceOrderPage = async () => {
   return (
     <>
       <CheckoutSteps current={3} />
-      <h1 className='py-4 text-2xl'>Place Order</h1>
+      <h1 className='py-4 text-2xl'><T k='placeOrder' /></h1>
       <div className='grid md:grid-cols-3 md:gap-5'>
         <div className='md:col-span-2 overflow-x-auto space-y-4'>
           <Card>
@@ -75,13 +76,13 @@ const PlaceOrderPage = async () => {
 
           <Card>
             <CardContent className='p-4 gap-4'>
-              <h2 className='text-xl pb-4'>Order Items</h2>
+              <h2 className='text-xl pb-4'><T k='orderItems' /></h2>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Price</TableHead>
+                    <TableHead><T k='itemLabel' /></TableHead>
+                    <TableHead><T k='quantityLabel' /></TableHead>
+                    <TableHead><T k='priceLabel' /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -118,19 +119,19 @@ const PlaceOrderPage = async () => {
           <Card>
             <CardContent className='p-4 gap-4 space-y-4'>
               <div className='flex justify-between'>
-                <div>Items</div>
+                <div><T k='itemsLabel' /></div>
                 <div>{formatCurrency(cart.itemsPrice)}</div>
               </div>
               <div className='flex justify-between'>
-                <div>Tax</div>
+                <div><T k='taxLabel' /></div>
                 <div>{formatCurrency(cart.taxPrice)}</div>
               </div>
               <div className='flex justify-between'>
-                <div>Shipping</div>
+                <div><T k='shippingLabel' /></div>
                 <div>{formatCurrency(cart.shippingPrice)}</div>
               </div>
               <div className='flex justify-between'>
-                <div>Total</div>
+                <div><T k='totalLabel' /></div>
                 <div>{formatCurrency(cart.totalPrice)}</div>
               </div>
               <PlaceOrderForm />
