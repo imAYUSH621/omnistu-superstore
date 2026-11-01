@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import T from '@/components/shared/i18n-text';
 import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import { addItemToCart, removeItemFromCart } from '@/lib/actions/cart.actions';
@@ -243,7 +244,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
             <div className='lg:col-span-3 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
               <div className='flex items-baseline justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3'>
                 <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
-                  Shopping Cart
+                  <T k='shoppingCart' />
                 </h1>
                 <span className='text-xs text-neutral-500 font-medium'>Price</span>
               </div>
@@ -312,7 +313,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
 
               {/* Subtotal Bottom Bar */}
               <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 text-right text-base md:text-lg'>
-                Subtotal ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
+                <T k='subtotal' /> ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
                 <strong className='text-xl text-[#0f172a] dark:text-white font-extrabold'>
                   {formatCurrency(cart.itemsPrice)}
                 </strong>

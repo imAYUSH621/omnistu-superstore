@@ -1,4 +1,5 @@
 import { getProductBySlug } from '@/lib/actions/product.actions';
+import T from '@/components/shared/i18n-text';
 import { notFound } from 'next/navigation';
 import ProductImages from '@/components/shared/product/product-images';
 import BuyBox from '@/components/shared/product/buy-box';
@@ -86,13 +87,13 @@ const ProductDetailsPage = async (props: {
                 </span>
               </div>
               <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
-                {product.numReviews.toLocaleString()} ratings & reviews
+                {product.numReviews.toLocaleString()} <T k='ratingsReviews' />
               </span>
             </div>
 
             {/* Description */}
             <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 space-y-1.5'>
-              <h3 className='font-bold text-sm text-foreground'>About this item</h3>
+              <h3 className='font-bold text-sm text-foreground'><T k='aboutThisItem' /></h3>
               <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-line'>
                 {product.description}
               </p>
