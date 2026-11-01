@@ -202,6 +202,15 @@ export function calculateTieredPrice(wholesaleCost: number): {
 export function isDatabaseAvailable(): boolean {
   const url = process.env.DATABASE_URL;
   if (!url) return false;
-  if (url.includes('localhost') || url.includes('127.0.0.1')) return false;
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    // Local test runs can opt in explicitly so browser and app-level checks
+    // exercise the real database instead of silently using the sample catalog.
+    return process.env.ALLOW_LOCAL_DATABASE === '1';
+  }
   return true;
+}
+
+/** Where catalog reads come from right now. Never exposes config values. */
+export function catalogSource(): 'database' | 'sample' {
+  return isDatabaseAvailable() ? 'database' : 'sample';
 }
