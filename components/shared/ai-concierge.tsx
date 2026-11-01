@@ -23,7 +23,13 @@ export default function AiConcierge() {
     const isEditable = (t: EventTarget | null) =>
       t instanceof HTMLElement &&
       (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-    const onFocusIn = (e: FocusEvent) => { if (isEditable(e.target)) setFormFocused(true); };
+    const onFocusIn = (e: FocusEvent) => {
+      if (!isEditable(e.target)) return;
+      // Ignore focus inside the concierge itself - its own chat input must
+      // not hide the launcher's Close control.
+      if (rootRef.current && rootRef.current.contains(e.target as Node)) return;
+      setFormFocused(true);
+    };
     const onFocusOut = (e: FocusEvent) => { if (isEditable(e.target)) setFormFocused(false); };
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
@@ -33,6 +39,7 @@ export default function AiConcierge() {
     };
   }, []);
   const endRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   async function send(e: FormEvent) {
     e.preventDefault();
@@ -76,18 +83,19 @@ export default function AiConcierge() {
   }
 
   return (
-    <>
-      {/* Floating Trigger Button */}
+    <div ref={rootRef}>
+      {/* Floating Trigger Button - unmounted while an external form control
+          has focus so it cannot cover inputs on short viewports */}
+      {!formFocused && (
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Close shopping assistant' : 'Open 24/7 shopping assistant'}
-        aria-hidden={formFocused}
-        tabIndex={formFocused ? -1 : 0}
-        className={`${formFocused ? 'hidden ' : ''}fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans`}
+        className="fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans"
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
         <span className="text-[13px] font-bold">{open ? 'Close Assistant' : 'AI Assistant'}</span>
       </button>
+      )}
 
       {/* Slideout Chat Modal */}
       {open && (
@@ -165,6 +173,5 @@ export default function AiConcierge() {
           </form>
         </div>
       )}
-    </>
-  );
+    </div>  );
 }

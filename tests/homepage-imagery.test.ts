@@ -42,9 +42,13 @@ describe('ai concierge launcher focus behavior', () => {
     'utf8'
   );
 
-  it('hides the launcher while a form control has focus', () => {
+  it('unmounts the launcher while an external form control has focus', () => {
     expect(src).toMatch(/addEventListener\('focusin'/);
-    expect(src).toMatch(/formFocused \? 'hidden '/);
+    expect(src).toMatch(/\{!formFocused && \(/);
     expect(src).toMatch(/tagName === 'TEXTAREA'/);
+    // its own chat input must not hide the launcher (Close control)
+    expect(src).toMatch(/rootRef\.current && rootRef\.current\.contains/);
+    // no hidden+flex cascade conflict (first attempt regressed on this)
+    expect(src).not.toMatch(/hidden ' : ''\}fixed/);
   });
 });
