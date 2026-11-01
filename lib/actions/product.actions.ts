@@ -173,6 +173,7 @@ export async function getAllProducts({
       return {
         data: convertToPlainObject(data.map(withVariantSummary)),
         totalPages: Math.ceil(dataCount / limit),
+        totalCount: dataCount,
       };
     } catch (err: unknown) {
       console.warn('Prisma getAllProducts fallback:', err);
@@ -218,6 +219,7 @@ export async function getAllProducts({
   return {
     data: convertToPlainObject(data),
     totalPages,
+    totalCount: filtered.length,
   };
 }
 

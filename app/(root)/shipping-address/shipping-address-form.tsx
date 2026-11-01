@@ -168,7 +168,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   <FormItem className='w-full'>
                     <FormLabel><T k='country' /></FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter country' {...field} />
+                      <Input placeholder='Country (e.g. US or United States)' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
