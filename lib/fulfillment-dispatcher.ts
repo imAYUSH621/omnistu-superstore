@@ -4,6 +4,8 @@
  * Supports zero-crash fallback queueing and persistent tracking generation.
  */
 
+import { assertDispatchSpendAllowed } from './spend-guard';
+
 const CJ_BASE_URL = 'https://developers.cjdropshipping.com/api2.0/v1';
 
 export interface DispatchItem {
@@ -40,7 +42,7 @@ export interface SupplierDispatchResult {
   // DISPATCHED = supplier API accepted the order. QUEUED = API attempt failed,
   // retry needed. SIMULATED = no supplier key configured, nothing was shipped.
   // UNROUTED = no supplier integration exists for this item group.
-  status: 'DISPATCHED' | 'QUEUED' | 'SIMULATED' | 'UNROUTED' | 'ADDRESS_INCOMPLETE';
+  status: 'DISPATCHED' | 'QUEUED' | 'SIMULATED' | 'UNROUTED' | 'ADDRESS_INCOMPLETE' | 'SPEND_BLOCKED';
   supplierOrderId: string | null;
   // Real tracking numbers only ever come from the supplier. Anything else is
   // null (unknown yet) - never an invented number (D3).
@@ -142,6 +144,25 @@ export async function dispatchOrderFulfillment(order: DispatchOrderInput): Promi
         trackingNumber: null,
         carrier: null,
         message: `Dispatch blocked: shipping address is missing ${addressCheck.missing.join(', ')}. Collect the real address from the customer before dispatch.`,
+        timestamp: new Date().toISOString(),
+      }],
+    };
+  }
+
+  // D11: fail-closed spend guard. No configured caps = no dispatch; caps
+  // are operator-set env values, never invented or auto-activated.
+  const spendCheck = assertDispatchSpendAllowed(order);
+  if (!spendCheck.ok) {
+    return {
+      orderId: order.id,
+      success: false,
+      dispatches: [{
+        supplier: 'DIRECT_WAREHOUSE',
+        status: 'SPEND_BLOCKED',
+        supplierOrderId: null,
+        trackingNumber: null,
+        carrier: null,
+        message: `Dispatch blocked by spend guard: ${spendCheck.reason}`,
         timestamp: new Date().toISOString(),
       }],
     };
