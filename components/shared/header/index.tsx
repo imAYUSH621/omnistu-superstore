@@ -25,7 +25,7 @@ const Header = () => {
                   omnistu
                 </span>
                 <span className='font-bold text-[12px] text-[#4f46e5] ml-0.5'>
-                  .us
+                  .com
                 </span>
               </div>
             </div>
