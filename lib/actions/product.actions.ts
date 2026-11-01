@@ -289,7 +289,12 @@ export async function getAllCategories() {
         by: ['category'],
         _count: true,
       });
-      if (data && data.length > 0) return data;
+      // Map to plain objects: raw groupBy rows carry the Prisma client's
+      // computed-field getters, which crash when serialized to client
+      // components (no price/rating on aggregate rows).
+      if (data && data.length > 0) {
+        return data.map((d) => ({ category: d.category, _count: d._count }));
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn('Prisma getAllCategories fallback:', msg);

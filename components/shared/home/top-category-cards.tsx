@@ -20,15 +20,19 @@ const TOP_CARDS = [
   },
   {
     id: 'card-3',
-    title: 'Custom Apparel',
-    image: '/images/sample-products/japanese-raw-selvedge-denim-overshirt-jacket-14-5oz-kuroki-mill-denim--1.jpg',
-    url: '/search?category=Custom%20Apparel',
-  },
-  {
-    id: 'card-4',
     title: 'Jewelry & Watches',
     image: '/images/sample-products/2-0-carat-d-color-vvs1-moissanite-solitaire-engagement-ring-in-18k-whi-1.jpg',
     url: '/search?category=Jewelry%20%26%20Watches',
+  },
+  {
+    // Custom Apparel has no verified-matching photo (all 3 product images
+    // are on the D21 unavailable list), so it would render a blank tile in
+    // this visual slot. Home & Lifestyle is the next real department with
+    // verified imagery.
+    id: 'card-4',
+    title: 'Home & Lifestyle',
+    image: '/images/sample-products/ultrasonic-flame-atmosphere-essential-oil-diffuser-realistic-led-fire--1.jpg',
+    url: '/search?category=Home%20%26%20Lifestyle',
   },
 ];
 
@@ -47,10 +51,10 @@ export default function TopCategoryCards() {
       {/* Left Paddle */}
       <button
         onClick={() => scroll('left')}
-        className='absolute left-1 md:left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-24 bg-white/95 hover:bg-white active:bg-[#f3f3f3] dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-r border-y border-r border-[#d5d9d9] dark:border-neutral-700 shadow-[2px_0_6px_rgba(0,0,0,0.18)] flex items-center justify-center transition focus:outline-none'
+        className='absolute left-1 md:left-2 top-1/2 -translate-y-1/2 z-30 w-7 h-14 md:w-10 md:h-24 bg-white/95 hover:bg-white active:bg-[#f3f3f3] dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-r border-y border-r border-[#d5d9d9] dark:border-neutral-700 shadow-[2px_0_6px_rgba(0,0,0,0.18)] flex items-center justify-center transition focus:outline-none'
         aria-label='Previous'
       >
-        <ChevronLeft className='w-6 h-6 text-[#0F1111] dark:text-white' />
+        <ChevronLeft className='w-4 h-4 md:w-6 md:h-6 text-[#0F1111] dark:text-white' />
       </button>
 
       {/* Horizontal Cards Track */}
@@ -86,10 +90,10 @@ export default function TopCategoryCards() {
       {/* Right Paddle */}
       <button
         onClick={() => scroll('right')}
-        className='absolute right-1 md:right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-24 bg-white/95 hover:bg-white active:bg-[#f3f3f3] dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-l border-y border-l border-[#d5d9d9] dark:border-neutral-700 shadow-[-2px_0_6px_rgba(0,0,0,0.18)] flex items-center justify-center transition focus:outline-none'
+        className='absolute right-1 md:right-2 top-1/2 -translate-y-1/2 z-30 w-7 h-14 md:w-10 md:h-24 bg-white/95 hover:bg-white active:bg-[#f3f3f3] dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-l border-y border-l border-[#d5d9d9] dark:border-neutral-700 shadow-[-2px_0_6px_rgba(0,0,0,0.18)] flex items-center justify-center transition focus:outline-none'
         aria-label='Next'
       >
-        <ChevronRight className='w-6 h-6 text-[#0F1111] dark:text-white' />
+        <ChevronRight className='w-4 h-4 md:w-6 md:h-6 text-[#0F1111] dark:text-white' />
       </button>
     </div>
   );

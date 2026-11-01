@@ -99,7 +99,9 @@ export default function SearchFacetedSidebar({
           Popular Shopping Ideas
         </h3>
         <div className='flex flex-wrap gap-1.5'>
-          {['Mini', 'Neodymium', '45dB ANC', 'MagSafe', '400GSM', '55°C', '100W PD'].map(
+          {/* Each term verified to match at least one real catalog product;
+              dead-end terms (zero results) are not offered. */}
+          {['Saffron', 'Moissanite', 'Earbuds', 'Hoodie', 'Diffuser', 'Ghee', 'MagSafe', '100W'].map(
             (idea) => (
               <Link
                 key={idea}

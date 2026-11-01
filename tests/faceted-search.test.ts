@@ -1,6 +1,10 @@
 import { describe, expect, test } from '@jest/globals';
+import { readFileSync } from 'fs';
 import sampleData from '../db/sample-data';
 import { getAllProducts, getAllCategories } from '../lib/actions/product.actions';
+
+const prismaClientSrc = readFileSync('db/prisma.ts', 'utf8');
+const productActionsSrc = readFileSync('lib/actions/product.actions.ts', 'utf8');
 
 describe('Amazon-Style Faceted Search Engine Invariants', () => {
   test('Zero Amazon CDN hotlinks in product database', () => {
@@ -89,5 +93,61 @@ describe('Amazon-Style Faceted Search Engine Invariants', () => {
     categories.forEach((cat) => {
       expect(cat._count).toBeGreaterThan(0);
     });
+  });
+});
+
+
+describe('Search page Flight-safety regressions (real crash: digest on /search)', () => {
+  test('prisma computed fields declare needs guards so subset rows never crash', () => {
+    // Without needs, the client attaches lazy price/rating getters to rows
+    // that lack those fields (groupBy/select subsets); Flight serialization
+    // then invokes them and crashes the whole page render.
+    const productBlock = prismaClientSrc.slice(prismaClientSrc.indexOf('product: {'), prismaClientSrc.indexOf('cart: {'));
+    expect(productBlock).toContain('needs: { price: true }');
+    expect(productBlock).toContain('needs: { rating: true }');
+    const orderItemBlock = prismaClientSrc.slice(prismaClientSrc.indexOf('orderItem: {'));
+    expect(orderItemBlock).toContain('needs: { price: true }');
+  });
+
+  test('getAllCategories maps groupBy rows to plain objects before returning', () => {
+    expect(productActionsSrc).toContain('data.map((d) => ({ category: d.category, _count: d._count }))');
+  });
+
+  test('getAllCategories result is JSON-serializable with only category/_count keys', async () => {
+    const rows = await getAllCategories();
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(() => JSON.stringify(row)).not.toThrow();
+      expect(Object.keys(row).sort()).toEqual(['_count', 'category']);
+    }
+  });
+});
+
+
+describe('Search discovery honesty (labels and quick-search terms)', () => {
+  const chipsSrc = readFileSync('components/shared/search/search-narrow-chips.tsx', 'utf8');
+  const sidebarSrc = readFileSync('components/shared/search/search-faceted-sidebar.tsx', 'utf8');
+
+  test('narrow chips display the real category names they filter by', () => {
+    // a chip must not advertise a department name that does not exist while
+    // silently filtering a different one
+    for (const real of ['Toys & Games', 'Electronics & Gadgets', 'Apparel & Merch', 'Home & Kitchen']) {
+      expect(chipsSrc).toContain(`label: '${real}'`);
+    }
+    for (const invented of ['Sensory & Toys', 'Electronics & Audio', 'Apparel & Streetwear']) {
+      expect(chipsSrc).not.toContain(invented);
+    }
+  });
+
+  test('every popular-ideas term matches at least one catalog product name', () => {
+    const m = sidebarSrc.match(/\{\[([^\]]+)\]\.map/);
+    expect(m).toBeTruthy();
+    const ideas = (m![1].match(/'[^']+'/g) || []).map((t) => t.slice(1, -1));
+    expect(ideas.length).toBeGreaterThan(0);
+    for (const idea of ideas) {
+      const needle = idea.toLowerCase();
+      const hit = sampleData.products.some((p) => p.name.toLowerCase().includes(needle));
+      expect(hit).toBe(true);
+    }
   });
 });

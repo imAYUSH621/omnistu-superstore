@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@/auth';
 import { getMyOrders } from '@/lib/actions/order.actions';
 import { getMyCart } from '@/lib/actions/cart.actions';
+import { getAllCategories } from '@/lib/actions/product.actions';
 import { isDatabaseAvailable } from '@/lib/utils';
 import T from '@/components/shared/i18n-text';
 
@@ -12,9 +13,10 @@ export default async function PersonalHero() {
   const session = await auth();
 
   if (!session?.user) {
+    const categories = await getAllCategories().catch(() => []);
     return (
       <div className='w-full bg-white dark:bg-[#1a202c] shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)] py-8 px-4 text-center border-y border-neutral-100 dark:border-neutral-800'>
-        <div className='max-w-md mx-auto space-y-2.5'>
+        <div className='max-w-2xl mx-auto space-y-3'>
           <p className='text-[14px] text-[#0f172a] dark:text-neutral-200'>
             <T k='signInForOrders' />
           </p>
@@ -31,6 +33,24 @@ export default async function PersonalHero() {
               <T k='startHere' />
             </Link>
           </p>
+          {categories.length > 0 && (
+            <div className='pt-3 border-t border-neutral-100 dark:border-neutral-800'>
+              <p className='text-[12px] font-semibold text-[#0f172a] dark:text-neutral-300 mb-2'>
+                <T k='shopByDepartment' />
+              </p>
+              <div className='flex flex-wrap justify-center gap-2'>
+                {categories.slice(0, 6).map((c) => (
+                  <Link
+                    key={c.category}
+                    href={`/search?category=${encodeURIComponent(c.category)}`}
+                    className='text-[12px] px-3 py-1.5 rounded-full border border-neutral-200 dark:border-neutral-700 bg-[#fbfbfb] dark:bg-neutral-800/40 text-[#0f172a] dark:text-neutral-200 hover:border-[#4f46e5] hover:text-[#4f46e5] dark:hover:text-[#56b6c2] transition-colors'
+                  >
+                    {c.category}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

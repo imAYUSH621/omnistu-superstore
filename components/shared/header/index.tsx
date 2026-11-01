@@ -65,7 +65,6 @@ const Header = () => {
           <div className='flex items-center gap-1 shrink-0'>
             <div className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer font-bold transition-colors'>
               <CategoryDrawer />
-              <span className='text-[14px] leading-none'>All</span>
             </div>
             <Link
               href='/search?sort=deals'

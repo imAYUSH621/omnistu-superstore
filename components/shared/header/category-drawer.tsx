@@ -24,7 +24,7 @@ const CategoryDrawer = async () => {
           aria-label='All Departments'
         >
           <Menu className='w-5 h-5 text-foreground' />
-          <span className='hidden sm:inline font-bold'>All</span>
+          <span className='font-bold text-[14px] leading-none'>All</span>
         </Button>
       </DrawerTrigger>
       <DrawerContent className='h-full max-w-sm p-6'>

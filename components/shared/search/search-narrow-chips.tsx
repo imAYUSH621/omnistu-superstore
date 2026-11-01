@@ -50,19 +50,19 @@ export default function SearchNarrowChips() {
       href: makeChipUrl({ rating: currentRating === '4' ? 'all' : '4' }),
     },
     {
-      label: 'Sensory & Toys',
+      label: 'Toys & Games',
       icon: Flame,
       active: currentCategory === 'Toys & Games',
       href: makeChipUrl({ category: currentCategory === 'Toys & Games' ? 'all' : 'Toys & Games' }),
     },
     {
-      label: 'Electronics & Audio',
+      label: 'Electronics & Gadgets',
       icon: Zap,
       active: currentCategory === 'Electronics & Gadgets',
       href: makeChipUrl({ category: currentCategory === 'Electronics & Gadgets' ? 'all' : 'Electronics & Gadgets' }),
     },
     {
-      label: 'Apparel & Streetwear',
+      label: 'Apparel & Merch',
       icon: Sparkles,
       active: currentCategory === 'Apparel & Merch',
       href: makeChipUrl({ category: currentCategory === 'Apparel & Merch' ? 'all' : 'Apparel & Merch' }),
