@@ -57,6 +57,10 @@ export const authConfig = {
 
       // Strict admin role verification
       if (pathname.startsWith('/admin') && (auth?.user as { role?: string } | undefined)?.role !== 'admin') {
+        // A signed-in non-admin sent to the sign-in page is bounced straight back to the admin URL
+        // (the sign-in page redirects authenticated users to callbackUrl): an endless redirect loop.
+        // Send them to the unauthorized page instead; unauthenticated visitors still go to sign-in.
+        if (auth) return NextResponse.redirect(new URL('/unauthorized', request.nextUrl));
         return false;
       }
 

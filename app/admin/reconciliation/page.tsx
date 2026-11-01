@@ -1,11 +1,26 @@
 import { getPaidOrderReconciliation } from '@/lib/actions/reconcile.actions';
+import { requireAdmin } from '@/lib/auth-guard';
 
 export const metadata = { title: 'Paid order reconciliation' };
 export const dynamic = 'force-dynamic';
 
+const fmt = (iso: string | null) => (iso ? `${iso.slice(0, 16).replace('T', ' ')} UTC` : 'unknown');
+const reasonText = (r: string) =>
+  r === 'NO_DISPATCH_RECORD' ? 'No dispatch record' : 'Dispatch not complete';
+
 export default async function ReconciliationPage() {
+  await requireAdmin(); // same guard as the other admin pages (non-admins go to /unauthorized)
   const res = await getPaidOrderReconciliation();
-  if (!res.success) return <p className="p-4">{res.message}</p>;
+  if (!res.success) {
+    return (
+      <div className="space-y-2">
+        <h1 className="h2-bold">Paid orders needing attention</h1>
+        <p role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          {res.message}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-4">
       <h1 className="h2-bold">Paid orders needing attention</h1>
@@ -15,23 +30,42 @@ export default async function ReconciliationPage() {
         first, and dispatch manually only if no supplier order exists.
       </p>
       {res.items.length === 0 ? (
-        <p>None found.</p>
+        <p className="rounded border p-3 text-sm">No paid orders need attention.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left">
-              <th>Order</th><th>Paid at</th><th>Reason</th><th>Dispatch status</th><th>Error</th><th>Supplier order</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <ul className="space-y-3 md:hidden">
             {res.items.map((i) => (
-              <tr key={i.orderId} className="border-t">
-                <td>{i.orderId}</td><td>{i.paidAt ?? ''}</td><td>{i.reason}</td>
-                <td>{i.dispatchStatus ?? ''}</td><td>{i.dispatchError ?? ''}</td><td>{i.supplierOrderId ?? ''}</td>
-              </tr>
+              <li key={i.orderId} className="space-y-1 rounded border p-3 text-sm">
+                <p className="break-all font-medium">{i.orderId}</p>
+                <p>{reasonText(i.reason)}</p>
+                <p>Paid at: {fmt(i.paidAt)}</p>
+                <p>Dispatch status: {i.dispatchStatus ?? 'none'}</p>
+                {i.supplierOrderId && <p className="break-all">Supplier order: {i.supplierOrderId}</p>}
+                {i.dispatchError && <p className="break-words">Error: {i.dispatchError}</p>}
+              </li>
             ))}
-          </tbody>
-        </table>
+          </ul>
+          <table className="hidden w-full text-sm md:table">
+            <thead>
+              <tr className="text-left">
+                <th className="p-2">Order</th><th className="p-2">Paid at</th><th className="p-2">Reason</th>
+                <th className="p-2">Dispatch status</th><th className="p-2">Error</th><th className="p-2">Supplier order</th>
+              </tr>
+            </thead>
+            <tbody>
+              {res.items.map((i) => (
+                <tr key={i.orderId} className="border-t align-top">
+                  <td className="break-all p-2">{i.orderId}</td>
+                  <td className="whitespace-nowrap p-2">{fmt(i.paidAt)}</td>
+                  <td className="p-2">{reasonText(i.reason)}</td>
+                  <td className="p-2">{i.dispatchStatus ?? 'none'}</td>
+                  <td className="break-words p-2">{i.dispatchError ?? ''}</td>
+                  <td className="break-all p-2">{i.supplierOrderId ?? ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
     </div>
   );

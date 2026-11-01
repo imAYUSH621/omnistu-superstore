@@ -9,7 +9,7 @@ const cb = authConfig.callbacks as any;
 
 function req(pathname: string, withCart = true) {
   return {
-    nextUrl: { pathname },
+    nextUrl: new URL(pathname, 'http://localhost:3000'),
     cookies: { get: () => (withCart ? { value: 'cart-1' } : undefined) },
     headers: new Headers(),
   } as any;
@@ -30,8 +30,12 @@ describe('authorized() admin gating', () => {
   it('allows an admin session onto /admin pages', () => {
     expect(cb.authorized({ request: req('/admin/orders'), auth: { user: { role: 'admin' } } })).toBe(true);
   });
-  it('rejects a non-admin session on /admin pages', () => {
-    expect(cb.authorized({ request: req('/admin/orders'), auth: { user: { role: 'user' } } })).toBe(false);
+  it('sends a signed-in non-admin to /unauthorized (not sign-in, which loops back to the admin URL)', () => {
+    const res = cb.authorized({ request: req('/admin/orders'), auth: { user: { role: 'user' } } });
+    expect(res).not.toBe(true);
+    expect(res).not.toBe(false);
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get('location')).pathname).toBe('/unauthorized');
   });
   it('rejects anonymous access to protected paths', () => {
     expect(cb.authorized({ request: req('/admin/orders'), auth: null })).toBe(false);
