@@ -6,6 +6,7 @@
 const mockOrderFindUnique = jest.fn();
 const mockOrderFindFirst = jest.fn();
 const mockOrderUpdate = jest.fn();
+const mockOrderUpdateMany = jest.fn();
 const mockTransaction = jest.fn();
 
 jest.mock('@/db/prisma', () => ({
@@ -14,6 +15,7 @@ jest.mock('@/db/prisma', () => ({
       findUnique: (...a: unknown[]) => mockOrderFindUnique(...a),
       findFirst: (...a: unknown[]) => mockOrderFindFirst(...a),
       update: (...a: unknown[]) => mockOrderUpdate(...a),
+      updateMany: (...a: unknown[]) => mockOrderUpdateMany(...a),
     },
     $transaction: (...a: unknown[]) => mockTransaction(...a),
   },
@@ -109,8 +111,9 @@ describe('updateOrderToPaid amount guard (D12)', () => {
         paymentResult: { id: 'cap-1', status: 'COMPLETED', pricePaid: '4.20', email_address: 'x@y.z' },
       })
     ).rejects.toThrow('Captured amount does not match');
-    expect(mockOrderUpdate).toHaveBeenCalledTimes(1);
-    const updateArg = mockOrderUpdate.mock.calls[0][0];
+    expect(mockOrderUpdateMany).toHaveBeenCalledTimes(1);
+    const updateArg = mockOrderUpdateMany.mock.calls[0][0];
+    expect(updateArg.where).toEqual({ id: 'order-1', isPaid: false });
     expect(updateArg.data.paymentNote).toMatch(/^AMOUNT_MISMATCH/);
     expect(updateArg.data.paymentResult.status).toBe('AMOUNT_MISMATCH');
     expect(updateArg.data.isPaid).toBeUndefined();
@@ -122,7 +125,7 @@ describe('updateOrderToPaid amount guard (D12)', () => {
       .mockResolvedValueOnce(baseOrder) // guard read
       .mockResolvedValueOnce({ ...baseOrder, isPaid: true, orderitems: [], user: null }); // post-tx read
     mockTransaction.mockImplementationOnce(async (cb: any) =>
-      cb({ product: { update: jest.fn() }, order: { update: jest.fn() } })
+      cb({ product: { update: jest.fn() }, order: { updateMany: jest.fn(async () => ({ count: 1 })) } })
     );
     const res = await updateOrderToPaid({
       orderId: 'order-1',

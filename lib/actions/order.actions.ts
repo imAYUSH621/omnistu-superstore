@@ -331,11 +331,12 @@ export async function updateOrderToPaid({
   // order total. The mismatch is recorded on the order and surfaced as an
   // error instead of silently accepting an under- or over-charge.
   if (paymentResult?.pricePaid != null && paymentResult.pricePaid !== '') {
-    const expected = Number(order.totalPrice);
+    const expected = String(order.totalPrice);
     if (isAmountMismatch(paymentResult.pricePaid, expected)) {
-      const note = `AMOUNT_MISMATCH: captured ${paymentResult.pricePaid}, expected ${expected.toFixed(2)}`;
-      await prisma.order.update({
-        where: { id: orderId },
+      const note = `AMOUNT_MISMATCH: captured ${paymentResult.pricePaid}, expected ${expected}`;
+      // updateMany + isPaid:false so a concurrent legitimate payment is never overwritten.
+      await prisma.order.updateMany({
+        where: { id: orderId, isPaid: false },
         data: {
           paymentNote: note,
           paymentResult: { ...paymentResult, status: 'AMOUNT_MISMATCH' },
@@ -346,25 +347,24 @@ export async function updateOrderToPaid({
     }
   }
 
-  // Transaction to update order and account for product stock
+  // Transaction to claim the paid transition and account for product stock.
+  // The claim is a compare-and-set on isPaid:false, taken FIRST inside the transaction: two
+  // concurrent calls (webhook replay, double-click, webhook racing the PayPal capture) serialize
+  // on the row lock and only one sees count 1. If the stock update then fails, the whole
+  // transaction, claim included, rolls back and the order stays unpaid and retryable.
   await prisma.$transaction(async (tx) => {
-    // Iterate over products and update stock
+    const claim = await tx.order.updateMany({
+      where: { id: orderId, isPaid: false },
+      data: { isPaid: true, paidAt: new Date(), paymentResult },
+    });
+    if (claim.count !== 1) throw new Error('Order is already paid');
+
     for (const item of order.orderitems) {
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { increment: -item.qty } },
       });
     }
-
-    // Set the order to paid
-    await tx.order.update({
-      where: { id: orderId },
-      data: {
-        isPaid: true,
-        paidAt: new Date(),
-        paymentResult,
-      },
-    });
   });
 
   // Get updated order after transaction

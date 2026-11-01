@@ -204,3 +204,22 @@ describe('chat order lookup: fallback is limited to the missing-function signatu
     expect(f).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('chat order lookup: id case normalisation', () => {
+  it('sends a UUID order id lowercase even when the customer typed it in capitals', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    const f = jest.fn(async () => ({ ok: true, status: 200, json: async () => [] }));
+    (global as unknown as { fetch: unknown }).fetch = f;
+    await lookupOrder('order AAAAAAAA-1111-4111-8111-111111111111 for c@z.co');
+    const [, init] = f.mock.calls[0] as unknown as [string, { body: string }];
+    expect(JSON.parse(init.body).p_order_id).toBe('aaaaaaaa-1111-4111-8111-111111111111');
+  });
+  it('keeps legacy OMN- ids uppercase', async () => {
+    const f = jest.fn(async () => ({ ok: true, status: 200, json: async () => [] }));
+    (global as unknown as { fetch: unknown }).fetch = f;
+    await lookupOrder('order omn-abc-123 for d@z.co');
+    const [, init] = f.mock.calls[0] as unknown as [string, { body: string }];
+    expect(JSON.parse(init.body).p_order_id).toBe('OMN-ABC-123');
+  });
+});

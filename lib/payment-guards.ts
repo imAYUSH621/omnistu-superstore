@@ -3,15 +3,36 @@
  * Pure functions so the rules are unit-testable without a database.
  */
 
-/** True when the captured amount disagrees with the order total (>1 cent). */
+/**
+ * Parse a USD amount into integer cents. Accepts only plain decimals with at most two fraction
+ * digits (what PayPal USD captures and Postgres Decimal(12,2) totals look like). Returns null for
+ * anything else so the caller fails closed.
+ */
+export function toMinorUnits(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null;
+  const str = typeof value === 'number' ? (Number.isFinite(value) ? value.toFixed(2) : '') : value.trim();
+  const m = /^(-?)(\d{1,10})(?:\.(\d{1,2}))?$/.exec(str);
+  if (!m) return null;
+  const cents = Number(m[2]) * 100 + Number((m[3] ?? '').padEnd(2, '0') || '0');
+  return m[1] ? -cents : cents;
+}
+
+/**
+ * True unless the captured amount equals the order total to the cent. Orders store totalPrice as
+ * Decimal(12,2) and Stripe/PayPal USD amounts are exact cents, so there is no rounding noise to
+ * absorb: any difference, including 1 cent, is an under- or over-payment. Unparseable input
+ * counts as a mismatch. (The earlier 1-cent tolerance came from float arithmetic and had no
+ * business rationale in the code.)
+ */
 export function isAmountMismatch(
   pricePaid: string | number | null | undefined,
-  expectedTotal: number
+  expectedTotal: string | number
 ): boolean {
-  if (pricePaid == null || pricePaid === '') return false; // nothing captured to compare
-  const paid = Number(pricePaid);
-  if (!Number.isFinite(paid)) return true;
-  return Math.abs(paid - expectedTotal) > 0.01;
+  if (pricePaid == null || pricePaid === '') return false; // nothing captured to compare; callers must fail closed first
+  const paid = toMinorUnits(pricePaid);
+  const expected = toMinorUnits(typeof expectedTotal === 'number' ? expectedTotal : String(expectedTotal));
+  if (paid === null || expected === null) return true;
+  return paid !== expected;
 }
 
 /** Stable comparison of two carts/order item lists for duplicate detection (D11). */

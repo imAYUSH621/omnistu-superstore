@@ -101,7 +101,10 @@ export function buildOrderLookupQuery(orderNo: string, email: string): URLSearch
 }
 
 export async function lookupOrder(text: string): Promise<string> {
-  const orderNo = text.match(ORDER_NO_RE)?.[0]?.toUpperCase();
+  const rawNo = text.match(ORDER_NO_RE)?.[0];
+  // The store mirrors order.id (a lowercase UUID) to Supabase; OMN- legacy ids are uppercase.
+  // Upper-casing a UUID would make the exact match miss every real order.
+  const orderNo = rawNo && (/^OMN-/i.test(rawNo) ? rawNo.toUpperCase() : rawNo.toLowerCase());
   const email = text.match(EMAIL_RE)?.[0]?.toLowerCase();
   if (!orderNo) return '';
   if (!email) return 'ORDER LOOKUP: Customer provided an order number but no email address. Please ask for the email used at checkout to verify identity.';
