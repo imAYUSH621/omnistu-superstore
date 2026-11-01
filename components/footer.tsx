@@ -20,7 +20,7 @@ export default function Footer() {
         onClick={scrollToTop}
         className='w-full py-3.5 bg-[#475569] hover:bg-[#485769] transition text-center text-[13px] font-bold text-white tracking-tight cursor-pointer block focus:outline-none'
       >
-        Back to top
+        <T k='backToTop' />
       </button>
 
       {/* 2. 4-Column Directory */}
@@ -180,7 +180,7 @@ export default function Footer() {
               </Link>
           </div>
           <p className='text-[#999] pt-1'>
-            © {new Date().getFullYear()} Omnistu Superstore. Demo catalog in test mode.
+            © {new Date().getFullYear()} Omnistu Superstore. <T k='footerDemoNote' />
           </p>
         </div>
       </div>
