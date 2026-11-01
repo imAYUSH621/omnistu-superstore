@@ -31,22 +31,22 @@ export default function Footer() {
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/' className='hover:underline hover:text-white'>
-                About {APP_NAME}
+                <T k='footerAbout' />
               </Link>
             </li>
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
-                Shipping Policy
+                <T k='footerShippingPolicy' />
               </Link>
             </li>
             <li>
               <Link href='/refund-policy' className='hover:underline hover:text-white'>
-                Refund Policy
+                <T k='footerRefundPolicy' />
               </Link>
             </li>
             <li>
               <Link href='/sustainability' className='hover:underline hover:text-white'>
-                Sustainability
+                <T k='footerSustainability' />
               </Link>
             </li>
           </ul>
@@ -63,22 +63,22 @@ export default function Footer() {
             </li>
             <li>
               <Link href='/admin' className='hover:underline hover:text-white'>
-                Sell on {APP_NAME}
+                <T k='footerSellOn' />
               </Link>
             </li>
             <li>
               <Link href='/admin' className='hover:underline hover:text-white'>
-                Supply via CJ Dropshipping
+                <T k='footerSupplyCJ' />
               </Link>
             </li>
             <li>
               <Link href='/admin' className='hover:underline hover:text-white'>
-                Printify On-Demand Lab
+                <T k='footerPrintify' />
               </Link>
             </li>
             <li>
               <Link href='/admin' className='hover:underline hover:text-white'>
-                Become an Affiliate
+                <T k='footerAffiliate' />
               </Link>
             </li>
           </ul>
@@ -90,17 +90,17 @@ export default function Footer() {
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
-                Shipping Policy
+                <T k='footerShippingPolicy' />
               </Link>
             </li>
             <li>
               <Link href='/privacy' className='hover:underline hover:text-white'>
-                Privacy Notice
+                <T k='footerPrivacy' />
               </Link>
             </li>
             <li>
               <Link href='/terms' className='hover:underline hover:text-white'>
-                Conditions of Use
+                <T k='footerTerms' />
               </Link>
             </li>
           </ul>
@@ -112,32 +112,32 @@ export default function Footer() {
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/user/profile' className='hover:underline hover:text-white'>
-                Your Account
+                <T k='footerYourAccount' />
               </Link>
             </li>
             <li>
               <Link href='/user/orders' className='hover:underline hover:text-white'>
-                Your Orders & Tracking
+                <T k='footerOrdersTracking' />
               </Link>
             </li>
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
-                Shipping Rates & Policies
+                <T k='footerShippingRates' />
               </Link>
             </li>
             <li>
               <Link href='/refund-policy' className='hover:underline hover:text-white'>
-                Returns & Replacements
+                <T k='footerReturns' />
               </Link>
             </li>
             <li>
               <Link href='/contact' className='hover:underline hover:text-white'>
-                Contact & Support
+                <T k='footerContact' />
               </Link>
             </li>
             <li>
               <Link href='/privacy' className='hover:underline hover:text-white'>
-                Help & Privacy Center
+                <T k='footerHelpCenter' />
               </Link>
             </li>
           </ul>
@@ -167,17 +167,17 @@ export default function Footer() {
         <div className='max-w-[1000px] mx-auto px-6 space-y-2'>
           <div className='flex flex-wrap items-center justify-center gap-4 text-[#ddd]'>
             <Link href='/terms' className='hover:underline'>
-              Conditions of Use
-            </Link>
+                <T k='footerTerms' />
+              </Link>
             <Link href='/privacy' className='hover:underline'>
-              Privacy Notice
-            </Link>
+                <T k='footerPrivacy' />
+              </Link>
             <Link href='/shipping-policy' className='hover:underline'>
-              Shipping & Carrier Policy
-            </Link>
+                <T k='footerShippingCarrier' />
+              </Link>
             <Link href='/refund-policy' className='hover:underline'>
-              Returns & Refund Policy
-            </Link>
+                <T k='footerReturnsRefunds' />
+              </Link>
           </div>
           <p className='text-[#999] pt-1'>
             © {new Date().getFullYear()} Omnistu Superstore. Demo catalog in test mode.
