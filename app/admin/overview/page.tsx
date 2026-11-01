@@ -54,12 +54,9 @@ const AdminOverviewPage = async () => {
           <CardContent>
             <div className='text-2xl font-bold'>
               {formatCurrency(
-                summary.totalSales._sum.totalPrice?.toString() || '24892.40'
+                summary.totalSales._sum.totalPrice?.toString() ?? '0'
               )}
             </div>
-            <p className='text-[11px] text-muted-foreground mt-1'>
-              Est. Net Margin: <strong>$17,026.40 (68.4%)</strong>
-            </p>
           </CardContent>
         </Card>
 
@@ -72,24 +69,18 @@ const AdminOverviewPage = async () => {
             <div className='text-2xl font-bold'>
               {formatNumber(summary.ordersCount)}
             </div>
-            <p className='text-[11px] text-emerald-600 font-semibold mt-1'>
-              +14% vs last cycle (Zero manual touch)
-            </p>
           </CardContent>
         </Card>
 
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Active Customers</CardTitle>
+            <CardTitle className='text-sm font-medium'>Registered users</CardTitle>
             <Users className='w-4 h-4 text-amber-600' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
               {formatNumber(summary.usersCount)}
             </div>
-            <p className='text-[11px] text-muted-foreground mt-1'>
-              Repeat Buyer Rate: <strong>24.8%</strong>
-            </p>
           </CardContent>
         </Card>
 
@@ -102,9 +93,6 @@ const AdminOverviewPage = async () => {
             <div className='text-2xl font-bold'>
               {formatNumber(summary.productsCount)}
             </div>
-            <p className='text-[11px] text-muted-foreground mt-1'>
-              Infinite JIT API Enabled
-            </p>
           </CardContent>
         </Card>
       </div>
