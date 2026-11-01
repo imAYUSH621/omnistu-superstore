@@ -88,11 +88,6 @@ export default function Footer() {
           <h3 className='font-bold text-[15px] mb-3 text-white'>Policies</h3>
           <ul className='space-y-2 text-[#DDD]'>
             <li>
-              <Link href='/refund-policy' className='hover:underline hover:text-white'>
-                30-Day Money-Back Guarantee
-              </Link>
-            </li>
-            <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 Shipping Policy
               </Link>

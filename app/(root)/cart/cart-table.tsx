@@ -180,7 +180,7 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                   </li>
                   <li className='flex items-start gap-2'>
                     <ShieldCheck className='w-4 h-4 text-emerald-600 shrink-0 mt-0.5' />
-                    <span><strong>30-Day Money-Back Guarantee</strong> on all catalog items.</span>
+                    <span>Refund policy is in draft - see the refund policy page.</span>
                   </li>
                   <li className='flex items-start gap-2'>
                     <CheckCircle2 className='w-4 h-4 text-blue-600 shrink-0 mt-0.5' />

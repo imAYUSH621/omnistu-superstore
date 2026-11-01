@@ -203,7 +203,7 @@ export default function BuyBox({
           <div className='flex justify-between py-0.5'>
             <span>Returns</span>
             <span className='font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1'>
-              <RotateCcw className='w-3 h-3' /> 30-Day Guarantee
+              <RotateCcw className='w-3 h-3' /> Refund policy (draft)
             </span>
           </div>
           <div className='flex justify-between py-0.5'>

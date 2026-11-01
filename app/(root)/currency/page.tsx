@@ -95,7 +95,7 @@ export default function CurrencyPolicyPage() {
               <ShieldCheck className='w-4 h-4 text-amber-500' /> 4. Currency Refunds
             </h2>
             <p>
-              When a refund is issued under our 30-Day Money-Back Guarantee, it is credited directly in the currency of your original purchase. The refunded amount corresponds to the exact purchase value authorized at checkout.
+              When a refund is issued under our (draft) 30-day refund policy, it is credited directly in the currency of your original purchase. The refunded amount corresponds to the exact purchase value authorized at checkout.
             </p>
           </section>
         </div>
