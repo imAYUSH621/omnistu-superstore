@@ -1,0 +1,27 @@
+name: CI
+
+# Test + typecheck + build gate on every push and PR. This workflow runs no
+# deploy step and holds no cloud credentials - merges cannot publish anything
+# anywhere from this repository.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # package-lock.json is intentionally untracked; use npm install.
+      - run: npm install --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npx jest
+      - run: npx next build
+        env:
+          # D13/D14: build must pass with zero secrets configured.
+          NODE_ENV: production
