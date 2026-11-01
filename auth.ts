@@ -63,9 +63,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // 2. Standard Database User Lookup
         try {
+          // Case-insensitive so accounts created before sign-up lowercased
+          // emails (e.g. "Asha@Example.com") can still sign in.
           const user = await prisma.user.findFirst({
             where: {
-              email: emailInput,
+              email: { equals: emailInput, mode: 'insensitive' },
             },
           });
 

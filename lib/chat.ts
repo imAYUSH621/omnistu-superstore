@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 
 // ---- Config -------------------------------------------------------------
 export const MAX_MESSAGES = 12;
@@ -33,27 +31,21 @@ export function limited(ip: string): boolean {
 }
 
 // ---- Catalog grounding ----------------------------------------------------
+// Products come from the same source as the store pages (database first, demo
+// sample data only when there is no database), so a link from the assistant
+// opens a real product page and the price matches it. Only name, category,
+// brand and description are searched and quoted: ratings, review counts and
+// badges are never used to rank or describe a product (they are unverified).
 export async function findProducts(query: string): Promise<string> {
   try {
-    const raw = await readFile(path.join(process.cwd(), 'public/data/catalog_unified.json'), 'utf8');
-    const parsed: unknown = JSON.parse(raw);
-    let list: Record<string, unknown>[] = [];
-    if (Array.isArray(parsed)) {
-      list = parsed as Record<string, unknown>[];
-    } else if (parsed && typeof parsed === 'object') {
-      const obj = parsed as Record<string, unknown>;
-      if ('products' in obj && Array.isArray(obj.products)) {
-        list = obj.products as Record<string, unknown>[];
-      } else {
-        list = Object.values(obj) as Record<string, unknown>[];
-      }
-    }
-
     const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
     if (!words.length) return '';
+    const { getAllProducts } = await import('@/lib/actions/product.actions');
+    const { data } = await getAllProducts({ query: 'all', limit: 200, page: 1 });
+    const list = (data ?? []) as { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number }[];
     const scored = list
       .map((p) => {
-        const text = JSON.stringify(p).toLowerCase();
+        const text = `${p.name} ${p.category ?? ''} ${p.brand ?? ''} ${p.description ?? ''}`.toLowerCase();
         return { p, score: words.filter((w) => text.includes(w)).length };
       })
       .filter((x) => x.score > 0)
@@ -62,10 +54,8 @@ export async function findProducts(query: string): Promise<string> {
 
     return scored
       .map(({ p }) => {
-        const title = String(p.title ?? p.name ?? 'Product');
-        const price = String(p.price ?? 'n/a');
-        const linkId = String(p.slug ?? p.asin ?? p.id ?? '');
-        return `- ${title} | price: ${price} | link: /product/${linkId}`;
+        const stockNote = typeof p.stock === 'number' && p.stock <= 0 ? ' | currently out of stock' : '';
+        return `- ${p.name} | price: $${Number(p.price).toFixed(2)}${stockNote} | link: /product/${p.slug}`;
       })
       .join('\n');
   } catch {
@@ -153,6 +143,7 @@ Rules:
 - Only state product facts that appear in the PRODUCT CONTEXT below. If a detail (compatibility, materials, sizing, health claims) is not there, say you cannot confirm it and offer to pass the question to the support team.
 - Only state order information that appears in an ORDER LOOKUP RESULT. Never guess tracking numbers or delivery dates.
 - You cannot issue refunds, replacements or cancellations. For those, tell the customer our support team handles return authorizations and ask them to contact support@omnistu.com.
+- Never say a product is a best seller, top rated, popular, trending or highly reviewed, and never quote star ratings or review counts: the store has no verified data for those claims.
 - Be brief, helpful, and friendly. Do not invent policies, prices, or unauthorized discount codes.`;
 
 /**
