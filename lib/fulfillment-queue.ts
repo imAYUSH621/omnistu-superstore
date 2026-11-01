@@ -27,14 +27,17 @@ export async function enqueueFulfillmentTask(input: {
   supplier: string;
   payload: Record<string, unknown>;
   maxAttempts?: number;
+  /** Optional transaction client: lets a caller record the task in the SAME transaction as another write. */
+  tx?: Pick<typeof prisma, 'fulfillmentTask'>;
 }): Promise<{ id: string; deduplicated: boolean }> {
+  const db = input.tx ?? prisma;
   // One active task per order+supplier: a duplicate enqueue returns the
   // existing task instead of double-dispatching later.
-  const existing = await prisma.fulfillmentTask.findFirst({
+  const existing = await db.fulfillmentTask.findFirst({
     where: { orderId: input.orderId, supplier: input.supplier, status: { in: ['PENDING', 'RETRYING'] } },
   });
   if (existing) return { id: existing.id, deduplicated: true };
-  const task = await prisma.fulfillmentTask.create({
+  const task = await db.fulfillmentTask.create({
     data: {
       orderId: input.orderId,
       supplier: input.supplier,

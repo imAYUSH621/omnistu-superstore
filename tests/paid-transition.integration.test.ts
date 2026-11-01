@@ -21,6 +21,8 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { prisma } from '@/db/prisma';
 import { updateOrderToPaid, updateOrderToPaidCOD } from '@/lib/actions/order.actions';
+import { enqueueFulfillmentTask } from '@/lib/fulfillment-queue';
+import { findPaidOrdersNeedingAttention } from '@/lib/paid-reconciliation';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB ? describe : describe.skip;
@@ -137,5 +139,52 @@ maybe('paid transition on REAL Postgres (sandbox, disposable)', () => {
     const o = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect((o.paymentResult as { pricePaid?: string }).pricePaid).toBe('42.50');
     expect(o.paymentNote ?? '').not.toContain('AMOUNT_MISMATCH');
+  }, 20000);
+
+  // ---- Passive outbox preparation (NOT wired into updateOrderToPaid; see design decision) ----
+  it('outbox row recorded in the same transaction as the paid claim commits atomically with it', async () => {
+    const { order } = await makeOrder();
+    await prisma.$transaction(async (tx) => {
+      await tx.order.updateMany({ where: { id: order.id, isPaid: false }, data: { isPaid: true, paidAt: new Date() } });
+      await enqueueFulfillmentTask({ orderId: order.id, supplier: 'ORDER_EFFECTS', payload: { kind: 'post-payment-effects' }, tx });
+    });
+    expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id } })).toBe(1);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(true);
+  }, 20000);
+
+  it('simulated crash (tx aborts after enqueue): neither the paid claim nor the task survives', async () => {
+    const { order } = await makeOrder();
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await tx.order.updateMany({ where: { id: order.id, isPaid: false }, data: { isPaid: true, paidAt: new Date() } });
+        await enqueueFulfillmentTask({ orderId: order.id, supplier: 'ORDER_EFFECTS', payload: {}, tx });
+        throw new Error('crash before commit');
+      })
+    ).rejects.toThrow('crash before commit');
+    expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id } })).toBe(0);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(false);
+  }, 20000);
+
+  it('duplicate enqueue in a transaction is deduplicated (one active task per order+supplier)', async () => {
+    const { order } = await makeOrder();
+    const r = await prisma.$transaction(async (tx) => {
+      const a = await enqueueFulfillmentTask({ orderId: order.id, supplier: 'ORDER_EFFECTS', payload: {}, tx });
+      const b = await enqueueFulfillmentTask({ orderId: order.id, supplier: 'ORDER_EFFECTS', payload: {}, tx });
+      return [a, b];
+    });
+    expect(r[1].deduplicated).toBe(true);
+    expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id } })).toBe(1);
+  }, 20000);
+
+  // ---- Read-only reconciliation on real rows ----
+  it('reconciliation finds a paid order with no dispatch record and changes nothing', async () => {
+    const { order } = await makeOrder();
+    await prisma.order.update({ where: { id: order.id }, data: { isPaid: true, paidAt: new Date(Date.now() - 3600_000) } });
+    const before = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    const items = await findPaidOrdersNeedingAttention(prisma as never);
+    expect(items.map((i) => i.orderId)).toContain(order.id);
+    const after = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(JSON.stringify(after)).toBe(JSON.stringify(before));
+    expect(dispatch).not.toHaveBeenCalled();
   }, 20000);
 });
