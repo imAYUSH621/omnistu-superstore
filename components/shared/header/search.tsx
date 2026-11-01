@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import SearchInput from './search-input';
 import {
   Select,
   SelectContent,
@@ -33,14 +33,8 @@ const Search = async () => {
           </SelectContent>
         </Select>
 
-        {/* Search Input with Amazon Selector id */}
-        <Input
-          id='twotabsearchtextbox'
-          name='q'
-          type='text'
-          placeholder='Search Omnistu Superstore'
-          className='flex-1 border-0 h-10 text-[14px] text-[#0f172a] placeholder:text-[#767676] focus-visible:ring-0 bg-white px-3 font-sans'
-        />
+        {/* Search Input (translated placeholder) */}
+        <SearchInput />
 
         {/* Search Submit Button */}
         <Button

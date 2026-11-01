@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import T from '@/components/shared/i18n-text';
 import { EllipsisVertical } from 'lucide-react';
 import {
   Sheet,
@@ -29,12 +30,7 @@ const Menu = () => {
           href='/user/orders'
           className='hidden sm:flex flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
         >
-          <span className='text-[11px] text-[#cccccc] font-normal leading-none'>
-            Returns
-          </span>
-          <span className='text-[13px] font-bold text-white leading-tight mt-0.5'>
-            & Orders
-          </span>
+          <T k='returnsOrders' className='text-[13px] font-bold text-white leading-tight' />
         </Link>
 
         {/* 4. Cart */}
@@ -57,13 +53,13 @@ const Menu = () => {
               href='/user/orders'
               className='text-sm font-semibold hover:text-amber-400 py-1'
             >
-              Returns & Orders
+              <T k='returnsOrders' />
             </Link>
             <Link
               href='/search?sort=deals'
               className='text-sm font-semibold hover:text-amber-400 py-1'
             >
-              Today&apos;s Deals
+              <T k='todaysDeals' />
             </Link>
             <Link
               href='/admin'
