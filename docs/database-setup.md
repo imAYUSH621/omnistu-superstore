@@ -31,3 +31,7 @@ How the store reads products: `getLatestProducts` / `getAllProducts` / `getProdu
 - `db/seed.ts` DELETES products, users, sessions and accounts. It now refuses unless the database host is local (or `ALLOW_DESTRUCTIVE_SEED=1` is set) and refuses in production.
 
 Stock semantics today: the cart checks stock when an item is added; stock is decremented only when an order is marked paid, with no floor, so two paid orders can take the last unit and stock can go below zero. `/admin/reconciliation` lists such products read-only. Whether to refund, backorder or reserve at checkout is an owner policy decision and is not implemented.
+
+### Real catalog import readiness (recorded, not imported)
+
+`public/data/catalog_unified.json` has 22 items with: id, title, price, image and thumbnails, category, rating, review count. It has NO brand, description or stock, and no supplier or product mapping. `lib/catalog-readiness.ts` maps what exists (name, slug from id, category, price, images) and invents nothing; ratings and review counts are not mapped because they are unverified claims. Result today: 22 total, 0 importable, 22 invalid (missing brand, description, stock). No authorized in-repo source supplies them; supplier APIs (CJ, Printify) need keys that are not available to this work, and nothing was bought or called. `catalog.json` (60) and `bestsellers.json` (100) are not referenced by any code and carry no brand or stock either. Nothing was imported; the JSON fallback is unchanged.
