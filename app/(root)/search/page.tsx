@@ -5,6 +5,7 @@ import {
 } from '@/lib/actions/product.actions';
 import SearchNarrowChips from '@/components/shared/search/search-narrow-chips';
 import SearchFacetedSidebar from '@/components/shared/search/search-faceted-sidebar';
+import SearchFiltersCollapsible from '@/components/shared/search/search-filters-collapsible';
 import SearchResultsClient from '@/components/shared/search/search-results-client';
 
 export async function generateMetadata(props: {
@@ -82,8 +83,8 @@ const SearchPage = async (props: {
 
       {/* 2. Main Search Body: Left Faceted Sidebar + Right Results Stream */}
       <div className='flex flex-col md:flex-row gap-6 items-start'>
-        {/* Left Faceted Navigation Sidebar (Desktop sticky) */}
-        <div className='w-full md:w-60 lg:w-64 flex-shrink-0 md:sticky md:top-20'>
+        {/* Left Faceted Navigation Sidebar (collapsible on mobile, sticky on desktop) */}
+        <SearchFiltersCollapsible>
           <SearchFacetedSidebar
             categories={categories}
             currentCategory={category}
@@ -92,7 +93,7 @@ const SearchPage = async (props: {
             currentSort={sort}
             currentQ={q}
           />
-        </div>
+        </SearchFiltersCollapsible>
 
         {/* Right Search Results Stream */}
         <SearchResultsClient
