@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
+import T from '@/components/shared/i18n-text';
 
 export default function CartBadge() {
   const [count, setCount] = useState<number>(0);
@@ -49,7 +50,7 @@ export default function CartBadge() {
         </span>
       </div>
       <span className='text-[14px] font-bold text-white hidden sm:inline pb-0.5 leading-none'>
-        Cart
+        <T k='cart' />
       </span>
     </Link>
   );

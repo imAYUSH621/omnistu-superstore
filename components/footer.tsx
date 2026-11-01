@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import T from '@/components/shared/i18n-text';
 import Link from 'next/link';
 import { APP_NAME } from '@/lib/constants';
 import GlobalSelector from '@/components/shared/header/global-selector';
@@ -57,7 +58,7 @@ export default function Footer() {
           <ul className='space-y-2 text-[#DDD]'>
             <li>
               <Link href='/admin' className='hover:underline text-amber-400 font-bold'>
-                ⚙ Seller Central / Admin
+                ⚙ <T k='sellerCentral' />
               </Link>
             </li>
             <li>

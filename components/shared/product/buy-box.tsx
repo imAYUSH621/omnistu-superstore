@@ -204,13 +204,13 @@ export default function BuyBox({
           <div className='flex justify-between py-0.5'>
             <span><T k='returnsLabel' /></span>
             <span className='font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1'>
-              <RotateCcw className='w-3 h-3' /> Refund policy (draft)
+              <RotateCcw className='w-3 h-3' /> <T k='refundPolicyDraft' />
             </span>
           </div>
           <div className='flex justify-between py-0.5'>
             <span><T k='paymentLabel' /></span>
             <span className='font-medium text-foreground flex items-center gap-1'>
-              <Lock className='w-3 h-3 text-neutral-500' /> Secure SSL (Stripe / PayPal)
+              <Lock className='w-3 h-3 text-neutral-500' /> <T k='securePaymentNote' />
             </span>
           </div>
         </div>

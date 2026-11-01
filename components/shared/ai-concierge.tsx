@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type FormEvent } from 'react';
+import T from '@/components/shared/i18n-text';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -68,7 +69,7 @@ export default function AiConcierge() {
         className="ai-concierge-launcher fixed right-5 bottom-5 z-50 flex items-center gap-2 px-4 py-3 bg-[#1e293b] hover:bg-[#334155] text-white rounded-full shadow-xl border border-[#4f46e5]/40 transition-all transform hover:scale-105 select-none font-sans"
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
-        <span className="text-[13px] font-bold">{open ? 'Close Assistant' : 'AI Assistant'}</span>
+        <span className="text-[13px] font-bold">{open ? <T k='closeAssistant' /> : <T k='aiAssistant' />}</span>
       </button>
 
       {/* Slideout Chat Modal */}
