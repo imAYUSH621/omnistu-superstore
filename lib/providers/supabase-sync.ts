@@ -18,7 +18,8 @@ export async function syncOrderToSupabase(payload: CloudOrderPayload): Promise<{
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   if (!url || !key || url.includes('placeholder')) {
-    return { success: true, mode: 'local_ledger' };
+    // D9: nothing was written anywhere remote - say so.
+    return { success: false, mode: 'unconfigured' };
   }
 
   try {

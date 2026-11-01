@@ -3,7 +3,7 @@ import CategoryQuads from '@/components/shared/home/category-quads';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Amazon.com. Spend less. Smile more.',
+  title: 'Omnistu Super Store - Everyday essentials, gourmet and more',
   description: 'Omnistu Superstore - Authentic Amazon category gateway, high-volume dropship fulfillment, and direct manufacturer pricing.',
 };
 
