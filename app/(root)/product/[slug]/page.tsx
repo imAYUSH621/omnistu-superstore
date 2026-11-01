@@ -82,25 +82,33 @@ const ProductDetailsPage = async (props: {
             ) : null}
 
             {/* Star Rating & Reviews */}
-            <div className='flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4'>
-              <div className='flex items-center gap-1.5'>
-                <Rating value={Number(product.rating)} />
-                <span className='font-bold text-sm text-foreground'>
-                  {product.rating}
+            {Number(product.numReviews) > 0 ? (
+              <div className='flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4'>
+                <div className='flex items-center gap-1.5'>
+                  <Rating value={Number(product.rating)} />
+                  <span className='font-bold text-sm text-foreground'>
+                    {product.rating}
+                  </span>
+                </div>
+                <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
+                  {product.numReviews.toLocaleString()} <T k='ratingsReviews' />
                 </span>
               </div>
-              <span className='text-xs text-[#4f46e5] dark:text-[#56b6c2]'>
-                {product.numReviews.toLocaleString()} <T k='ratingsReviews' />
-              </span>
-            </div>
+            ) : (
+              <p className='border-b border-neutral-200 dark:border-neutral-800 pb-4 text-xs text-muted-foreground' data-testid='no-reviews-yet'>
+                No reviews yet
+              </p>
+            )}
 
             {/* Description */}
-            <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 space-y-1.5'>
-              <h3 className='font-bold text-sm text-foreground'><T k='aboutThisItem' /></h3>
-              <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-line'>
-                {product.description}
-              </p>
-            </div>
+            {product.description && product.description.trim() ? (
+              <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 space-y-1.5'>
+                <h3 className='font-bold text-sm text-foreground'><T k='aboutThisItem' /></h3>
+                <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-line'>
+                  {product.description}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Authentic Buy Box Column (3 Cols) */}

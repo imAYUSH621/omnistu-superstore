@@ -59,9 +59,9 @@ describe('premium category-first homepage', () => {
     }
   });
 
-  it('signed-out hero offers real department quick links, not an empty card', () => {
-    expect(hero).toContain('getAllCategories');
-    expect(hero).toContain('/search?category=');
+  it('signed-out hero does not repeat the department links (the ribbon below owns them)', () => {
+    expect(hero).not.toContain('getAllCategories');
+    expect(readFileSync('components/shared/home/department-ribbon.tsx', 'utf8')).toContain('/search?category=');
   });
 
   it('header renders the All drawer label exactly once', () => {
