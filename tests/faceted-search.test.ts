@@ -134,14 +134,10 @@ describe('Search discovery honesty (labels and quick-search terms)', () => {
   const chipsSrc = readFileSync('components/shared/search/search-narrow-chips.tsx', 'utf8');
   const sidebarSrc = readFileSync('components/shared/search/search-faceted-sidebar.tsx', 'utf8');
 
-  test('narrow chips display the real category names they filter by', () => {
-    // a chip must not advertise a department name that does not exist while
-    // silently filtering a different one
-    for (const real of ['Toys & Games', 'Electronics & Gadgets', 'Apparel & Merch', 'Home & Kitchen']) {
-      expect(chipsSrc).toContain(`label: '${real}'`);
-    }
-    for (const invented of ['Sensory & Toys', 'Electronics & Audio', 'Apparel & Streetwear']) {
-      expect(chipsSrc).not.toContain(invented);
+  test('narrow chips take category names from the live category list, never hard-coded', () => {
+    expect(chipsSrc).toContain('label: c.category');
+    for (const hardcoded of ['Electronics & Gadgets', 'Apparel & Merch', 'Home & Kitchen', 'Toys & Games', 'Sensory & Toys']) {
+      expect(chipsSrc).not.toContain(hardcoded);
     }
   });
 
