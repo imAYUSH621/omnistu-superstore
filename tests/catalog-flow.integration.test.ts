@@ -104,4 +104,24 @@ maybe('catalog flow on REAL Postgres (fixtures)', () => {
     const p = await getProductBySlug(slug('b'));
     expect(p?.name).toBe('Fxt Widget Beta');
   });
+
+  it('variants: list shows option count and lowest reference cost; cascade delete leaves none', async () => {
+    const p = await prisma.product.findFirstOrThrow({ where: { slug: slug('a') } });
+    await prisma.productVariant.createMany({
+      data: [
+        { productId: p.id, sku: `FXT-${run}-1`, name: 'S', referenceCost: '12.60', supplierStock: 3 },
+        { productId: p.id, sku: `FXT-${run}-2`, name: 'M', referenceCost: '9.50' },
+      ],
+    });
+    const res = await q({ category: cats[0] });
+    const a = mine(res.data as never).find((x: { slug: string }) => x.slug === slug('a')) as unknown as { variantCount: number; variantCostFrom: string; variants?: unknown };
+    expect(a.variantCount).toBe(2);
+    expect(a.variantCostFrom).toBe('9.50');
+    expect(a.variants).toBeUndefined();
+    const b = mine(res.data as never).find((x: { slug: string }) => x.slug === slug('b')) as unknown as { variantCount: number; variantCostFrom: string | null };
+    expect(b.variantCount).toBe(0);
+    expect(b.variantCostFrom).toBeNull();
+    await prisma.product.delete({ where: { id: p.id } });
+    expect(await prisma.productVariant.count({ where: { sku: { startsWith: `FXT-${run}-` } } })).toBe(0);
+  });
 });
