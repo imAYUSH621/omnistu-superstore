@@ -123,7 +123,7 @@ export function lookupThrottled(orderNo: string, email: string, now = Date.now()
 
 export function buildOrderLookupQuery(orderNo: string, email: string): URLSearchParams {
   return new URLSearchParams({
-    select: 'order_id,customer_email,status,tracking_number,carrier,created_at',
+    select: 'order_id,status,tracking_number,carrier,created_at',
     order_id: `eq.${orderNo}`,
     customer_email: `eq.${email}`,
     limit: '1',
@@ -172,6 +172,9 @@ export async function lookupOrder(text: string): Promise<string> {
       // Order fields are store-generated, but they still cross into an LLM
       // prompt as data. Flatten control characters and cap length so a field
       // can never carry instruction-like formatting into the conversation.
+      // The email already did its job as the match key; it is personal data
+      // and adds nothing to the answer, so it never enters the prompt.
+      delete rows[0].customer_email;
       const clean = Object.fromEntries(
         Object.entries(rows[0]).map(([k, v]) => [
           k,
