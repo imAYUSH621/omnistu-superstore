@@ -123,13 +123,13 @@ export default function AffiliatesPage() {
           {/* CTA */}
           <section className='text-center'>
             <a
-              href='mailto:affiliates@omnistu.com?subject=Affiliate Program Application'
+              href='/contact'
               className='inline-block bg-amber-400 hover:bg-amber-500 text-black font-bold py-3 px-8 rounded-lg text-sm transition-colors'
             >
-              Apply Now — affiliates@omnistu.com
+              Apply Now — contact form
             </a>
             <p className='text-xs text-gray-500 mt-3'>
-              Include your platform links, niche, and estimated monthly reach. We review applications within 3 business days.
+              Include your platform links, niche, and estimated monthly reach.
             </p>
           </section>
 
@@ -175,8 +175,7 @@ export default function AffiliatesPage() {
 
           {/* Callout */}
           <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Already a partner?</strong> Log in to your affiliate dashboard or contact{' '}
-            <span className='font-mono underline'>affiliates@omnistu.com</span> for account support.
+            <strong>Already a partner?</strong> Contact us through the contact form at /contact for account support.
           </div>
         </div>
 

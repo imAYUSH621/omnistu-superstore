@@ -72,8 +72,7 @@ export default function PrivacyPage() {
           </section>
 
           <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Questions regarding privacy?</strong> Contact our data privacy officer at{' '}
-            <span className='font-mono underline'>privacy@omnistu.com</span> or open a session with our 24/7 AI Concierge.
+            <strong>Questions regarding privacy?</strong> Contact our team through the contact form at /contact, or open the automated assistant widget.
           </div>
         </div>
 

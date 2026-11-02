@@ -29,9 +29,9 @@ const IconBoxes = () => {
           </div>
           <div className='space-y-2'>
             <Headset />
-            <div className='text-sm font-bold'>24/7 Support</div>
+            <div className='text-sm font-bold'>Automated Support</div>
             <div className='text-sm text-muted-foreground'>
-              Get support at any time
+              Product answers plus a contact form
             </div>
           </div>
         </CardContent>

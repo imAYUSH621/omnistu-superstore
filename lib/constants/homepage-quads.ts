@@ -263,8 +263,8 @@ export const HOMEPAGE_QUADS: HomepageQuad[] = [
         url: '/admin',
       },
       {
-        title: '24/7 Priority Customer Care',
-        label: 'Dedicated Support',
+        title: 'Customer Care via Contact Form',
+        label: 'Contact Form',
         image: '/images/tiles/dedicated-support.svg',
         url: '/admin',
       },
