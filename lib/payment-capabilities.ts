@@ -7,8 +7,15 @@ import { PAYMENT_METHODS } from '@/lib/constants';
 // supplier and fulfilment support that is not assumed.
 export type PaymentMethodStatus = { method: string; enabled: boolean; reason?: string };
 
+// Master switch. In a production runtime no payment method is usable unless ORDERS_ENABLED=true is
+// set on purpose, whatever provider keys happen to be present. Outside production it does not apply.
+export function ordersEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.NODE_ENV !== 'production' || env.ORDERS_ENABLED === 'true';
+}
+
 export function getPaymentMethodStatuses(env: Record<string, string | undefined> = process.env): PaymentMethodStatus[] {
   return PAYMENT_METHODS.map((method) => {
+    if (!ordersEnabled(env)) return { method, enabled: false, reason: 'Not available yet' };
     if (method === 'PayPal') {
       const ok = !!(env.PAYPAL_CLIENT_ID && env.PAYPAL_APP_SECRET && env.PAYPAL_API_URL);
       return ok ? { method, enabled: true } : { method, enabled: false, reason: 'Not available yet' };
