@@ -11,12 +11,14 @@ import { Prisma } from '@prisma/client';
 import { Product } from '@/types';
 
 import sampleData from '@/db/sample-data';
+import { fixtureExclusion } from '@/lib/test-fixture';
 
 // Get latest products
 export async function getLatestProducts(): Promise<Product[]> {
   if (isDatabaseAvailable()) {
     try {
       const data = await prisma.product.findMany({
+        where: fixtureExclusion(),
         take: LATEST_PRODUCTS_LIMIT,
         orderBy: { createdAt: 'desc' },
       });
@@ -45,7 +47,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (isDatabaseAvailable()) {
     try {
       const item = await prisma.product.findFirst({
-        where: { slug: slug },
+        where: { slug: slug, ...fixtureExclusion() },
       });
       if (item) return convertToPlainObject(item);
     } catch (err: unknown) {
@@ -147,6 +149,7 @@ export async function getAllProducts({
           : {};
 
       const where: Prisma.ProductWhereInput = {
+        ...fixtureExclusion(),
         ...queryFilter,
         ...categoryFilter,
         ...priceFilter,
@@ -298,6 +301,7 @@ export async function getAllCategories() {
     try {
       const data = await prisma.product.groupBy({
         by: ['category'],
+        where: fixtureExclusion(),
         _count: true,
       });
       // Map to plain objects: raw groupBy rows carry the Prisma client's
@@ -328,7 +332,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   if (isDatabaseAvailable()) {
     try {
       const data = await prisma.product.findMany({
-        where: { isFeatured: true },
+        where: { isFeatured: true, ...fixtureExclusion() },
         orderBy: { createdAt: 'desc' },
         take: 4,
       });
@@ -368,6 +372,7 @@ export async function getFacetCounts({ query, category }: { query?: string; cate
   if (isDatabaseAvailable()) {
     try {
       const base: Prisma.ProductWhereInput = {
+        ...fixtureExclusion(),
         ...(query && query !== 'all' ? { name: { contains: query, mode: 'insensitive' } as Prisma.StringFilter } : {}),
         ...(category && category !== 'all' ? { category } : {}),
       };
