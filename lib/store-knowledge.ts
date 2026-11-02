@@ -40,8 +40,9 @@ export const STORE_KNOWLEDGE: KnowledgeChunk[] = [
     ],
     text:
       'Signed-in customers can open their order page to see the order status; a carrier and tracking ' +
-      'number appear there once the order has been dispatched. You can also check an order for the ' +
-      'customer when they provide BOTH the order number and the email address used at checkout.',
+      'number appear there once the order has been dispatched. The assistant does not retrieve order ' +
+      'details; for anything the customer cannot see on their order page, the team can help via /contact.',
+    link: '/contact',
   },
   {
     id: 'policies-pending',

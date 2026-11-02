@@ -28,7 +28,7 @@ jest.mock('@/lib/fulfillment-persistence', () => ({ persistDispatchSummary: jest
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { updateOrderToPaidCOD, deliverOrder } from '@/lib/actions/order.actions';
-import { buildOrderLookupQuery, lookupThrottled, lookupOrder, LOOKUP_ATTEMPTS } from '@/lib/chat';
+import { lookupThrottled, lookupOrder, LOOKUP_ATTEMPTS } from '@/lib/chat';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -86,19 +86,6 @@ describe('deliverOrder authorization', () => {
 });
 
 describe('chat order lookup', () => {
-  it('builds an exact-match query with a fixed column list and no or/ilike', () => {
-    const q = buildOrderLookupQuery('OMN-884920', 'a@b.co');
-    expect(q.get('order_id')).toBe('eq.OMN-884920');
-    expect(q.get('customer_email')).toBe('eq.a@b.co');
-    expect(q.get('select')).toBe('order_id,status,tracking_number,carrier,created_at');
-    expect(q.get('limit')).toBe('1');
-    expect(q.has('or')).toBe(false);
-    expect(q.toString()).not.toMatch(/ilike/);
-  });
-  it('encodes hostile email characters as one parameter value, not extra params', () => {
-    const q = buildOrderLookupQuery('OMN-12345', 'x@y.co&or=(id.gt.0)');
-    expect([...q.keys()].sort()).toEqual(['customer_email', 'limit', 'order_id', 'select']);
-  });
   it('throttles repeated attempts per order+email and not other pairs', () => {
     const t0 = 1_000_000;
     for (let i = 0; i < LOOKUP_ATTEMPTS; i++) expect(lookupThrottled('OMN-THR-1', 't@x.co', t0 + i)).toBe(false);
@@ -111,6 +98,7 @@ describe('chat order lookup', () => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-secret';
     process.env.SUPABASE_ANON_KEY = 'anon-key';
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
     const f = jest.fn(async () => ({ ok: true, json: async () => [] }));
     (global as unknown as { fetch: unknown }).fetch = f;
     await lookupOrder('order OMN-NOKEY-1 for k@z.co');
@@ -125,6 +113,7 @@ describe('chat order lookup', () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     process.env.SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-secret';
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
     const f = jest.fn();
     (global as unknown as { fetch: unknown }).fetch = f;
     const r = await lookupOrder('order OMN-NOKEY-2 for k@z.co');
@@ -134,10 +123,11 @@ describe('chat order lookup', () => {
   });
 });
 
-describe('chat order lookup: rpc first, table fallback only on 404', () => {
+describe('chat order lookup: rpc only, never a table probe', () => {
   const env = () => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'anon-key';
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   };
   it('posts a JSON body to rpc/lookup_order and returns the row', async () => {
@@ -152,56 +142,44 @@ describe('chat order lookup: rpc first, table fallback only on 404', () => {
     expect(f).toHaveBeenCalledTimes(1);
     expect(r).toMatch(/OMN-RPC-1/);
   });
-  it('falls back to the exact-match table query when the function is missing (404)', async () => {
+  it('never probes the orders table when the function is missing (404)', async () => {
     env();
-    const f = jest
-      .fn()
-      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({ code: 'PGRST202', message: 'Could not find the function public.lookup_order(p_email, p_order_id) in the schema cache' }) })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [{ order_id: 'OMN-RPC-2' }] });
+    const f = jest.fn(async () => ({ ok: false, status: 404, json: async () => ({ code: 'PGRST202', message: 'Could not find the function public.lookup_order(p_email, p_order_id) in the schema cache' }) }));
     (global as unknown as { fetch: unknown }).fetch = f;
     const r = await lookupOrder('order OMN-RPC-2 for r@z.co');
-    expect(f).toHaveBeenCalledTimes(2);
-    expect(String((f.mock.calls[1] as unknown[])[0])).toMatch(/\/rest\/v1\/orders\?.*order_id=eq\.OMN-RPC-2/);
-    expect(r).toMatch(/OMN-RPC-2/);
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(String((f.mock.calls[0] as unknown[])[0])).toContain('/rpc/lookup_order');
+    expect(r).toMatch(/unavailable/);
   });
-  it('does NOT fall back on other errors (e.g. 401/500) and reports no match', async () => {
+  it('does NOT fall back on other errors (e.g. 401/500) and reports unavailable', async () => {
     env();
     const f = jest.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }));
     (global as unknown as { fetch: unknown }).fetch = f;
     const r = await lookupOrder('order OMN-RPC-3 for r@z.co');
     expect(f).toHaveBeenCalledTimes(1);
-    expect(r).toMatch(/No matching order/);
+    expect(r).toMatch(/unavailable/);
   });
 });
 
-describe('chat order lookup: fallback is limited to the missing-function signature', () => {
-  const setup = (first: unknown) => {
+describe('chat order lookup: fail closed when disabled', () => {
+  it('never calls any Supabase endpoint with CHAT_ORDER_LOOKUP unset', async () => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'anon-key';
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const f = jest.fn().mockResolvedValueOnce(first).mockResolvedValue({ ok: true, status: 200, json: async () => [{ order_id: 'LEAK' }] });
+    delete process.env.CHAT_ORDER_LOOKUP;
+    const f = jest.fn();
     (global as unknown as { fetch: unknown }).fetch = f;
-    return f;
-  };
-  it('arbitrary 404 (different body) does not fall back', async () => {
-    const f = setup({ ok: false, status: 404, json: async () => ({ message: 'not found' }) });
-    expect(await lookupOrder('order OMN-A-1 for r@z.co')).toMatch(/No matching order/);
-    expect(f).toHaveBeenCalledTimes(1);
+    const r = await lookupOrder('order OMN-OFF-1 for r@z.co');
+    expect(f).not.toHaveBeenCalled();
+    expect(r).toContain('turned off');
   });
-  it('404 for a different function does not fall back', async () => {
-    const f = setup({ ok: false, status: 404, json: async () => ({ code: 'PGRST202', message: 'Could not find the function public.other' }) });
-    expect(await lookupOrder('order OMN-A-2 for r@z.co')).toMatch(/No matching order/);
-    expect(f).toHaveBeenCalledTimes(1);
-  });
-  it('404 with unparseable body does not fall back', async () => {
-    const f = setup({ ok: false, status: 404, json: async () => { throw new Error('x'); } });
-    expect(await lookupOrder('order OMN-A-3 for r@z.co')).toMatch(/No matching order/);
-    expect(f).toHaveBeenCalledTimes(1);
-  });
-  it('empty rpc result is a no-match without table fallback', async () => {
-    const f = setup({ ok: true, status: 200, json: async () => [] });
-    expect(await lookupOrder('order OMN-A-4 for r@z.co')).toMatch(/No matching order/);
-    expect(f).toHaveBeenCalledTimes(1);
+  it('any value other than exactly "enabled" stays closed', async () => {
+    process.env.CHAT_ORDER_LOOKUP = 'true';
+    const f = jest.fn();
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const r = await lookupOrder('order OMN-OFF-2 for r@z.co');
+    expect(f).not.toHaveBeenCalled();
+    expect(r).toContain('turned off');
+    delete process.env.CHAT_ORDER_LOOKUP;
   });
 });
 
@@ -209,6 +187,7 @@ describe('chat order lookup: id case normalisation', () => {
   it('sends a UUID order id lowercase even when the customer typed it in capitals', async () => {
     process.env.SUPABASE_URL = 'https://example.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'anon-key';
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
     const f = jest.fn(async () => ({ ok: true, status: 200, json: async () => [] }));
     (global as unknown as { fetch: unknown }).fetch = f;
     await lookupOrder('order AAAAAAAA-1111-4111-8111-111111111111 for c@z.co');
@@ -216,6 +195,9 @@ describe('chat order lookup: id case normalisation', () => {
     expect(JSON.parse(init.body).p_order_id).toBe('aaaaaaaa-1111-4111-8111-111111111111');
   });
   it('keeps legacy OMN- ids uppercase', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
     const f = jest.fn(async () => ({ ok: true, status: 200, json: async () => [] }));
     (global as unknown as { fetch: unknown }).fetch = f;
     await lookupOrder('order omn-abc-123 for d@z.co');

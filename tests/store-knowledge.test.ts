@@ -12,7 +12,7 @@ describe('store knowledge retrieval', () => {
   test('order tracking questions get the order-status chunk', () => {
     const k = findStoreKnowledge('where is my package, has it shipped?');
     expect(k).toContain('order page');
-    expect(k).toContain('BOTH the order number and the email');
+    expect(k).toContain('does not retrieve order details');
   });
 
   test('human-agent requests get the contact chunk', () => {

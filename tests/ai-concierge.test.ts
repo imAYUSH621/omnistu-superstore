@@ -58,28 +58,48 @@ describe('AI Concierge Assistant Edge Cases', () => {
     expect(res2).toBe('');
   });
 
-  test('lookupOrder asks for checkout email when order number is provided alone', async () => {
-    const res = await lookupOrder('Please check order OMN-884920');
-    expect(res).toContain('ask for the email used at checkout');
+  test('lookupOrder fails closed by default and never touches data', async () => {
+    delete process.env.CHAT_ORDER_LOOKUP;
+    const f = jest.fn();
+    (global as unknown as { fetch: unknown }).fetch = f;
+    const res = await lookupOrder('Please check order OMN-884920 for a@b.co');
+    expect(res).toContain('turned off');
+    expect(res).toContain('order page');
+    expect(f).not.toHaveBeenCalled();
+    jest.restoreAllMocks();
   });
 
-  test('lookupOrder returns empty string when neither order ID nor email are in text', async () => {
+  test('lookupOrder returns empty string when no order ID is in text', async () => {
     const res = await lookupOrder('What are your store hours?');
     expect(res).toBe('');
   });
 
-  test('lookupOrder reports unavailable when Supabase environment variables are missing', async () => {
+  test('lookupOrder enabled asks for checkout email when order number is provided alone', async () => {
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
+    try {
+      const res = await lookupOrder('Please check order OMN-884920');
+      expect(res).toContain('ask for the email used at checkout');
+    } finally {
+      delete process.env.CHAT_ORDER_LOOKUP;
+    }
+  });
+
+  test('lookupOrder enabled reports unavailable when Supabase environment variables are missing', async () => {
     const origUrl = process.env.SUPABASE_URL;
-    const origKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const origAnon = process.env.SUPABASE_ANON_KEY;
     delete process.env.SUPABASE_URL;
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.CHAT_ORDER_LOOKUP = 'enabled';
 
     try {
       const res = await lookupOrder('Order OMN-12345 for customer customer@example.com');
-      expect(res).toContain('Database connection unavailable');
+      expect(res).toContain('unavailable');
     } finally {
       if (origUrl) process.env.SUPABASE_URL = origUrl;
-      if (origKey) process.env.SUPABASE_SERVICE_ROLE_KEY = origKey;
+      if (origAnon) process.env.SUPABASE_ANON_KEY = origAnon;
+      delete process.env.CHAT_ORDER_LOOKUP;
     }
   });
 });
