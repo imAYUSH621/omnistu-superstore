@@ -55,7 +55,7 @@ const sampleData = {
       description:
         '400GSM ultra-dense organic French Terry cotton streetwear hoodie. Features cybernetic high-density back print engineered at 300DPI, dropped shoulder oversized silhouette, and double-lined thermal hood.',
       images: [
-        '/images/products/placeholder.svg',
+        '/images/sample-products/omnistu-cyber-heavyweight-graphic-hoodie-concept-1.jpg',
       ],
       price: 58.95,
       brand: 'Omnistu Apparel',
@@ -123,7 +123,7 @@ const sampleData = {
       description:
         '280GSM heavy combed cotton oversized boxy fit t-shirt with enzyme wash treatment. Pre-shrunk with reinforced ribbed collar and seamless tubular body construction for maximum streetwear aesthetic.',
       images: [
-        '/images/products/placeholder.svg',
+        '/images/sample-products/omnistu-vintage-wash-streetwear-oversized-tee-concept-1.jpg',
       ],
       price: 34.95,
       brand: 'Omnistu Apparel',
