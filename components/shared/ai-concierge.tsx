@@ -69,7 +69,7 @@ export default function AiConcierge() {
         ...next,
         {
           role: 'assistant',
-          content: 'Sorry, I am temporarily unable to answer. Please contact support@omnistu.com for direct assistance.',
+          content: 'Sorry, I am temporarily unable to answer. Please use our contact form at /contact for direct assistance.',
         },
       ]);
     } finally {
