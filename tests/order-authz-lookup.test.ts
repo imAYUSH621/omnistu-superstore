@@ -90,7 +90,7 @@ describe('chat order lookup', () => {
     const q = buildOrderLookupQuery('OMN-884920', 'a@b.co');
     expect(q.get('order_id')).toBe('eq.OMN-884920');
     expect(q.get('customer_email')).toBe('eq.a@b.co');
-    expect(q.get('select')).toBe('order_id,customer_email,status,tracking_number,carrier,created_at');
+    expect(q.get('select')).toBe('order_id,status,tracking_number,carrier,created_at');
     expect(q.get('limit')).toBe('1');
     expect(q.has('or')).toBe(false);
     expect(q.toString()).not.toMatch(/ilike/);
