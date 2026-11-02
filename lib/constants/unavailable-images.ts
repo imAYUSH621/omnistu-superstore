@@ -1,5 +1,7 @@
 // Sample-product image files whose photo does NOT depict the product
 // (verified visually against a contact sheet, 2026-11-01; tracker D21).
+// Two Omnistu-branded demo apparel items were replaced 2026-11-02 with
+// clearly labeled concept illustrations (strip on the image itself).
 // These render as an explicit neutral "Image unavailable" tile instead of
 // a misleading photo, until real photography assets exist. The product
 // itself, its name, price and link stay real - no substitution.
@@ -9,8 +11,6 @@ export const UNAVAILABLE_IMAGES: ReadonlySet<string> = new Set([
   `${P}/a2-vedic-desi-gir-cow-cultured-ghee-traditional-bilona-method-grass-fe-1.jpg`,
   `${P}/royal-heritage-indian-festive-sweet-savory-hamper-kaju-katli-gulab-jam-1.jpg`,
   `${P}/smart-titanium-health-fitness-tracking-ring-continuous-heart-rate-slee-1.jpg`,
-  `${P}/heavyweight-french-terry-oversized-streetwear-hoodie-450-gsm-100-combe-1.jpg`,
-  `${P}/vintage-washed-boxy-fit-graphic-tee-260-gsm-heavyweight-jersey-cotton--1.jpg`,
   `${P}/artisan-matte-ceramic-pour-over-coffee-brewer-station-double-wall-boro-1.jpg`,
   `${P}/precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy-full-sp-1.jpg`,
   `${P}/artisan-laser-cut-wooden-mechanical-gear-treasure-box-3d-self-assembly-1.jpg`,

@@ -37,13 +37,13 @@ describe('homepage honest imagery', () => {
       path.join(process.cwd(), 'lib/constants/unavailable-images.ts'),
       'utf8'
     );
-    // the 11 visually verified mismatches (tracker D21) must stay listed
+    // the 9 remaining visually verified mismatches (tracker D21) must stay
+    // listed; the two Omnistu-branded demo apparel photos were replaced
+    // 2026-11-02 with clearly labeled concept illustrations
     const flagged = [
       'a2-vedic-desi-gir-cow-cultured-ghee',
       'royal-heritage-indian-festive-sweet-savory-hamper',
       'smart-titanium-health-fitness-tracking-ring',
-      'heavyweight-french-terry-oversized-streetwear-hoodie',
-      'vintage-washed-boxy-fit-graphic-tee',
       'artisan-matte-ceramic-pour-over-coffee-brewer',
       'precision-aerospace-aluminum-optical-illusion-kinetic-desk-toy',
       'artisan-laser-cut-wooden-mechanical-gear-treasure-box',
