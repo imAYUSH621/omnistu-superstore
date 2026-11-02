@@ -82,7 +82,7 @@ export default function AiConcierge() {
       {/* Docked edge tab: only a slim strip rests over the page (content keeps a gutter), it slides out on hover, focus or tap */}
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Close shopping assistant' : 'Open 24/7 shopping assistant'}
+        aria-label={open ? 'Close shopping assistant' : 'Open automated shopping assistant'}
         className={`ai-concierge-launcher group fixed right-0 bottom-3 sm:bottom-5 z-50 flex items-center gap-2 py-2.5 pl-2 pr-2 sm:py-3 sm:pl-2.5 bg-[#1e293b] hover:bg-[#334155] text-white rounded-l-full rounded-r-none shadow-xl border border-r-0 border-[#4f46e5]/40 transition-transform duration-200 select-none font-sans ${open ? 'translate-x-0' : 'translate-x-[calc(100%-28px)] hover:translate-x-0 focus-visible:translate-x-0'} ${tucked && !open ? 'opacity-0 pointer-events-none' : ''}`}
       >
         <Sparkles className="w-4 h-4 text-[#4f46e5]" />
@@ -101,7 +101,7 @@ export default function AiConcierge() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#4f46e5]" />
               <span className="font-bold text-[14px]">Omnistu Concierge</span>
-              <span className="text-[11px] bg-[#4f46e5]/20 text-[#4f46e5] px-2 py-0.5 rounded-full font-medium">24/7 Live</span>
+              <span className="text-[11px] bg-[#4f46e5]/20 text-[#4f46e5] px-2 py-0.5 rounded-full font-medium">Automated</span>
             </div>
             <button
               onClick={() => setOpen(false)}
@@ -149,7 +149,7 @@ export default function AiConcierge() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about products or tracking..."
+              placeholder="Ask about our products..."
               maxLength={500}
               disabled={busy}
               className="flex-1 px-3 py-2 text-[13px] bg-[#f8f9fa] dark:bg-[#1f2937] border border-[#d0d5dd] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#4f46e5] dark:text-white"
