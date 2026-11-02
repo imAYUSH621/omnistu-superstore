@@ -38,19 +38,16 @@ export default function PressPage() {
               <Newspaper className='w-4 h-4 text-amber-500' /> 1. For Press Inquiries
             </h2>
             <p className='mb-4'>
-              We welcome media inquiries, interview requests, fact-checking questions, and collaboration proposals. Our press team aims to respond within <strong>2 business days</strong>.
+              We welcome media inquiries, interview requests, fact-checking questions, and collaboration proposals. Reach us through the contact form at /contact.
             </p>
             <div className='grid sm:grid-cols-2 gap-4'>
               {[
-                { label: 'General Press', email: 'press@omnistu.com', note: 'Interviews, quotes, story pitches' },
-                { label: 'Partnership & Collab', email: 'partners@omnistu.com', note: 'Brand partnerships, co-marketing' },
-                { label: 'Legal & Compliance', email: 'legal@omnistu.com', note: 'Regulatory, trademark, DMCA' },
-                { label: 'Data Privacy Press', email: 'privacy@omnistu.com', note: 'GDPR/CCPA related press queries' },
+                { label: 'Contact', email: null, note: 'Use the contact form at /contact for press, partnerships, legal and privacy inquiries.' },
               ].map((c) => (
                 <div key={c.label} className='border border-gray-200 dark:border-gray-700 rounded-lg p-4'>
                   <div className='font-semibold text-gray-900 dark:text-white mb-1'>{c.label}</div>
-                  <a href={`mailto:${c.email}`} className='text-amber-600 hover:underline font-mono text-xs'>
-                    {c.email}
+                  <a href='/contact' className='text-amber-600 hover:underline font-mono text-xs'>
+                    /contact
                   </a>
                   <div className='text-xs text-gray-500 mt-1'>{c.note}</div>
                 </div>
@@ -81,10 +78,10 @@ export default function PressPage() {
                   <div className='text-xs text-gray-500'>{a.desc}</div>
                   <span className='text-xs text-gray-400 font-mono'>{a.size}</span>
                   <a
-                    href='mailto:press@omnistu.com?subject=Brand Asset Request'
+                    href='/contact'
                     className='text-xs text-amber-600 hover:underline mt-1'
                   >
-                    Request via email →
+                    Request via contact form →
                   </a>
                 </div>
               ))}
@@ -130,8 +127,7 @@ export default function PressPage() {
 
           {/* Callout */}
           <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Media kit & embargo requests:</strong> Email{' '}
-            <span className='font-mono underline'>press@omnistu.com</span> with your outlet name, publication date, and scope of coverage. We respond within 2 business days.
+            <strong>Media kit & embargo requests:</strong> Use the contact form at /contact with your outlet name, publication date, and scope of coverage.
           </div>
         </div>
 

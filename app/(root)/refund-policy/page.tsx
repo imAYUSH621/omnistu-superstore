@@ -85,7 +85,7 @@ export default function RefundPolicyPage() {
             </h2>
             <ol className='list-decimal pl-5 space-y-2'>
               <li>Locate your <strong>Order ID</strong> (from your confirmation email) and checkout email.</li>
-              <li>Open our <strong>24/7 AI Concierge</strong> widget on the bottom right or email <span className='font-mono font-bold text-amber-600'>support@omnistu.com</span>.</li>
+              <li>Open the automated assistant widget on the bottom right or use the contact form at /contact.</li>
               <li>Provide a concise description of the issue along with a photo/video attachment.</li>
               <li>Our automated claim system relays the evidence directly to the fulfilling supplier API; valid claims are typically approved within <strong>24 to 48 business hours</strong>.</li>
             </ol>

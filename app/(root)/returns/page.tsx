@@ -48,7 +48,7 @@ export default function ReturnsPage() {
               <div className='p-4 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700'>
                 <span className='w-6 h-6 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-xs mb-2'>1</span>
                 <h3 className='font-bold text-sm text-gray-900 dark:text-white mb-1'>Initiate Claim</h3>
-                <p className='text-xs text-gray-500'>Email support@omnistu.com with your order number (e.g. OMN-...) and photos of the item.</p>
+                <p className='text-xs text-gray-500'>Use the contact form at /contact with your order number (e.g. OMN-...) and a description of the issue.</p>
               </div>
               <div className='p-4 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700'>
                 <span className='w-6 h-6 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-xs mb-2'>2</span>

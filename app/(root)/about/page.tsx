@@ -71,7 +71,7 @@ export default function AboutPage() {
             </p>
             <ol className='list-decimal pl-5 space-y-3'>
               <li>
-                <strong>AI Discovery:</strong> Our models scan CJ Dropshipping, Printify, BrandsGateway, Blanka, and dozens of regional catalogs 24/7 — surfacing trending items before they hit mainstream markets.
+                <strong>AI Discovery:</strong> Our models continually scan CJ Dropshipping, Printify, BrandsGateway, Blanka, and dozens of regional catalogs — surfacing trending items before they hit mainstream markets.
               </li>
               <li>
                 <strong>Brand Sanitization:</strong> Our AI Brand Sanitizer strips supplier branding from listings and replaces it with a clean, neutral product identity — giving you premium aesthetics at wholesale prices.
@@ -130,7 +130,7 @@ export default function AboutPage() {
                 },
                 {
                   title: 'AI Concierge',
-                  desc: '24/7 autonomous support agent handles order tracking, returns, and product queries without human intervention.',
+                  desc: 'Automated assistant answers product questions and points you to self-serve order status and the contact form.',
                 },
               ].map((item) => (
                 <div
@@ -146,8 +146,7 @@ export default function AboutPage() {
 
           {/* Contact callout */}
           <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Questions about our business?</strong> Reach our team at{' '}
-            <span className='font-mono underline'>hello@omnistu.com</span> or connect via our 24/7 AI Concierge.
+            <strong>Questions about our business?</strong> Reach our team through the contact form at /contact, or open the automated assistant widget.
           </div>
         </div>
 

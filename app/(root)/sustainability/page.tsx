@@ -149,8 +149,7 @@ export default function SustainabilityPage() {
 
           {/* Callout */}
           <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Sustainability feedback?</strong> We publish an annual impact summary and welcome supplier nominations at{' '}
-            <span className='font-mono underline'>sustainability@omnistu.com</span>.
+            <strong>Sustainability feedback?</strong> We welcome supplier nominations through the contact form at /contact.
           </div>
         </div>
 

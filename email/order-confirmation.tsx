@@ -129,7 +129,7 @@ export const OrderConfirmationEmail = ({
         {/* Footer */}
         <Section style={{ backgroundColor: '#f7f7f7', padding: '20px 30px', textAlign: 'center' as const, borderTop: '1px solid #eee' }}>
           <Text style={{ fontSize: '12px', color: '#888', margin: '4px 0' }}>
-            Questions? Contact us at support@omnistu.com
+            Questions? Use the contact form on the store website.
           </Text>
           <Text style={{ fontSize: '11px', color: '#aaa', margin: '8px 0 0' }}>
             © 2026 Omnistu Superstore. 548 Market St, Suite 38000, San Francisco, CA 94104
