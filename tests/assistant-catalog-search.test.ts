@@ -63,7 +63,7 @@ describe('findProducts database path', () => {
 describe('lookupOrder prompt safety', () => {
   const OLD_ENV = process.env;
   beforeEach(() => {
-    process.env = { ...OLD_ENV, SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'anon' };
+    process.env = { ...OLD_ENV, SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'anon', CHAT_ORDER_LOOKUP: 'enabled' };
   });
   afterEach(() => {
     process.env = OLD_ENV;

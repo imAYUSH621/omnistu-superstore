@@ -8,7 +8,7 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 
 const GREETING: Msg = {
   role: 'assistant',
-  content: 'Hello! I am the Omnistu Shopping Assistant. Ask me about any product in our catalog or check your order status (please provide both your Order ID and checkout email).',
+  content: 'Hello! I am the Omnistu Shopping Assistant. Ask me about any product in our catalog, or where to see your order status.',
 };
 
 export default function AiConcierge() {
