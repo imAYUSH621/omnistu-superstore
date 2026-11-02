@@ -214,7 +214,7 @@ export const DICTIONARY = {
     shippingLabel: 'Shipping',
     taxLabel: 'Tax',
     totalLabel: 'Total',
-    sampleModeNote: 'Preview mode: this product comes from the built-in sample catalog. Add to Cart stays disabled until the store database is connected.',
+    sampleModeNote: 'Preview mode: this product comes from the built-in sample catalog. Retail products are not listed yet, so Add to Cart is unavailable in this preview.',
     subtotal: 'Subtotal',
   },
   HI: {
@@ -332,7 +332,7 @@ export const DICTIONARY = {
     shippingLabel: 'शिपिंग',
     taxLabel: 'कर',
     totalLabel: 'कुल',
-    sampleModeNote: 'पूर्वावलोकन मोड: यह उत्पाद अंतर्निहित नमूना कैटलॉग से है। डेटाबेस जुड़ने तक कार्ट में जोड़ना बंद रहता है।',
+    sampleModeNote: 'पूर्वावलोकन मोड: यह उत्पाद अंतर्निहित नमूना कैटलॉग से है। खुदरा उत्पाद अभी सूचीबद्ध नहीं हैं, इसलिए इस पूर्वावलोकन में कार्ट में जोड़ना उपलब्ध नहीं है।',
     subtotal: 'उप-योग',
   },
   ES: {
@@ -450,7 +450,7 @@ export const DICTIONARY = {
     shippingLabel: 'Envío',
     taxLabel: 'Impuestos',
     totalLabel: 'Total',
-    sampleModeNote: 'Modo de vista previa: este producto proviene del catálogo de muestra integrado. Añadir al carrito permanece desactivado hasta que se conecte la base de datos.',
+    sampleModeNote: 'Modo de vista previa: este producto proviene del catálogo de muestra integrado. Los productos minoristas aún no están listados, por lo que Añadir al carrito no está disponible en esta vista previa.',
     subtotal: 'Subtotal',
   },
   FR: {
@@ -568,7 +568,7 @@ export const DICTIONARY = {
     shippingLabel: 'Livraison',
     taxLabel: 'Taxes',
     totalLabel: 'Total',
-    sampleModeNote: 'Mode aperçu : ce produit provient du catalogue d\'exemple intégré. L\'ajout au panier reste désactivé tant que la base de données n\'est pas connectée.',
+    sampleModeNote: "Mode aperçu : ce produit provient du catalogue d'exemple intégré. Les produits de vente ne sont pas encore répertoriés, donc l'ajout au panier n'est pas disponible dans cet aperçu.",
     subtotal: 'Sous-total',
   },
   DE: {
@@ -686,7 +686,7 @@ export const DICTIONARY = {
     shippingLabel: 'Versand',
     taxLabel: 'Steuern',
     totalLabel: 'Gesamt',
-    sampleModeNote: 'Vorschaumodus: Dieses Produkt stammt aus dem integrierten Beispielkatalog. „In den Warenkorb“ bleibt deaktiviert, bis die Datenbank verbunden ist.',
+    sampleModeNote: 'Vorschaumodus: Dieses Produkt stammt aus dem integrierten Beispielkatalog. Einzelhandelsprodukte sind noch nicht gelistet, daher ist „In den Warenkorb“ in dieser Vorschau nicht verfügbar.',
     subtotal: 'Zwischensumme',
   },
   JA: {
@@ -804,7 +804,7 @@ export const DICTIONARY = {
     shippingLabel: '配送',
     taxLabel: '税',
     totalLabel: '合計',
-    sampleModeNote: 'プレビューモード: この商品は組み込みのサンプルカタログのものです。データベースに接続されるまでカートへの追加は無効です。',
+    sampleModeNote: 'プレビューモード: この商品は組み込みのサンプルカタログのものです。小売商品はまだ掲載されていないため、このプレビューではカートへの追加は利用できません。',
     subtotal: '小計',
   },
 } as const;
