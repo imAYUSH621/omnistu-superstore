@@ -8,6 +8,7 @@ import {
   lookupOrder,
   SYSTEM_PROMPT,
 } from '@/lib/chat';
+import { findStoreKnowledge } from '@/lib/store-knowledge';
 
 export async function POST(req: Request): Promise<Response> {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
@@ -36,8 +37,9 @@ export async function POST(req: Request): Promise<Response> {
 
   const recentUserText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
   const [products, order] = await Promise.all([findProducts(lastUser.content), lookupOrder(recentUserText)]);
+  const knowledge = findStoreKnowledge(recentUserText);
 
-  const system = `${SYSTEM_PROMPT}\n\nPRODUCT CONTEXT:\n${products || '(no matching products found)'}\n\n${order}`;
+  const system = `${SYSTEM_PROMPT}\n\nSTORE KNOWLEDGE:\n${knowledge || '(no store knowledge matched)'}\n\nPRODUCT CONTEXT:\n${products || '(no matching products found)'}\n\n${order}`;
 
   const upstream = await fetch(provider.url, {
     method: 'POST',

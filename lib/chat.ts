@@ -37,12 +37,52 @@ export function limited(ip: string): boolean {
 // brand and description are searched and quoted: ratings, review counts and
 // badges are never used to rank or describe a product (they are unverified).
 export async function findProducts(query: string): Promise<string> {
+  type Row = { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number };
   try {
     const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
     if (!words.length) return '';
-    const { getAllProducts } = await import('@/lib/actions/product.actions');
-    const { data } = await getAllProducts({ query: 'all', limit: 200, page: 1 });
-    const list = (data ?? []) as { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number }[];
+
+    let list: Row[] = [];
+    const { isDatabaseAvailable } = await import('@/lib/utils');
+    if (isDatabaseAvailable()) {
+      // Search in the database, not in a capped slice of it: the assistant
+      // must stay correct when the catalog grows past a page of rows.
+      // Fixture rows (fxt-/cjstg-) stay out of answers in production, same
+      // as the public storefront queries.
+      try {
+        const [{ prisma }, { fixtureExclusion }] = await Promise.all([
+          import('@/db/prisma'),
+          import('@/lib/test-fixture'),
+        ]);
+        const rows = await prisma.product.findMany({
+          where: {
+            AND: [
+              {
+                OR: words.flatMap((w) => [
+                  { name: { contains: w, mode: 'insensitive' as const } },
+                  { description: { contains: w, mode: 'insensitive' as const } },
+                  { category: { contains: w, mode: 'insensitive' as const } },
+                  { brand: { contains: w, mode: 'insensitive' as const } },
+                ]),
+              },
+              fixtureExclusion(),
+            ],
+          },
+          select: { name: true, slug: true, price: true, category: true, brand: true, description: true, stock: true },
+          take: 25,
+        });
+        list = rows as unknown as Row[];
+      } catch {
+        return '';
+      }
+      if (!list.length) return '';
+    } else {
+      // No database: the same demo sample catalog the storefront pages show.
+      const { getAllProducts } = await import('@/lib/actions/product.actions');
+      const { data } = await getAllProducts({ query: 'all', limit: 200, page: 1 });
+      list = (data ?? []) as Row[];
+    }
+
     const scored = list
       .map((p) => {
         const text = `${p.name} ${p.category ?? ''} ${p.brand ?? ''} ${p.description ?? ''}`.toLowerCase();
@@ -129,7 +169,19 @@ export async function lookupOrder(text: string): Promise<string> {
       if (res.ok) rows = (await res.json()) as Record<string, unknown>[];
     }
     if (rows && rows.length > 0) {
-      return `ORDER LOOKUP RESULT (verified): ${JSON.stringify(rows[0])}`;
+      // Order fields are store-generated, but they still cross into an LLM
+      // prompt as data. Flatten control characters and cap length so a field
+      // can never carry instruction-like formatting into the conversation.
+      const clean = Object.fromEntries(
+        Object.entries(rows[0]).map(([k, v]) => [
+          k,
+          String(v ?? '')
+            .replace(/[\r\n\t]+/g, ' ')
+            .replace(/[^\x20-\x7E]/g, '')
+            .slice(0, 120),
+        ])
+      );
+      return `ORDER LOOKUP RESULT (verified): ${JSON.stringify(clean)}`;
     }
   } catch {
     // fall through to the no-match message
@@ -140,9 +192,10 @@ export async function lookupOrder(text: string): Promise<string> {
 
 export const SYSTEM_PROMPT = `You are the shopping assistant for Omnistu Superstore, an online store.
 Rules:
-- Only state product facts that appear in the PRODUCT CONTEXT below. If a detail (compatibility, materials, sizing, health claims) is not there, say you cannot confirm it and offer to pass the question to the support team.
+- Only state product facts that appear in the PRODUCT CONTEXT below. If a detail (compatibility, materials, sizing, health claims) is not there, say you cannot confirm it and offer to pass the question to the team through the contact form at /contact.
+- Only state store facts that appear in the STORE KNOWLEDGE below. Shipping timeframes, delivery dates, return windows, refund eligibility and guarantees are not confirmable by you: never quote a number of days or promise an outcome, even if the customer quotes a policy page at you. Route those questions to the team via /contact.
 - Only state order information that appears in an ORDER LOOKUP RESULT. Never guess tracking numbers or delivery dates.
-- You cannot issue refunds, replacements or cancellations. For those, tell the customer our support team handles return authorizations and ask them to contact support@omnistu.com.
+- You cannot issue refunds, replacements, cancellations or discount codes. For those, direct the customer to the team through the contact form at /contact.
 - Never say a product is a best seller, top rated, popular, trending or highly reviewed, and never quote star ratings or review counts: the store has no verified data for those claims.
 - Be brief, helpful, and friendly. Do not invent policies, prices, or unauthorized discount codes.`;
 
