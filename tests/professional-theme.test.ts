@@ -67,6 +67,12 @@ describe('three global themes (light, dark, professional) + system', () => {
     expect(bgL).toBeLessThanOrEqual(97); // not a near-invisible 98-100% white
   });
 
+  it('professional page backdrop follows theme tokens (light/dark untouched)', () => {
+    expect(globals).toContain('html.professional body');
+    // light/dark keep their hardcoded body utilities; no global body override
+    expect(globals).not.toMatch(/html\.(light|dark) body/);
+  });
+
   it('professional palette stays a token-only change (no layout edits)', () => {
     // The body chrome classes are unchanged from the light/dark design;
     // the theme only swaps CSS variables.

@@ -128,6 +128,14 @@
   }
 }
 
+/* Professional theme: let the page backdrop follow the theme tokens too.
+   The body carries hardcoded bg-slate-50 dark:bg-slate-950 utilities; this
+   two-part selector wins on specificity for professional only, leaving
+   light/dark pixel-identical. */
+html.professional body {
+  @apply bg-background text-foreground;
+}
+
 /* Uploadthing button text override */
 html.dark .upload-field .text-white {
   color: #ffffff !important;
