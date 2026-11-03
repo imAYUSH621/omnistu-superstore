@@ -135,3 +135,54 @@ export async function updateOrderToPaid({
     .then((summary) => persistDispatchSummary(updatedOrder.id, summary))
     .catch((e) => console.error('Supplier auto-fulfillment background error:', e));
 }
+
+// Simulated settlement for TEST_CHECKOUT_MODE. Mirrors the paid claim and
+// stock accounting of updateOrderToPaid, but every external side effect is
+// replaced by a clearly-labeled simulation record: no real charge, no
+// supplier order, no customer email, no cloud mirror. Only reachable from
+// the TestPayment server action, which re-checks the mode, ownership and
+// payment method.
+export async function updateOrderToPaidSimulated(orderId: string) {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId },
+    include: { orderitems: true },
+  });
+  if (!order) throw new Error('Order not found');
+  if (order.isPaid) throw new Error('Order is already paid');
+  if (order.paymentMethod !== 'TestPayment') throw new Error('Only simulated test orders can be settled this way');
+
+  await prisma.$transaction(async (tx) => {
+    const claim = await tx.order.updateMany({
+      where: { id: orderId, isPaid: false },
+      data: {
+        isPaid: true,
+        paidAt: new Date(),
+        paymentResult: { id: 'TEST-SIMULATION', email_address: '', status: 'SIMULATED', pricePaid: '' },
+        paymentNote: 'TEST MODE: simulated payment - no real charge, no supplier order placed, no real shipment.',
+      },
+    });
+    if (claim.count !== 1) throw new Error('Order is already paid');
+    for (const item of order.orderitems) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: -item.qty } },
+      });
+    }
+  });
+
+  await persistDispatchSummary(orderId, {
+    orderId,
+    success: true,
+    dispatches: order.orderitems.map((item) => ({
+      supplier: 'CJ_DROPSHIPPING' as const,
+      status: 'SIMULATED' as const,
+      supplierOrderId: null,
+      trackingNumber: null,
+      carrier: null,
+      message: `SIMULATED dispatch (test mode): no supplier order placed for "${item.name}".`,
+      timestamp: new Date().toISOString(),
+    })),
+  });
+
+  revalidatePath(`/order/${orderId}`);
+}

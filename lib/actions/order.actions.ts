@@ -1,8 +1,8 @@
 'use server';
 
-import { isPaymentMethodAvailable } from '@/lib/payment-capabilities';
+import { isPaymentMethodAvailable, testCheckoutMode } from '@/lib/payment-capabilities';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
-import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE } from '@/lib/test-fixture';
+import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE, isTestCatalogSlug, TEST_CATALOG_MESSAGE } from '@/lib/test-fixture';
 import { convertToPlainObject, formatError } from '../utils';
 import { auth } from '@/auth';
 import { getMyCart } from './cart.actions';
@@ -20,7 +20,7 @@ import { sendOrderConfirmationEmail } from '../mailer';
 import { syncOrderToSupabase } from '../providers/supabase-sync';
 import { dispatchOrderFulfillment } from '../fulfillment-dispatcher';
 import { persistDispatchSummary } from '../fulfillment-persistence';
-import { updateOrderToPaid } from '../order-settlement';
+import { updateOrderToPaid, updateOrderToPaidSimulated } from '../order-settlement';
 import { requireAdmin } from '../auth-guard';
 
 // Create order and create the order items
@@ -45,6 +45,10 @@ export async function createOrder(idempotencyKey?: string) {
 
     if ((cart.items as { slug?: string }[]).some((i) => isTestFixtureSlug(i.slug))) {
       return { success: false, message: TEST_FIXTURE_MESSAGE, redirectTo: '/cart' };
+    }
+
+    if (!testCheckoutMode() && (cart.items as { slug?: string }[]).some((i) => isTestCatalogSlug(i.slug))) {
+      return { success: false, message: TEST_CATALOG_MESSAGE, redirectTo: '/cart' };
     }
 
     if (!user.address) {
@@ -542,6 +546,68 @@ export async function deliverOrder(orderId: string) {
       message: 'Order has been marked delivered',
     };
   } catch (error) {
+    return { success: false, message: formatError(error) };
+  }
+}
+
+// Simulated payment for a TestPayment order (test checkout mode only). The
+// order owner (or an admin) can mark their own test order paid; everything
+// downstream is a labeled simulation - no real charge, no supplier order.
+export async function updateOrderToPaidTest(orderId: string) {
+  try {
+    if (!testCheckoutMode()) throw new Error('Test checkout is not enabled');
+    const session = await auth();
+    if (!session?.user?.id) throw new Error('User is not authenticated');
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId },
+      select: { paymentMethod: true, userId: true },
+    });
+    if (!order) throw new Error('Order not found');
+    if (order.userId !== session.user.id && session.user.role !== 'admin') {
+      throw new Error('User is not authorized');
+    }
+    if (order.paymentMethod !== 'TestPayment') {
+      throw new Error('Only simulated test orders can be paid this way');
+    }
+
+    await updateOrderToPaidSimulated(orderId);
+    revalidatePath(`/order/${orderId}`);
+    return { success: true, message: 'Test order marked as paid (simulated - no real charge)' };
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return { success: false, message: formatError(error) };
+  }
+}
+
+// Simulated delivery for a paid TestPayment order (test checkout mode only).
+export async function deliverOrderTest(orderId: string) {
+  try {
+    if (!testCheckoutMode()) throw new Error('Test checkout is not enabled');
+    const session = await auth();
+    if (!session?.user?.id) throw new Error('User is not authenticated');
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId },
+      select: { paymentMethod: true, userId: true, isPaid: true },
+    });
+    if (!order) throw new Error('Order not found');
+    if (order.userId !== session.user.id && session.user.role !== 'admin') {
+      throw new Error('User is not authorized');
+    }
+    if (order.paymentMethod !== 'TestPayment') {
+      throw new Error('Only simulated test orders can be delivered this way');
+    }
+    if (!order.isPaid) throw new Error('Order is not paid');
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { isDelivered: true, deliveredAt: new Date() },
+    });
+    revalidatePath(`/order/${orderId}`);
+    return { success: true, message: 'Test order marked as delivered (simulated - no real shipment)' };
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     return { success: false, message: formatError(error) };
   }
 }

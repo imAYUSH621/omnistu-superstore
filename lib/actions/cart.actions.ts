@@ -1,7 +1,8 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE } from '@/lib/test-fixture';
+import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE, isTestCatalogSlug, TEST_CATALOG_MESSAGE } from '@/lib/test-fixture';
+import { testCheckoutMode } from '@/lib/payment-capabilities';
 import { CartItem } from '@/types';
 import { convertToPlainObject, formatError, round2, isDatabaseAvailable } from '../utils';
 import { auth } from '@/auth';
@@ -49,6 +50,7 @@ export async function addItemToCart(data: CartItem) {
     });
     if (!product) throw new Error('Product not found');
     if (isTestFixtureSlug(product.slug)) throw new Error(TEST_FIXTURE_MESSAGE);
+    if (isTestCatalogSlug(product.slug) && !testCheckoutMode()) throw new Error(TEST_CATALOG_MESSAGE);
 
     if (!cart) {
       // Create new cart object

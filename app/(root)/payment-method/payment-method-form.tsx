@@ -98,7 +98,7 @@ const PaymentMethodForm = ({
                               />
                             </FormControl>
                             <FormLabel className='font-normal'>
-                              {paymentMethod}
+                              {paymentMethod === 'TestPayment' ? 'Test payment (SIMULATED - no real charge)' : paymentMethod}
                               {!m.enabled && (
                                 <span className='ml-2 text-xs text-muted-foreground' data-testid='method-unavailable'>
                                   ({m.reason ?? 'Not available yet'})

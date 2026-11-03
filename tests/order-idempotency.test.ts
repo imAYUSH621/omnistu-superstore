@@ -40,7 +40,7 @@ jest.mock('@/lib/actions/user.actions', () => ({
     paymentMethod: 'PayPal',
   })),
 }));
-jest.mock('@/lib/payment-capabilities', () => ({ isPaymentMethodAvailable: () => true }));
+jest.mock('@/lib/payment-capabilities', () => ({ isPaymentMethodAvailable: () => true, testCheckoutMode: () => false }));
 jest.mock('@/email', () => ({ sendPurchaseReceipt: jest.fn() }));
 jest.mock('@/lib/mailer', () => ({ sendOrderConfirmationEmail: jest.fn(async () => ({})) }));
 jest.mock('@/lib/providers/supabase-sync', () => ({ syncOrderToSupabase: jest.fn(async () => ({})) }));

@@ -26,3 +26,17 @@ export function fixtureExclusion(env: Record<string, string | undefined> = proce
     ? { AND: PREFIXES.map((p) => ({ NOT: { slug: { startsWith: p } } })) }
     : {};
 }
+
+// Test catalog rows (slug prefix cjt-): real supplier data imported for owner
+// acceptance testing on a protected deployment. Unlike fixtures they can flow
+// through a SIMULATED checkout, but only while TEST_CHECKOUT_MODE=true. They
+// are never a retail offer: price is supplier cost plus a demo markup, and
+// supplier images/claims stay unverified until qualification (see
+// catalog-qualification.md in the backup File).
+export const TEST_CATALOG_PREFIX = 'cjt-';
+
+export function isTestCatalogSlug(slug: string | null | undefined): boolean {
+  return typeof slug === 'string' && slug.startsWith(TEST_CATALOG_PREFIX);
+}
+
+export const TEST_CATALOG_MESSAGE = 'Test catalog item: simulated checkout only (test mode is off).';

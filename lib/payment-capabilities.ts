@@ -9,12 +9,19 @@ export type PaymentMethodStatus = { method: string; enabled: boolean; reason?: s
 
 // Master switch. In a production runtime no payment method is usable unless ORDERS_ENABLED=true is
 // set on purpose, whatever provider keys happen to be present. Outside production it does not apply.
+// Test checkout: an explicit, clearly-labeled simulation mode for owner acceptance
+// testing on a protected deployment. Simulated payment only - no real charge,
+// no supplier order, no real shipment. Never a path to real commerce.
+export function testCheckoutMode(env: Record<string, string | undefined> = process.env): boolean {
+  return env.TEST_CHECKOUT_MODE === 'true';
+}
+
 export function ordersEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.NODE_ENV !== 'production' || env.ORDERS_ENABLED === 'true';
+  return env.NODE_ENV !== 'production' || env.ORDERS_ENABLED === 'true' || testCheckoutMode(env);
 }
 
 export function getPaymentMethodStatuses(env: Record<string, string | undefined> = process.env): PaymentMethodStatus[] {
-  return PAYMENT_METHODS.map((method) => {
+  const statuses = PAYMENT_METHODS.map((method) => {
     if (!ordersEnabled(env)) return { method, enabled: false, reason: 'Not available yet' };
     if (method === 'PayPal') {
       const ok = !!(env.PAYPAL_CLIENT_ID && env.PAYPAL_APP_SECRET && env.PAYPAL_API_URL);
@@ -29,6 +36,8 @@ export function getPaymentMethodStatuses(env: Record<string, string | undefined>
     }
     return { method, enabled: false, reason: 'Not available yet' };
   });
+  if (testCheckoutMode(env)) statuses.push({ method: 'TestPayment', enabled: true });
+  return statuses;
 }
 
 export function isPaymentMethodAvailable(method: string, env: Record<string, string | undefined> = process.env): boolean {

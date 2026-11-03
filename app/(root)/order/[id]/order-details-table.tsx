@@ -27,6 +27,8 @@ import {
   createPayPalOrder,
   approvePayPalOrder,
   updateOrderToPaidCOD,
+  updateOrderToPaidTest,
+  deliverOrderTest,
   deliverOrder,
 } from '@/lib/actions/order.actions';
 import StripePayment from './stripe-payment';
@@ -119,6 +121,47 @@ const OrderDetailsTable = ({
         }
       >
         {isPending ? 'processing...' : 'Mark As Paid'}
+      </Button>
+    );
+  };
+
+  // Simulated buttons for TEST_CHECKOUT_MODE TestPayment orders. The server
+  // actions re-check the mode, ownership and payment method, so rendering
+  // them is not the authorization boundary.
+  const SimulatePaidButton = () => {
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
+    return (
+      <Button
+        type='button'
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await updateOrderToPaidTest(order.id);
+            toast({ variant: res.success ? 'default' : 'destructive', description: res.message });
+          })
+        }
+      >
+        {isPending ? 'processing...' : 'Simulate payment (TEST - no real charge)'}
+      </Button>
+    );
+  };
+
+  const SimulateDeliveredButton = () => {
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
+    return (
+      <Button
+        type='button'
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await deliverOrderTest(order.id);
+            toast({ variant: res.success ? 'default' : 'destructive', description: res.message });
+          })
+        }
+      >
+        {isPending ? 'processing...' : 'Simulate delivery (TEST - no real shipment)'}
       </Button>
     );
   };
@@ -299,6 +342,15 @@ const OrderDetailsTable = ({
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && <MarkAsDeliveredButton />}
+
+              {/* Simulated test checkout */}
+              {paymentMethod === 'TestPayment' && (
+                <div className='rounded-md border border-sky-300 bg-sky-50 px-3 py-2.5 text-xs text-sky-900 mb-2' data-testid='test-order-banner'>
+                  TEST ORDER - simulated checkout: no real payment was charged and no real shipment will happen.
+                </div>
+              )}
+              {!isPaid && paymentMethod === 'TestPayment' && <SimulatePaidButton />}
+              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && <SimulateDeliveredButton />}
             </CardContent>
           </Card>
         </div>
