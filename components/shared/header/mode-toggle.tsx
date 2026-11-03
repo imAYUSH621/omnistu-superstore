@@ -10,7 +10,7 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon, SunMoon } from 'lucide-react';
+import { SunIcon, MoonIcon, SunMoon, Briefcase } from 'lucide-react';
 
 const ModeToggle = () => {
   const [mounted, setMounted] = useState(false);
@@ -35,6 +35,8 @@ const ModeToggle = () => {
             <SunMoon />
           ) : theme === 'dark' ? (
             <MoonIcon />
+          ) : theme === 'professional' ? (
+            <Briefcase />
           ) : (
             <SunIcon />
           )}
@@ -54,6 +56,13 @@ const ModeToggle = () => {
           onClick={() => setTheme('dark')}
         >
           Dark
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={theme === 'professional'}
+          onClick={() => setTheme('professional')}
+          aria-label='Professional theme'
+        >
+          Professional
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'light'}
