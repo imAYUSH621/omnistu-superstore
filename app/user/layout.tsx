@@ -1,3 +1,9 @@
+// Per-request rendering for the whole segment: pages here auth-gate
+// (requireAdmin/session checks) and redirect on failure. With the root
+// loading.tsx shell removed, a build-time prerender would execute the guard
+// with no request context and fail the build on the resulting redirect().
+export const dynamic = 'force-dynamic';
+
 import { APP_NAME } from '@/lib/constants';
 import Image from 'next/image';
 import Link from 'next/link';
