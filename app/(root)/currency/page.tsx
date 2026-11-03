@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'Shop in your local currency. Converted amounts are estimates from market exchange rates.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function CurrencyPolicyPage() {
   // Draft policy for a multi-currency settlement model that is not built:
   // checkout settles in USD only. Hidden until the owner reviews it.

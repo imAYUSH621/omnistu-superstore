@@ -12,6 +12,8 @@ export const metadata: Metadata = {
     'Join the Omnistu Creator Network. Earn 8–15% commission on every sale, get monthly payouts, and access your dedicated affiliate dashboard.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function AffiliatesPage() {
   // No affiliate program exists yet - the page described commissions and a
   // dashboard that are not built. Hidden until the owner reviews it, same
