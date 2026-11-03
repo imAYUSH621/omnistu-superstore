@@ -31,7 +31,17 @@ it('leads discovery with clearly illustrative apparel artwork before the account
   expect(src.indexOf("title: 'Custom Apparel'")).toBeLessThan(src.indexOf("title: 'Royal Gourmet & Indian Food'"));
   expect(src).toContain('custom-apparel-editorial.webp');
   expect(src).toContain('Category artwork is illustrative.');
-  expect(home.indexOf('<TopCategoryCards />')).toBeLessThan(home.indexOf('<PersonalHero />'));
+  expect(home.indexOf('<DepartmentMosaic />')).toBeLessThan(home.indexOf('<PersonalHero />'));
   expect(existsSync('public/images/categories/custom-apparel.jpg')).toBe(true);
   expect(DEPARTMENTS).toHaveLength(18);
+});
+
+
+it('mosaic uses only existing category routes and keeps a full directory', () => {
+ const src = readFileSync('components/shared/home/department-mosaic.tsx', 'utf8');
+ expect(src).toContain('Illustrative category artwork, not product photography.');
+ expect(src).toContain('All 18 departments');
+ expect(src).not.toMatch(/bestseller|free shipping|under \$|in stock|women.s clothing|men.s clothing/i);
+ const home = readFileSync('app/(root)/page.tsx', 'utf8');
+ expect(home).toContain('<AllDepartments />');
 });

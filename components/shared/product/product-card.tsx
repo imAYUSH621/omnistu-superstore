@@ -99,7 +99,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           <ProductImage
             src={product.images[0] || '/images/products/placeholder.svg'}
             alt={product.name}
-            sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+            sizes='(max-width: 767px) 45vw, (max-width: 1279px) 25vw, 20vw'
             className='object-contain p-4 group-hover:scale-105 transition-transform duration-300'
             priority={false}
           />
@@ -112,7 +112,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       </CardHeader>
 
       {/* Product Metadata */}
-      <CardContent className='p-4 flex flex-col justify-between flex-1 gap-3'>
+      <CardContent className='p-2.5 sm:p-4 flex flex-col justify-between flex-1 gap-3'>
         <div className='space-y-1.5'>
           <div className='flex items-center justify-between text-[11px] text-muted-foreground uppercase tracking-wider font-semibold'>
             <span>{product.brand ?? ''}</span>
