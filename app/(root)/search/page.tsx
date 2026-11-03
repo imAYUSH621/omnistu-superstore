@@ -90,9 +90,12 @@ const SearchPage = async (props: {
     redirect(`/search${params.toString() ? `?${params}` : ''}`);
   }
 
-  const categories = await getAllCategories();
-  const facetCounts = await getFacetCounts({ query: q, category });
-  const featuredDeals = await getFeaturedProducts();
+  // Independent reads run in parallel instead of three sequential round trips.
+  const [categories, facetCounts, featuredDeals] = await Promise.all([
+    getAllCategories(),
+    getFacetCounts({ query: q, category }),
+    getFeaturedProducts(),
+  ]);
 
   return (
     <div className='max-w-[1520px] mx-auto px-4 md:px-6 py-4 space-y-4 font-sans'>
