@@ -1,8 +1,9 @@
 /**
  * Brand logo implementation (user-supplied logo pack v2): header renders the
- * wide PNG at 40-44px with a CSS masked shine (reduced-motion safe), the pack
- * favicon and apple touch icon are wired via Next conventions, and no logo
- * assets beyond the two header weights ship in the initial web load.
+ * wide PNG at 40-44px, fully static. The earlier CSS shine sweep hurt
+ * small-size readability and was removed on owner feedback. The pack favicon
+ * and apple touch icon are wired via Next conventions, and no logo assets
+ * beyond the header weight ship in the initial web load.
  */
 import { readFileSync, existsSync, statSync } from 'fs';
 
@@ -14,13 +15,12 @@ describe('brand logo (pack v2)', () => {
     expect(header).toContain("/images/logo/omnistu-logo-wide-400.png");
     expect(header).toContain("h-10 sm:h-11");
     expect(header).toContain("data-testid='site-logo'");
-    expect(header).toContain('logo-shine');
   });
 
-  it('shine is a CSS masked overlay and respects prefers-reduced-motion', () => {
-    expect(css).toContain('.logo-shine::after');
-    expect(css).toContain('@keyframes omnistu-shine');
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.logo-shine::after[\s\S]*?animation: none/);
+  it('logo is static: no shine overlay or animation remains', () => {
+    expect(header).not.toContain('logo-shine');
+    expect(css).not.toContain('.logo-shine');
+    expect(css).not.toContain('@keyframes omnistu-shine');
   });
 
   it('pack favicon and apple touch icon are wired via Next file conventions', () => {

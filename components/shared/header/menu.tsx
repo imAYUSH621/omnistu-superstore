@@ -69,12 +69,6 @@ const Menu = async () => {
             >
               <T k='todaysDeals' />
             </Link>
-            <Link
-              href='/admin'
-              className='text-sm font-bold text-amber-400 py-1'
-            >
-              <T k='sellerCentral' />
-            </Link>
             <div className='flex items-center justify-between py-2 border-b border-neutral-700 w-full'>
               <span className='text-xs text-neutral-300'>Language & Currency</span>
               <GlobalSelector />
