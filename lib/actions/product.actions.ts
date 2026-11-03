@@ -12,6 +12,7 @@ import { Product } from '@/types';
 
 import sampleData from '@/db/sample-data';
 import { fixtureExclusion } from '@/lib/test-fixture';
+import { queryMatchesName } from '@/lib/search-match';
 
 // Get latest products
 export async function getLatestProducts(): Promise<Product[]> {
@@ -117,6 +118,9 @@ export async function getAllProducts({
 }) {
   if (isDatabaseAvailable()) {
     try {
+      // Loose contains is only a DB-side prefilter; the real match is the
+      // word-start check below, applied to rows in memory so a query like
+      // "men" never returns "women" products (see lib/search-match.ts).
       const queryFilter: Prisma.ProductWhereInput =
         query && query !== 'all'
           ? {
@@ -155,7 +159,7 @@ export async function getAllProducts({
         ...priceFilter,
         ...ratingFilter,
       };
-      const data = await prisma.product.findMany({
+      const rows = await prisma.product.findMany({
         where,
         orderBy:
           sort === 'lowest'
@@ -165,14 +169,14 @@ export async function getAllProducts({
             : sort === 'rating'
             ? { rating: 'desc' }
             : { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
         include: { variants: { select: { referenceCost: true } } },
       });
 
-      // Count the FILTERED set (it used to count every product, so filtered
-      // searches showed wrong page counts).
-      const dataCount = await prisma.product.count({ where });
+      // Word-start filter applied after the loose contains prefilter, so
+      // counts and pages agree with what is actually shown.
+      const matched = rows.filter((r) => queryMatchesName(r.name, query));
+      const data = matched.slice((page - 1) * limit, page * limit);
+      const dataCount = matched.length;
 
       return {
         data: convertToPlainObject(data.map(withVariantSummary)),
@@ -186,9 +190,7 @@ export async function getAllProducts({
 
   let filtered = [...sampleData.products];
   if (query && query !== 'all') {
-    filtered = filtered.filter((p) =>
-      p.name.toLowerCase().includes(query.toLowerCase())
-    );
+    filtered = filtered.filter((p) => queryMatchesName(p.name, query));
   }
   if (category && category !== 'all') {
     filtered = filtered.filter((p) => p.category === category);
@@ -376,12 +378,19 @@ export async function getFacetCounts({ query, category }: { query?: string; cate
         ...(query && query !== 'all' ? { name: { contains: query, mode: 'insensitive' } as Prisma.StringFilter } : {}),
         ...(category && category !== 'all' ? { category } : {}),
       };
+      // Same word-start matching as getAllProducts, so facet counts agree
+      // with the results the shopper actually sees.
+      const rows = await prisma.product.findMany({
+        where: base,
+        select: { name: true, price: true, rating: true },
+      });
+      const matched = rows.filter((r) => queryMatchesName(r.name, query || ''));
       for (const b of FACET_PRICE_BUCKETS) {
         const [lo, hi] = b.split('-').map(Number);
-        out.price[b] = await prisma.product.count({ where: { ...base, price: { gte: lo, lte: hi } } });
+        out.price[b] = matched.filter((r) => Number(r.price) >= lo && Number(r.price) <= hi).length;
       }
       for (const r of FACET_RATINGS) {
-        out.rating[String(r)] = await prisma.product.count({ where: { ...base, rating: { gte: r } } });
+        out.rating[String(r)] = matched.filter((p) => Number(p.rating) >= r).length;
       }
       return out;
     } catch (err: unknown) {
@@ -390,7 +399,7 @@ export async function getFacetCounts({ query, category }: { query?: string; cate
     }
   }
   let list = [...sampleData.products];
-  if (query && query !== 'all') list = list.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+  if (query && query !== 'all') list = list.filter((p) => queryMatchesName(p.name, query));
   if (category && category !== 'all') list = list.filter((p) => p.category === category);
   for (const b of FACET_PRICE_BUCKETS) {
     const [lo, hi] = b.split('-').map(Number);
