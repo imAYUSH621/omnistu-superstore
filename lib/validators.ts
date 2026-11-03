@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { formatNumberWithDecimal } from './utils';
 import { PAYMENT_METHODS } from './constants';
+import { testCheckoutMode } from './payment-capabilities';
 
 const currency = z
   .string()
@@ -104,9 +105,14 @@ export const insertOrderSchema = z.object({
   shippingPrice: currency,
   taxPrice: currency,
   totalPrice: currency,
-  paymentMethod: z.string().refine((data) => PAYMENT_METHODS.includes(data), {
-    message: 'Invalid payment method',
-  }),
+  paymentMethod: z.string().refine(
+    (data) =>
+      PAYMENT_METHODS.includes(data) ||
+      // 'TestPayment' orders are allowed only while the simulated checkout is
+      // explicitly enabled; production behavior is unchanged.
+      (data === 'TestPayment' && testCheckoutMode()),
+    { message: 'Invalid payment method' }
+  ),
   shippingAddress: shippingAddressSchema,
 });
 
