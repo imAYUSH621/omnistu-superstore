@@ -122,6 +122,7 @@ export default function BuyBox({
           <div className='flex items-baseline gap-2'>
             <LocalizedPrice
               amountUsd={priceNum}
+              showNote
               className='text-3xl font-extrabold tracking-tight'
               supClassName='text-sm align-super font-medium'
             />
