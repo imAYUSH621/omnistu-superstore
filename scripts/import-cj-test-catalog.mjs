@@ -92,7 +92,14 @@ for (const [category, keyword] of SPECS) {
       cost: num(v.variantSellPrice), stock: variantStock(perVariant.get(String(v.vid))),
     })).filter((v) => v.cost !== null);
     if (!variants.length) { console.log(`SKIP (no priced variants): ${d.productNameEn?.slice(0, 60)}`); skipped++; continue; }
-    const images = [d.productImage, ...(Array.isArray(d.productImageSet) ? d.productImageSet : [])].filter(Boolean).slice(0, 4);
+    // CJ sometimes returns productImage/productImageSet as a JSON-encoded
+    // string rather than an array; normalise before storing.
+    const asList = (v) => {
+      if (Array.isArray(v)) return v;
+      if (typeof v === 'string' && v.trim().startsWith('[')) { try { const a = JSON.parse(v); return Array.isArray(a) ? a : []; } catch { return []; } }
+      return typeof v === 'string' && v.trim() ? [v.trim()] : [];
+    };
+    const images = [...asList(d.productImage), ...asList(d.productImageSet)].filter(Boolean).slice(0, 4);
     const description = typeof d.description === 'string' ? d.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 2000) : '';
     const minCost = Math.min(...variants.map((v) => v.cost));
     const price = Math.round(minCost * MARKUP * 100) / 100;

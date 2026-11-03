@@ -7,6 +7,7 @@ import {
   findProducts,
   lookupOrder,
   SYSTEM_PROMPT,
+  deterministicTestAnswer,
 } from '@/lib/chat';
 import { findStoreKnowledge } from '@/lib/store-knowledge';
 
@@ -17,15 +18,29 @@ export async function POST(req: Request): Promise<Response> {
   const providerName = (process.env.LLM_PROVIDER === 'nvidia' ? 'nvidia' : 'groq') as keyof typeof PROVIDERS;
   const provider = PROVIDERS[providerName];
   const apiKey = provider.key();
-  if (!apiKey) {
-    return new Response('AI Concierge assistant is currently configuring keys. Please check back shortly.', { status: 503 });
-  }
 
   let body: { messages?: ChatMessage[] };
   try {
     body = (await req.json()) as { messages?: ChatMessage[] };
   } catch {
     return new Response('Invalid JSON', { status: 400 });
+  }
+
+  if (!apiKey) {
+    // Deterministic grounded TEST mode: rule-based answers over live store
+    // data, clearly labeled, nothing sent to any external model. Explicit
+    // opt-in via ASSISTANT_TEST_MODE; otherwise the honest 503 stands.
+    if (process.env.ASSISTANT_TEST_MODE === 'true') {
+      const raw = (body.messages ?? [])
+        .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        .slice(-MAX_MESSAGES)
+        .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) }));
+      const lastTestUser = [...raw].reverse().find((m) => m.role === 'user');
+      if (!lastTestUser) return new Response('No message', { status: 400 });
+      const answer = await deterministicTestAnswer(lastTestUser.content);
+      return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    }
+    return new Response('AI Concierge assistant is currently configuring keys. Please check back shortly.', { status: 503 });
   }
 
   const messages = (body.messages ?? [])
