@@ -59,7 +59,7 @@ export type UnsettledCapture = { orderId: string; createdAt: string; note: strin
 
 /**
  * Admin-only, read-only. UNPAID orders whose payment note says money may have been taken without the
- * order being marked paid: CAPTURED_UNSETTLED (settlement failed after capture), AMOUNT_MISMATCH and
+ * order being marked paid: CAPTURED_UNSETTLED (settlement failed after capture), CAPTURE_UNCONFIRMED (capture outcome unknown), AMOUNT_MISMATCH and
  * CURRENCY_MISMATCH. Needs manual review in PayPal. This never retries a capture, refunds or dispatches.
  */
 export async function getUnsettledCaptures(): Promise<
@@ -73,6 +73,7 @@ export async function getUnsettledCaptures(): Promise<
         isPaid: false,
         OR: [
           { paymentNote: { contains: 'CAPTURED_UNSETTLED' } },
+          { paymentNote: { contains: 'CAPTURE_UNCONFIRMED' } },
           { paymentNote: { contains: 'AMOUNT_MISMATCH' } },
           { paymentNote: { contains: 'CURRENCY_MISMATCH' } },
         ],

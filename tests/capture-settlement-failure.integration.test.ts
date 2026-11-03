@@ -126,6 +126,10 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     const n = (await prisma.order.findUnique({ where: { id }, select: { paymentNote: true, isPaid: true } }));
     expect(n?.isPaid).toBe(false);
     expect(n?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=NETWORK_OR_TIMEOUT');
+    mockAuth.mockResolvedValue({ user: { id: 'adm', role: 'admin' } });
+    const { getUnsettledCaptures } = await import('@/lib/actions/reconcile.actions');
+    const listing = await getUnsettledCaptures();
+    expect(listing.success && listing.items.some((i) => i.orderId === id && i.note.includes('CAPTURE_UNCONFIRMED'))).toBe(true);
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
