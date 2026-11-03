@@ -11,8 +11,9 @@ import { Prisma } from '@prisma/client';
 import { Product } from '@/types';
 
 import sampleData from '@/db/sample-data';
-import { fixtureExclusion } from '@/lib/test-fixture';
+import { fixtureExclusion, hiddenSlugPrefixes } from '@/lib/test-fixture';
 import { queryMatchesName } from '@/lib/search-match';
+import { wordStartPattern } from '@/lib/search-sql';
 
 // Get latest products
 export async function getLatestProducts(): Promise<Product[]> {
@@ -118,65 +119,51 @@ export async function getAllProducts({
 }) {
   if (isDatabaseAvailable()) {
     try {
-      // Loose contains is only a DB-side prefilter; the real match is the
-      // word-start check below, applied to rows in memory so a query like
-      // "men" never returns "women" products (see lib/search-match.ts).
-      const queryFilter: Prisma.ProductWhereInput =
-        query && query !== 'all'
-          ? {
-              name: {
-                contains: query,
-                mode: 'insensitive',
-              } as Prisma.StringFilter,
-            }
-          : {};
+      // Database-level word-start matching (lib/search-sql.ts): filtering,
+      // ordering, count and pagination all run in SQL, so they stay correct at
+      // any catalog size. Every value is a bound parameter; the only raw text
+      // is the whitelisted ORDER BY column and generated facet aliases.
+      const conditions: Prisma.Sql[] = [Prisma.sql`TRUE`];
+      if (query && query !== 'all') {
+        conditions.push(Prisma.sql`name ~* ${wordStartPattern(query)}`);
+      }
+      if (category && category !== 'all') {
+        conditions.push(Prisma.sql`category = ${category}`);
+      }
+      if (price && price !== 'all') {
+        const lo = Number(price.split('-')[0]);
+        const hi = Number(price.split('-')[1]);
+        conditions.push(Prisma.sql`price >= ${lo} AND price <= ${hi}`);
+      }
+      if (rating && rating !== 'all') {
+        conditions.push(Prisma.sql`rating >= ${Number(rating)}`);
+      }
+      for (const p of hiddenSlugPrefixes()) {
+        conditions.push(Prisma.sql`slug NOT LIKE ${p + '%'}`);
+      }
+      const whereSql = Prisma.join(conditions, ' AND ');
+      const orderSql =
+        sort === 'lowest'
+          ? Prisma.sql`price ASC`
+          : sort === 'highest'
+          ? Prisma.sql`price DESC`
+          : sort === 'rating'
+          ? Prisma.sql`rating DESC`
+          : Prisma.sql`"createdAt" DESC`;
+      const offset = (page - 1) * limit;
 
-      const categoryFilter = category && category !== 'all' ? { category } : {};
-
-      const priceFilter: Prisma.ProductWhereInput =
-        price && price !== 'all'
-          ? {
-              price: {
-                gte: Number(price.split('-')[0]),
-                lte: Number(price.split('-')[1]),
-              },
-            }
-          : {};
-
-      const ratingFilter =
-        rating && rating !== 'all'
-          ? {
-              rating: {
-                gte: Number(rating),
-              },
-            }
-          : {};
-
-      const where: Prisma.ProductWhereInput = {
-        ...fixtureExclusion(),
-        ...queryFilter,
-        ...categoryFilter,
-        ...priceFilter,
-        ...ratingFilter,
-      };
-      const rows = await prisma.product.findMany({
-        where,
-        orderBy:
-          sort === 'lowest'
-            ? { price: 'asc' }
-            : sort === 'highest'
-            ? { price: 'desc' }
-            : sort === 'rating'
-            ? { rating: 'desc' }
-            : { createdAt: 'desc' },
+      const idRows = await prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM "Product" WHERE ${whereSql} ORDER BY ${orderSql} LIMIT ${limit} OFFSET ${offset}`;
+      const countRows = await prisma.$queryRaw<Array<{ c: bigint }>>`
+        SELECT count(*) AS c FROM "Product" WHERE ${whereSql}`;
+      const ids = idRows.map((r) => r.id);
+      const rowsById = await prisma.product.findMany({
+        where: { id: { in: ids } },
         include: { variants: { select: { referenceCost: true } } },
       });
-
-      // Word-start filter applied after the loose contains prefilter, so
-      // counts and pages agree with what is actually shown.
-      const matched = rows.filter((r) => queryMatchesName(r.name, query));
-      const data = matched.slice((page - 1) * limit, page * limit);
-      const dataCount = matched.length;
+      const byId = new Map(rowsById.map((r) => [r.id, r]));
+      const data = ids.map((id) => byId.get(id)).filter((r) => r !== undefined);
+      const dataCount = Number(countRows[0]?.c ?? 0);
 
       return {
         data: convertToPlainObject(data.map(withVariantSummary)),
@@ -373,25 +360,36 @@ export async function getFacetCounts({ query, category }: { query?: string; cate
   const out: FacetCounts = { price: {}, rating: {} };
   if (isDatabaseAvailable()) {
     try {
-      const base: Prisma.ProductWhereInput = {
-        ...fixtureExclusion(),
-        ...(query && query !== 'all' ? { name: { contains: query, mode: 'insensitive' } as Prisma.StringFilter } : {}),
-        ...(category && category !== 'all' ? { category } : {}),
-      };
-      // Same word-start matching as getAllProducts, so facet counts agree
-      // with the results the shopper actually sees.
-      const rows = await prisma.product.findMany({
-        where: base,
-        select: { name: true, price: true, rating: true },
-      });
-      const matched = rows.filter((r) => queryMatchesName(r.name, query || ''));
-      for (const b of FACET_PRICE_BUCKETS) {
+      const conditions: Prisma.Sql[] = [Prisma.sql`TRUE`];
+      if (query && query !== 'all') {
+        conditions.push(Prisma.sql`name ~* ${wordStartPattern(query)}`);
+      }
+      if (category && category !== 'all') {
+        conditions.push(Prisma.sql`category = ${category}`);
+      }
+      for (const p of hiddenSlugPrefixes()) {
+        conditions.push(Prisma.sql`slug NOT LIKE ${p + '%'}`);
+      }
+      const whereSql = Prisma.join(conditions, ' AND ');
+      // One conditional-aggregation round trip: the same word-start matching
+      // as getAllProducts, so facet counts agree with the results shown.
+      const selectParts: Prisma.Sql[] = [];
+      FACET_PRICE_BUCKETS.forEach((b, i) => {
         const [lo, hi] = b.split('-').map(Number);
-        out.price[b] = matched.filter((r) => Number(r.price) >= lo && Number(r.price) <= hi).length;
-      }
-      for (const r of FACET_RATINGS) {
-        out.rating[String(r)] = matched.filter((p) => Number(p.rating) >= r).length;
-      }
+        selectParts.push(Prisma.sql`count(*) FILTER (WHERE price >= ${lo} AND price <= ${hi}) AS ${Prisma.raw('b' + i)}`);
+      });
+      FACET_RATINGS.forEach((r, i) => {
+        selectParts.push(Prisma.sql`count(*) FILTER (WHERE rating >= ${r}) AS ${Prisma.raw('r' + i)}`);
+      });
+      const aggRows = await prisma.$queryRaw<Array<Record<string, bigint | number>>>`
+        SELECT ${Prisma.join(selectParts, ', ')} FROM "Product" WHERE ${whereSql}`;
+      const agg = aggRows[0] ?? {};
+      FACET_PRICE_BUCKETS.forEach((b, i) => {
+        out.price[b] = Number(agg['b' + i] ?? 0);
+      });
+      FACET_RATINGS.forEach((r, i) => {
+        out.rating[String(r)] = Number(agg['r' + i] ?? 0);
+      });
       return out;
     } catch (err: unknown) {
       console.warn('Prisma getFacetCounts failed:', err instanceof Error ? err.message : String(err));

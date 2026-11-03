@@ -35,7 +35,10 @@ export function hideFixturesInPublic(env: Record<string, string | undefined> = p
   return env.NODE_ENV === 'production' && env.SHOW_TEST_FIXTURES !== 'true';
 }
 
-export function fixtureExclusion(env: Record<string, string | undefined> = process.env) {
+// Slug prefixes hidden from the public storefront in this runtime. Shared by
+// the Prisma filter (fixtureExclusion) and the raw-SQL search path, so both
+// exclude exactly the same rows.
+export function hiddenSlugPrefixes(env: Record<string, string | undefined> = process.env): string[] {
   const hidden: string[] = [];
   if (hideFixturesInPublic(env)) hidden.push(...PREFIXES);
   // Test-catalog rows (cjt-) exist for simulated checkout only: outside
@@ -43,6 +46,11 @@ export function fixtureExclusion(env: Record<string, string | undefined> = proce
   // runtime, so demo-markup prices and unverified supplier data can never
   // leak into a real catalog.
   if (env.TEST_CHECKOUT_MODE !== 'true') hidden.push(TEST_CATALOG_PREFIX);
+  return hidden;
+}
+
+export function fixtureExclusion(env: Record<string, string | undefined> = process.env) {
+  const hidden = hiddenSlugPrefixes(env);
   return hidden.length ? { AND: hidden.map((p) => ({ NOT: { slug: { startsWith: p } } })) } : {};
 }
 
