@@ -25,6 +25,11 @@ const Menu = async () => {
           <GlobalSelector />
         </div>
 
+        {/* Theme switcher (Light / Dark / Professional / System) */}
+        <div className='text-white'>
+          <ModeToggle />
+        </div>
+
         {/* 2. Account & Lists */}
         <UserButton />
 

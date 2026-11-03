@@ -10,6 +10,7 @@ import { readFileSync } from 'fs';
 const layout = readFileSync('app/layout.tsx', 'utf8');
 const toggle = readFileSync('components/shared/header/mode-toggle.tsx', 'utf8');
 const globals = readFileSync('assets/styles/globals.css', 'utf8');
+const menu = readFileSync('components/shared/header/menu.tsx', 'utf8');
 
 describe('three global themes (light, dark, professional) + system', () => {
   it('ThemeProvider declares the explicit theme list', () => {
@@ -47,6 +48,12 @@ describe('three global themes (light, dark, professional) + system', () => {
     ]) {
       expect(block).toContain(`${token}:`);
     }
+  });
+
+  it('theme switcher is reachable on desktop and mobile chrome', () => {
+    // desktop nav + mobile sheet both mount the same ModeToggle
+    const occurrences = menu.split('<ModeToggle />').length - 1;
+    expect(occurrences).toBe(2);
   });
 
   it('professional palette stays a token-only change (no layout edits)', () => {
