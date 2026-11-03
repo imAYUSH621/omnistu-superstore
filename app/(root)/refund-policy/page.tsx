@@ -61,7 +61,7 @@ export default function RefundPolicyPage() {
                 <strong>Incorrect Item / Wrong Size Dispatched:</strong> If the manufacturer inadvertently dispatched a product or variant different from your confirmed order, an immediate correct replacement is dispatched at zero cost.
               </li>
               <li>
-                <strong>Lost in Transit:</strong> If carrier tracking (USPS, YunExpress, DHL, India Post) shows no movement for more than <strong>30 consecutive days</strong> (or package is declared officially lost by the carrier), we issue an automatic 100% refund or expedited reshipment.
+                <strong>Lost in Transit:</strong> If carrier tracking{contentReviewMode && (<> (USPS, YunExpress, DHL, India Post)</>)} shows no movement for more than <strong>30 consecutive days</strong> (or package is declared officially lost by the carrier), we issue an automatic 100% refund or expedited reshipment.
               </li>
             </ul>
           </section>
