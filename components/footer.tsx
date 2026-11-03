@@ -5,6 +5,7 @@ import T from '@/components/shared/i18n-text';
 import Link from 'next/link';
 import { APP_NAME } from '@/lib/constants';
 import GlobalSelector from '@/components/shared/header/global-selector';
+import { contentReviewMode } from '@/lib/content-review';
 
 export default function Footer() {
   const scrollToTop = () => {
@@ -39,11 +40,13 @@ export default function Footer() {
                 <T k='footerServices' />
               </Link>
             </li>
-            <li>
-              <Link href='/blog' className='hover:underline hover:text-white'>
-                <T k='footerBlog' />
-              </Link>
-            </li>
+            {contentReviewMode && (
+              <li>
+                <Link href='/blog' className='hover:underline hover:text-white'>
+                  <T k='footerBlog' />
+                </Link>
+              </li>
+            )}
             <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 <T k='footerShippingPolicy' />

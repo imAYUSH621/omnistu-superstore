@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import EnquiryForm from '@/components/services/enquiry-form';
 import { SERVICES, getService } from '@/lib/services-catalog';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const s = getService((await params).slug);
-  if (!s) notFound();
+  if (!s || !contentReviewMode) notFound();
   return (
     <div className='max-w-[800px] mx-auto px-4 py-10 space-y-5'>
       <Link href='/services' className='text-sm underline'>
