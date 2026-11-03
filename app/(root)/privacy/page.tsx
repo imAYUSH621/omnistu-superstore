@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, Lock, Truck, RefreshCw } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
   title: `Privacy Notice | ${APP_NAME}`,
@@ -48,11 +49,11 @@ export default function PrivacyPage() {
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
               <Truck className='w-4 h-4 text-amber-500' /> 2. Fulfiller & Carrier Data Sharing
             </h2>
-            <p className='mb-3'>
+            {contentReviewMode && (<p className='mb-3'>
               To honor our direct-to-consumer pricing and global dispatch, order details are transmitted strictly on a need-to-know basis to our vetted fulfillment and logistics partners:
-            </p>
+            </p>)}
             <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Fulfillment Networks:</strong> CJ Dropshipping Inc., Printify Inc., and certified regional suppliers for product packing and dispatch.</li>
+              {contentReviewMode && (<li><strong>Fulfillment Networks:</strong> CJ Dropshipping Inc., Printify Inc., and certified regional suppliers for product packing and dispatch.</li>)}
               <li><strong>Carriers & Customs Authorities:</strong> USPS, YunExpress, DHL Express, India Post, and Blue Dart solely to generate shipping waybills, compute customs tariffs, and transmit SMS/email delivery tracking.</li>
               <li>We <strong>do not sell, rent, or trade</strong> customer data to third-party ad brokers or data aggregators.</li>
             </ul>

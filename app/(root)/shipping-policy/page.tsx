@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { Truck, Clock, Globe2, ShieldCheck, MapPin } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
   title: `Shipping & Delivery Policy | ${APP_NAME}`,
@@ -31,14 +32,14 @@ export default function ShippingPolicyPage() {
         {/* Content Body */}
         <div className='space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300'>
           {/* Overview */}
-          <section>
+          {contentReviewMode && (<section>
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
               <Globe2 className='w-4 h-4 text-amber-500' /> 1. Direct Global Fulfillment Sourcing
             </h2>
             <p className='mb-3'>
               {APP_NAME} partners directly with certified manufacturers and premier fulfillment hubs across the United States, Europe, and Asia. By dispatching parcels directly from the production facility or bonded export warehouse, we offer exceptional prices without middleman markups.
             </p>
-          </section>
+          </section>)}
 
           {/* Regional Delivery Table */}
           <section>
@@ -109,9 +110,9 @@ export default function ShippingPolicyPage() {
               <li>
                 <strong>Customs &amp; Import Duties:</strong> customs handling for live orders has not been finalized; the applicable duties model will be published here before live ordering starts.
               </li>
-              <li>
+              {contentReviewMode && (<li>
                 <strong>Separate Package Shipments:</strong> If you purchase items originating from different specialized suppliers (e.g., custom apparel from Printify and electronics from CJ Dropshipping), items may arrive in separate, individually tracked parcels.
-              </li>
+              </li>)}
             </ul>
           </section>
         </div>

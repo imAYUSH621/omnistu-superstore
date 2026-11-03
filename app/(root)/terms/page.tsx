@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { FileText, CheckCircle2, AlertTriangle, Scale } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
   title: `Terms of Service | ${APP_NAME}`,
@@ -30,7 +31,7 @@ export default function TermsPage() {
 
         {/* Content Body */}
         <div className='space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300'>
-          <section>
+          {contentReviewMode && (<section>
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
               <CheckCircle2 className='w-4 h-4 text-emerald-500' /> 1. Direct-to-Consumer Model & Sourcing
             </h2>
@@ -40,15 +41,15 @@ export default function TermsPage() {
             <p>
               This operational model eliminates intermediary retail markups, warehouse hoarding fees, and speculative advertising costs, passing direct factory-floor savings to you.
             </p>
-          </section>
+          </section>)}
 
           <section>
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
               <Scale className='w-4 h-4 text-amber-500' /> 2. Pricing, Multi-Currency & Dynamic Conversion
             </h2>
-            <p className='mb-3'>
+            {contentReviewMode && (<p className='mb-3'>
               Product prices are computed dynamically based on real-time manufacturer wholesale costs, destination freight quotes, payment gateway interchange fees, and live interbank foreign exchange rates.
-            </p>
+            </p>)}
             <ul className='list-disc pl-5 space-y-1.5'>
               <li>Some browsing pages can display indicative prices in non-USD currencies converted with periodically refreshed public exchange rates. Cart and checkout totals are currently always computed and charged in USD.</li>
               <li>While we endeavor to guarantee real-time price accuracy, manufacturer cost changes or sudden currency volatility may lead to updated checkout totals prior to payment confirmation.</li>
