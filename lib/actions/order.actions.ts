@@ -17,6 +17,7 @@ import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
 import { updateOrderToPaid, updateOrderToPaidSimulated } from '../order-settlement';
 import { requireAdmin } from '../auth-guard';
+import { recordCapturedUnsettled } from '../captured-unsettled';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
@@ -337,17 +338,24 @@ export async function approvePayPalOrder(
       throw new Error('Captured currency does not match the order currency');
     }
 
-    // Update order to paid
-    await updateOrderToPaid({
-      orderId,
-      paymentResult: {
-        id: captureData.id,
-        status: captureData.status,
-        email_address: captureData.payer.email_address,
-        pricePaid:
-          captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value,
-      },
-    });
+    // Update order to paid. The PayPal capture above is external and cannot roll back with a
+    // DB transaction: if settlement fails now, money is captured but the order is unpaid. Leave a
+    // durable, searchable record (never a refund, never a retry) so it can be reconciled.
+    try {
+      await updateOrderToPaid({
+        orderId,
+        paymentResult: {
+          id: captureData.id,
+          status: captureData.status,
+          email_address: captureData.payer.email_address,
+          pricePaid:
+            captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value,
+        },
+      });
+    } catch (settleError) {
+      await recordCapturedUnsettled(orderId, captureData.id, capture.amount?.value, settleError);
+      throw settleError;
+    }
 
     revalidatePath(`/order/${orderId}`);
 
