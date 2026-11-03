@@ -4,7 +4,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import { cookies } from 'next/headers';
 import { hashPassword, verifyPasswordGated, dummyVerify, HashBusyError } from './lib/password';
-import { hitLimit, clearLimit, LIMITS } from './lib/auth-limits';
+import { hitLimit, clearLimit, limiterBlocksSignin, signinClientIp, LIMITS } from './lib/auth-limits';
 import { getSessionVersion } from './lib/session-version';
 import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -36,12 +36,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // forwarded (anti-spoofing; vercel.com/docs/edge-network/headers).
         // Without a trustworthy header (local/dev), skip: the per-email limit
         // still applies. Refusal is the same generic null as a bad password.
-        const fwd =
-          (request as Request | undefined)?.headers?.get('x-forwarded-for') ?? '';
-        const clientIp = fwd.split(',')[0].trim();
+        const clientIp = signinClientIp(request as Request | undefined, process.env.NODE_ENV);
         if (clientIp) {
           const ipLim = await hitLimit('signin-ip', clientIp, LIMITS.signinIp.max, LIMITS.signinIp.windowSec);
-          if (!ipLim.allowed) return null;
+          if (limiterBlocksSignin(ipLim, process.env.NODE_ENV)) return null;
         }
 
         // 1. DEV-ONLY admin bypass: active solely outside production when
@@ -79,7 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 2. Standard Database User Lookup
         // Attempt limit per email, enforced here so the direct auth endpoint is covered too.
         const lim = await hitLimit('signin', emailInput, LIMITS.signin.max, LIMITS.signin.windowSec);
-        if (!lim.allowed) return null;
+        if (limiterBlocksSignin(lim, process.env.NODE_ENV)) return null;
         try {
           // Case-insensitive so accounts created before sign-up lowercased
           // emails (e.g. "Asha@Example.com") can still sign in.
