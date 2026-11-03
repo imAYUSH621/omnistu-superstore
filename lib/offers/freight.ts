@@ -74,3 +74,95 @@ export function applyFreightEvidence(
     return { ...offer, shippingCents: match.shippingCents };
   });
 }
+
+/**
+ * Destination-scoped cached freight quote store.
+ *
+ * Quotes are read from JSON files in a cache directory. Every entry must be
+ * labeled: 'live-cached' means it was once returned by the provider for the
+ * exact pid/vid/quantity/destination/currency it names; 'simulated-fixture'
+ * means it is synthetic test data. Simulated entries are excluded unless the
+ * caller explicitly opts in, so a fixture can never silently qualify an offer
+ * in a production path. Files named *.simulated.json may contain ONLY
+ * simulated entries; any other file must contain ONLY live-cached entries.
+ * Anything ambiguous is rejected (fail closed).
+ */
+
+export type FreightQuoteSource = 'live-cached' | 'simulated-fixture';
+
+export interface StoredFreightEvidence extends FreightEvidence {
+  source: FreightQuoteSource;
+}
+
+export interface FreightQuoteResult {
+  offer: Offer;
+  shippingCents: number;
+  source: FreightQuoteSource; // always surfaced; callers must not present simulated as live
+  method?: string;
+  fetchedAt: Date;
+}
+
+function isValidStored(e: any): e is StoredFreightEvidence {
+  return (
+    e &&
+    typeof e.provider === 'string' &&
+    typeof e.pid === 'string' &&
+    typeof e.quantity === 'number' &&
+    typeof e.destinationCountry === 'string' &&
+    typeof e.destinationPostal === 'string' &&
+    e.currency === 'USD' &&
+    typeof e.shippingCents === 'number' &&
+    !!e.fetchedAt &&
+    !Number.isNaN(new Date(e.fetchedAt).getTime()) &&
+    (e.source === 'live-cached' || e.source === 'simulated-fixture')
+  );
+}
+
+export function parseFreightEvidenceFile(
+  fileName: string,
+  json: unknown,
+  opts: { includeSimulated?: boolean } = {}
+): StoredFreightEvidence[] {
+  const simulatedFile = fileName.endsWith('.simulated.json');
+  const arr = Array.isArray(json) ? json : [json];
+  const out: StoredFreightEvidence[] = [];
+  for (const raw of arr) {
+    if (!isValidStored(raw)) continue; // fail closed on malformed entries
+    if (simulatedFile !== (raw.source === 'simulated-fixture')) continue; // label must match file convention
+    if (raw.source === 'simulated-fixture' && !opts.includeSimulated) continue;
+    out.push({ ...raw, fetchedAt: new Date(raw.fetchedAt) });
+  }
+  return out;
+}
+
+/**
+ * Destination-scoped lookup: returns a quote only for evidence matching the
+ * exact offer identity AND the exact quantity/destination/currency context,
+ * within maxAgeMs. Otherwise null - the offer stays unrankable (unknown
+ * shipping), never estimated.
+ */
+export function getCachedFreightQuote(
+  offer: Offer,
+  evidence: StoredFreightEvidence[],
+  ctx: FreightContext,
+  now: Date,
+  opts: { maxAgeMs: number }
+): FreightQuoteResult | null {
+  const [withShipping] = applyFreightEvidence([offer], evidence, ctx, now, opts);
+  if (withShipping.shippingCents === undefined) return null;
+  const match = evidence.find(
+    (e) =>
+      evidenceMatchesOffer(e, offer) &&
+      evidenceMatchesContext(e, ctx) &&
+      new Date(e.fetchedAt).getTime() <= now.getTime() &&
+      now.getTime() - new Date(e.fetchedAt).getTime() <= opts.maxAgeMs
+  );
+  if (!match) return null;
+  return {
+    offer: withShipping,
+    shippingCents: withShipping.shippingCents,
+    source: match.source,
+    method: match.method,
+    fetchedAt: new Date(match.fetchedAt),
+  };
+}

@@ -1,0 +1,15 @@
+[
+  {
+    "source": "simulated-fixture",
+    "provider": "cj",
+    "pid": "P1",
+    "vid": "V1",
+    "quantity": 1,
+    "destinationCountry": "SIM",
+    "destinationPostal": "SIM-000",
+    "currency": "USD",
+    "shippingCents": 499,
+    "method": "SIMULATED standard (synthetic fixture, not a real quote)",
+    "fetchedAt": "2026-11-03T04:30:00Z"
+  }
+]
