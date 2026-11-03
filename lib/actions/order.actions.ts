@@ -274,6 +274,7 @@ export async function createPayPalOrder(orderId: string) {
         data: {
           paymentResult: {
             id: paypalOrder.id,
+            paypalEnv: paypal.environment,
             email_address: '',
             status: '',
             pricePaid: 0,
@@ -382,6 +383,7 @@ export async function approvePayPalOrder(
         orderId,
         paymentResult: {
           id: captureData.id,
+          paypalEnv: (order.paymentResult as PaymentResult)?.paypalEnv,
           status: captureData.status,
           email_address: captureData.payer?.email_address ?? '',
           pricePaid:

@@ -43,6 +43,16 @@ export async function updateOrderToPaid({
 
   if (order.isPaid) throw new SettlementError('ALREADY_PAID', 'Order is already paid');
 
+  // Preserve the environment recorded at PayPal creation through all settlement callers.
+  // Incoming data and today's API origin cannot rewrite historical provenance.
+  const storedEnv = (order.paymentResult as PaymentResult | null)?.paypalEnv;
+  if (paymentResult) {
+    const { paypalEnv: _incomingEnv, ...incoming } = paymentResult;
+    void _incomingEnv;
+    paymentResult = storedEnv ? { ...incoming, paypalEnv: storedEnv } : incoming;
+  }
+
+
   // D12: never mark paid when the captured amount disagrees with the
   // order total. The mismatch is recorded on the order and surfaced as an
   // error instead of silently accepting an under- or over-charge.

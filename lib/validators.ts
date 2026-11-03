@@ -128,6 +128,7 @@ export const insertOrderItemSchema = z.object({
 
 // Schema for the PayPal paymentResult
 export const paymentResultSchema = z.object({
+  paypalEnv: z.enum(['sandbox', 'live', 'unknown']).optional(),
   id: z.string(),
   status: z.string(),
   email_address: z.string(),

@@ -11,11 +11,12 @@ const maybe = DB && process.env.DATABASE_URL === DB && !DB.includes('supabase') 
 
 const mockAuth = jest.fn();
 const mockCapture = jest.fn();
+const mockCreate = jest.fn();
 const mockDispatch = jest.fn();
 const mockMail = jest.fn();
 const mockMirror = jest.fn();
 jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
-jest.mock('@/lib/paypal', () => ({ paypal: { capturePayment: (...a: unknown[]) => mockCapture(...a), createOrder: jest.fn() } }));
+jest.mock('@/lib/paypal', () => ({ paypal: { capturePayment: (...a: unknown[]) => mockCapture(...a), createOrder: (...a: unknown[]) => mockCreate(...a), environment: 'sandbox' } }));
 jest.mock('@/lib/fulfillment-dispatcher', () => ({ dispatchOrderFulfillment: (...a: unknown[]) => mockDispatch(...a) }));
 jest.mock('@/lib/mailer', () => ({ sendOrderConfirmationEmail: (...a: unknown[]) => mockMail(...a) }));
 jest.mock('@/email', () => ({ sendPurchaseReceipt: (...a: unknown[]) => mockMail(...a) }));
@@ -208,5 +209,17 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(r.message).toContain('could not confirm');
     expect(o?.isPaid).toBe(false);
     expect(o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=NO_RESPONSE_DATA');
+  });
+
+  test('creation stores the API instance environment on the local order', async () => {
+    const id = await mkOrder('PP-BEFORE');
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCreate.mockResolvedValueOnce({ id: 'PP-CREATED' });
+    const { createPayPalOrder } = await import('@/lib/actions/order.actions');
+    const r = await createPayPalOrder(id);
+    const { prisma } = await import('@/db/prisma');
+    expect(r.success).toBe(true);
+    const order = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(order.paymentResult).toMatchObject({ id: 'PP-CREATED', paypalEnv: 'sandbox' });
   });
 });

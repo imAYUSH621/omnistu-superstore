@@ -1,6 +1,14 @@
 const base = process.env.PAYPAL_API_URL || 'https://api-m.sandbox.paypal.com';
 
+// The environment is captured from the same immutable origin used for this API instance.
+// Unknown/custom origins stay unknown; never infer legacy payment provenance from today's env.
+export function paypalEnvironmentForOrigin(origin: string): 'sandbox' | 'live' | 'unknown' {
+  if (origin === 'https://api-m.sandbox.paypal.com') return 'sandbox';
+  if (origin === 'https://api-m.paypal.com') return 'live';
+  return 'unknown';
+}
 export const paypal = {
+  environment: paypalEnvironmentForOrigin(base),
   createOrder: async function createOrder(price: number) {
     const accessToken = await generateAccessToken();
     const url = `${base}/v2/checkout/orders`;
