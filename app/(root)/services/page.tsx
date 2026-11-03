@@ -30,10 +30,10 @@ export default function ServicesPage() {
         ))}
       </ul>
       <p className='text-sm'>
-        Portfolio and case studies are on{' '}
-        <a href='https://omnistu.com' className='underline font-medium' rel='noopener'>
-          omnistu.com
-        </a>
+        Practical notes on how we work are on our{' '}
+        <Link href='/blog' className='underline font-medium'>
+          blog
+        </Link>
         . Questions or a project in mind? <Link href='/contact' className='underline font-medium'>Contact us</Link>.
       </p>
     </div>
