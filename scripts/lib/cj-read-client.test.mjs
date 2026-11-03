@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { classifyCjResponse, createCjReadClient } from './cj-read-client.mjs';
 for (const [status, body, expected] of [
-  [429, {code:1600200}, 'RATE_LIMIT'],
+  [429, {code:1600200,pointsInfo:{remaining:120}}, 'RATE_LIMIT'],
   [429, {code:429,pointsInfo:{remaining:0}}, 'QUOTA'],
   [200, {code:1600201}, 'QUOTA'],
   [200, {code:16900500}, 'QUOTA'],
