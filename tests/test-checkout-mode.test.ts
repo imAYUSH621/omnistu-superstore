@@ -123,3 +123,19 @@ it('simulated tax and shipping are labeled as TEST estimates, never real rates',
   expect(page).toContain("data-testid='test-estimates-note'");
   expect(page).toContain('not real tax or shipping rates');
 });
+
+it('auth origin falls back to the deployment URL when no fixed public URL exists', () => {
+  // Shareable-link access is per deployment URL; a hardcoded alias origin
+  // bounces share-link users to the Vercel login wall after sign-in.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { authOrigin } = require('@/lib/auth-origin');
+  const prevN = process.env.NEXTAUTH_URL;
+  const prevV = process.env.VERCEL_URL;
+  delete process.env.NEXTAUTH_URL;
+  process.env.VERCEL_URL = 'my-app-abc123.vercel.app';
+  expect(authOrigin()).toBe('https://my-app-abc123.vercel.app');
+  process.env.NEXTAUTH_URL = 'https://fixed.example.com';
+  expect(authOrigin()).toBe('https://fixed.example.com');
+  if (prevN === undefined) delete process.env.NEXTAUTH_URL; else process.env.NEXTAUTH_URL = prevN;
+  if (prevV === undefined) delete process.env.VERCEL_URL; else process.env.VERCEL_URL = prevV;
+});

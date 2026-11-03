@@ -1,3 +1,4 @@
+import { authOrigin } from '@/lib/auth-origin';
 'use server';
 
 import { z } from 'zod';
@@ -15,7 +16,7 @@ export async function requestReset(_prev: unknown, formData: FormData) {
   if (parsed.success) {
     const lim = await hitLimit('reset-req', parsed.data, LIMITS.resetRequest.max, LIMITS.resetRequest.windowSec);
     if (lim.allowed) try {
-      await requestPasswordReset(parsed.data, process.env.NEXTAUTH_URL || 'http://localhost:3000');
+      await requestPasswordReset(parsed.data, authOrigin() || 'http://localhost:3000');
     } catch (e) {
       console.warn('password reset request failed', e instanceof Error ? e.name : 'error');
     }
