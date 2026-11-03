@@ -59,3 +59,40 @@ test('simulate capturing a payment from an order', async () => {
 
   mockCapturePayment.mockRestore();
 });
+
+describe('capturePayment outcome typing', () => {
+  const tokenOk = { ok: true, json: () => Promise.resolve({ access_token: 't' }), text: () => Promise.resolve('') } as Response;
+  const withCapture = (capture: () => Promise<Response>) => {
+    global.fetch = jest.fn((url: RequestInfo | URL) =>
+      String(url).includes('/oauth2/token') ? Promise.resolve(tokenOk) : capture()
+    ) as unknown as typeof fetch;
+  };
+  const run = async () => {
+    try {
+      await paypal.capturePayment('ORD');
+      return null;
+    } catch (e) {
+      return e as { outcome?: string; detail?: string };
+    }
+  };
+  test('network failure is UNKNOWN (money may have moved)', async () => {
+    withCapture(() => Promise.reject(new Error('socket hang up')));
+    expect(await run()).toMatchObject({ outcome: 'UNKNOWN', detail: 'NETWORK_OR_TIMEOUT' });
+  });
+  test('5xx is UNKNOWN', async () => {
+    withCapture(() => Promise.resolve({ ok: false, status: 503, text: () => Promise.resolve('x') } as Response));
+    expect(await run()).toMatchObject({ outcome: 'UNKNOWN', detail: 'HTTP_503' });
+  });
+  test('422 ORDER_ALREADY_CAPTURED is UNKNOWN to this app (it was captured)', async () => {
+    withCapture(() => Promise.resolve({ ok: false, status: 422, text: () => Promise.resolve('{"details":[{"issue":"ORDER_ALREADY_CAPTURED"}]}') } as Response));
+    expect(await run()).toMatchObject({ outcome: 'UNKNOWN', detail: 'ALREADY_CAPTURED' });
+  });
+  test('422 INSTRUMENT_DECLINED is a definite REJECTED', async () => {
+    withCapture(() => Promise.resolve({ ok: false, status: 422, text: () => Promise.resolve('{"details":[{"issue":"INSTRUMENT_DECLINED"}]}') } as Response));
+    expect(await run()).toMatchObject({ outcome: 'REJECTED', detail: 'HTTP_422' });
+  });
+  test('unreadable 200 body is UNKNOWN', async () => {
+    withCapture(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.reject(new Error('bad json')) } as Response));
+    expect(await run()).toMatchObject({ outcome: 'UNKNOWN', detail: 'UNREADABLE_RESPONSE' });
+  });
+});

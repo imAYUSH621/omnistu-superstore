@@ -1,4 +1,4 @@
-import { getPaidOrderReconciliation, getOversoldProducts } from '@/lib/actions/reconcile.actions';
+import { getPaidOrderReconciliation, getOversoldProducts, getUnsettledCaptures } from '@/lib/actions/reconcile.actions';
 import { requireAdmin } from '@/lib/auth-guard';
 
 export const metadata = { title: 'Paid order reconciliation' };
@@ -13,6 +13,7 @@ export default async function ReconciliationPage({ searchParams }: { searchParam
   const sp = (await searchParams) ?? {};
   const res = await getPaidOrderReconciliation(sp.after);
   const oversold = await getOversoldProducts();
+  const unsettled = await getUnsettledCaptures();
   if (!res.success) {
     return (
       <div className="space-y-2">
@@ -75,6 +76,23 @@ export default async function ReconciliationPage({ searchParams }: { searchParam
           <a className="underline" href={`/admin/reconciliation?after=${res.nextToken}`}>Next page</a>
           . Pages follow the order id, not the paid time; each page is sorted by paid time. Orders can change while you page, so start again from page 1 for a fresh list.
         </p>
+      )}
+      {unsettled.success && unsettled.items.length > 0 && (
+        <section className="space-y-2 rounded border border-red-300 bg-red-50 p-3 text-sm" aria-label="Captures needing review">
+          <h2 className="font-semibold">Unpaid orders with a payment problem (needs review)</h2>
+          <p>
+            Money may have been captured in PayPal while the order is not marked paid. Check each order in PayPal first.
+            This list is read-only: it does not retry, refund or dispatch anything.
+          </p>
+          {unsettled.truncated && <p className="font-medium">Showing the 100 most recent; more exist.</p>}
+          <ul className="space-y-1">
+            {unsettled.items.map((u) => (
+              <li key={u.orderId} className="break-words">
+                <span className="break-all">{u.orderId}</span> ({fmt(u.createdAt)}): {u.note}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {oversold.success && oversold.items.length > 0 && (
         <section className="space-y-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm" aria-label="Oversold products">

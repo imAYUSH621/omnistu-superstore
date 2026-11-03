@@ -11,6 +11,17 @@ import { dispatchOrderFulfillment } from './fulfillment-dispatcher';
 import { persistDispatchSummary } from './fulfillment-persistence';
 import { revalidatePath } from 'next/cache';
 
+/** Typed settlement failures: callers branch on `settlementCode`, never on message text. */
+export type SettlementCode = 'ORDER_MISSING' | 'ALREADY_PAID' | 'AMOUNT_MISMATCH';
+export class SettlementError extends Error {
+  settlementCode: SettlementCode;
+  constructor(code: SettlementCode, message: string) {
+    super(message);
+    this.name = 'SettlementError';
+    this.settlementCode = code;
+  }
+}
+
 export async function updateOrderToPaid({
   orderId,
   paymentResult,
@@ -28,9 +39,9 @@ export async function updateOrderToPaid({
     },
   });
 
-  if (!order) throw new Error('Order not found');
+  if (!order) throw new SettlementError('ORDER_MISSING', 'Order not found');
 
-  if (order.isPaid) throw new Error('Order is already paid');
+  if (order.isPaid) throw new SettlementError('ALREADY_PAID', 'Order is already paid');
 
   // D12: never mark paid when the captured amount disagrees with the
   // order total. The mismatch is recorded on the order and surfaced as an
@@ -48,7 +59,7 @@ export async function updateOrderToPaid({
         },
       });
       console.error(`[payments] ${note} on order ${orderId} - not marking paid`);
-      throw new Error('Captured amount does not match the order total');
+      throw new SettlementError('AMOUNT_MISMATCH', 'Captured amount does not match the order total');
     }
   }
 
@@ -62,7 +73,7 @@ export async function updateOrderToPaid({
       where: { id: orderId, isPaid: false },
       data: { isPaid: true, paidAt: new Date(), paymentResult },
     });
-    if (claim.count !== 1) throw new Error('Order is already paid');
+    if (claim.count !== 1) throw new SettlementError('ALREADY_PAID', 'Order is already paid');
 
     for (const item of order.orderitems) {
       await tx.product.update({
@@ -81,7 +92,7 @@ export async function updateOrderToPaid({
     },
   });
 
-  if (!updatedOrder) throw new Error('Order not found');
+  if (!updatedOrder) throw new SettlementError('ORDER_MISSING', 'Order not found');
 
   if (updatedOrder.user?.email) {
     sendOrderConfirmationEmail({

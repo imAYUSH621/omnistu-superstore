@@ -17,6 +17,7 @@ import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
 import { updateOrderToPaid, updateOrderToPaidSimulated } from '../order-settlement';
 import { requireAdmin } from '../auth-guard';
+import { recordCapturedUnsettled } from '../captured-unsettled';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
@@ -309,26 +310,60 @@ export async function approvePayPalOrder(
     if (!order) throw new Error('Order not found');
     await requireOrderAccess(order.userId);
 
-    const captureData = await paypal.capturePayment(data.orderID);
-
-    if (
-      !captureData ||
-      captureData.id !== (order.paymentResult as PaymentResult)?.id ||
-      captureData.status !== 'COMPLETED'
-    ) {
-      throw new Error('Error in PayPal payment');
+    let captureData;
+    try {
+      captureData = await paypal.capturePayment(data.orderID);
+    } catch (captureError) {
+      const outcome = (captureError as { outcome?: string } | null)?.outcome;
+      if (outcome === 'UNKNOWN') {
+        // Money may have been captured: leave a durable review marker and never tell the buyer it failed.
+        await recordCapturedUnsettled(
+          orderId,
+          String(data.orderID),
+          undefined,
+          captureError,
+          'CAPTURE_UNCONFIRMED',
+          String((captureError as { detail?: string }).detail ?? 'UNKNOWN')
+        );
+        throw new Error('We could not confirm the payment status yet. Please do not pay again until it has been checked.');
+      }
+      if (outcome === 'REJECTED') throw new Error('PayPal did not complete the payment.');
+      throw captureError;
     }
 
-    const capture = captureData.purchase_units[0]?.payments?.captures[0];
-    // Fail closed: without a COMPLETED capture carrying an amount, the amount check in
-    // updateOrderToPaid would be skipped (it only compares when pricePaid is present).
-    if (
-      !capture ||
-      capture.status !== 'COMPLETED' ||
-      capture.amount?.value == null ||
-      capture.amount.value === ''
-    ) {
-      throw new Error('PayPal capture is missing, incomplete or has no amount');
+    // Distinguish the capture states from the actual PayPal response; money may have moved in several of
+    // them, so only a definite DECLINED/FAILED (or an order that never completed) is reported as not paid.
+    const unconfirmed = async (kind: 'CAPTURE_PENDING' | 'CAPTURE_UNCONFIRMED', reason: string, message: string, amount?: string) => {
+      await recordCapturedUnsettled(orderId, String(captureData?.id ?? data.orderID), amount, null, kind, reason);
+      throw new Error(message);
+    };
+    const NOT_CONFIRMED = 'We could not confirm the payment status yet. Please do not pay again until it has been checked.';
+    if (!captureData) throw new Error('PayPal did not complete the payment.');
+    const rawCapture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+    const capStatus: string | undefined = rawCapture?.status;
+    if (captureData.id !== (order.paymentResult as PaymentResult)?.id) {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'ORDER_ID_MISMATCH', NOT_CONFIRMED);
+    }
+    if (capStatus === 'PENDING') {
+      const why = String(rawCapture?.status_details?.reason ?? 'PENDING').toUpperCase();
+      await unconfirmed(
+        'CAPTURE_PENDING',
+        why,
+        'Your payment is pending with PayPal and has not been confirmed yet. Please do not pay again.',
+        rawCapture?.amount?.value
+      );
+    }
+    if (capStatus === 'DECLINED' || capStatus === 'FAILED') throw new Error('PayPal did not complete the payment.');
+    if (captureData.status !== 'COMPLETED' && !rawCapture) throw new Error('PayPal did not complete the payment.');
+    const capture = rawCapture;
+    if (!capture) await unconfirmed('CAPTURE_UNCONFIRMED', 'NO_CAPTURE_DATA', NOT_CONFIRMED);
+    if (capture!.status !== 'COMPLETED') {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'UNEXPECTED_CAPTURE_STATE', NOT_CONFIRMED, capture!.amount?.value);
+    }
+    // Fail closed: without an amount the amount check in updateOrderToPaid would be skipped (it only
+    // compares when pricePaid is present).
+    if (captureData.status !== 'COMPLETED' || capture!.amount?.value == null || capture!.amount.value === '') {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'INCOMPLETE_CAPTURE_DATA', NOT_CONFIRMED);
     }
     if (!isExpectedCurrency(capture?.amount?.currency_code)) {
       const note = `CURRENCY_MISMATCH: captured ${capture?.amount?.currency_code ?? 'unknown'}, expected USD`;
@@ -337,17 +372,32 @@ export async function approvePayPalOrder(
       throw new Error('Captured currency does not match the order currency');
     }
 
-    // Update order to paid
-    await updateOrderToPaid({
-      orderId,
-      paymentResult: {
-        id: captureData.id,
-        status: captureData.status,
-        email_address: captureData.payer.email_address,
-        pricePaid:
-          captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value,
-      },
-    });
+    // Update order to paid. The PayPal capture above is external and cannot roll back with a
+    // DB transaction: if settlement fails now, money is captured but the order is unpaid. Leave a
+    // durable, searchable record (never a refund, never a retry) so it can be reconciled.
+    try {
+      await updateOrderToPaid({
+        orderId,
+        paymentResult: {
+          id: captureData.id,
+          status: captureData.status,
+          email_address: captureData.payer.email_address,
+          pricePaid:
+            captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value,
+        },
+      });
+    } catch (settleError) {
+      await recordCapturedUnsettled(orderId, captureData.id, capture.amount?.value, settleError);
+      // Allowlist by typed code, never by message text. "Already paid" passes through only when the
+      // database really shows the order paid; amount mismatch is a typed, already-recorded case.
+      const code = (settleError as { settlementCode?: string } | null)?.settlementCode;
+      if (code === 'AMOUNT_MISMATCH') throw settleError;
+      if (code === 'ALREADY_PAID') {
+        const paid = await prisma.order.findFirst({ where: { id: orderId, isPaid: true }, select: { id: true } }).catch(() => null);
+        if (paid) throw settleError;
+      }
+      throw new Error('Your payment was received but the order could not be finalized yet. Please do not pay again.');
+    }
 
     revalidatePath(`/order/${orderId}`);
 
