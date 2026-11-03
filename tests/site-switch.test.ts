@@ -23,11 +23,14 @@ describe('Products/Services switch', () => {
     for (const s of SERVICES) expect(s.title && s.summary && s.covers.length).toBeTruthy();
   });
   it('brand wordmark uses omnistu.com, not .us', () => {
-    for (const f of ['components/shared/header/index.tsx', 'components/footer.tsx']) {
-      const t = readFileSync(f, 'utf8');
-      expect(t).not.toMatch(/>\s*\.us\s*</);
-      expect(t).toMatch(/\.com/);
-    }
+    // Since logo pack v2 the header brand mark is the wide logo image
+    // (omnistu.com mark inside the artwork); the footer keeps the text mark.
+    const h = readFileSync('components/shared/header/index.tsx', 'utf8');
+    expect(h).not.toMatch(/>\s*\.us\s*</);
+    expect(h).toMatch(/\.com|omnistu-logo-wide/);
+    const f = readFileSync('components/footer.tsx', 'utf8');
+    expect(f).not.toMatch(/>\s*\.us\s*</);
+    expect(f).toMatch(/\.com/);
   });
 });
 
