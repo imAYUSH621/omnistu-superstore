@@ -19,16 +19,19 @@ const Header = () => {
             className='flex items-center px-2 py-1.5 border border-transparent hover:border-white rounded-xs transition-colors'
             aria-label='Omnistu Superstore Home'
           >
-            <div className='flex flex-col items-start leading-none relative'>
-              <div className='flex items-baseline'>
-                <span className='font-bold text-[22px] tracking-tight text-white'>
-                  omnistu
-                </span>
-                <span className='font-bold text-[12px] text-[#4f46e5] ml-0.5'>
-                  .com
-                </span>
-              </div>
-            </div>
+            {/* Brand mark: user-supplied wide logo (pack v2), static at
+                40-44px with a CSS masked shine (reduced-motion safe). */}
+            <span className='logo-shine inline-block'>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src='/images/logo/omnistu-logo-wide-400.png'
+                alt='Omnistu Superstore'
+                className='h-10 sm:h-11 w-auto'
+                width={400}
+                height={137}
+                data-testid='site-logo'
+              />
+            </span>
           </Link>
 
           {/* Amazon Deliver to India Location Widget */}
