@@ -54,3 +54,44 @@ export async function getOversoldProducts(): Promise<{ success: true; items: Ove
     return { success: false, message: 'Could not load oversold products.' };
   }
 }
+
+export type UnsettledCapture = { orderId: string; createdAt: string; note: string };
+
+/**
+ * Admin-only, read-only. UNPAID orders whose payment note says money may have been taken without the
+ * order being marked paid: CAPTURED_UNSETTLED (settlement failed after capture), AMOUNT_MISMATCH and
+ * CURRENCY_MISMATCH. Needs manual review in PayPal. This never retries a capture, refunds or dispatches.
+ */
+export async function getUnsettledCaptures(): Promise<
+  { success: true; items: UnsettledCapture[]; truncated: boolean } | { success: false; message: string }
+> {
+  const session = await auth();
+  if (session?.user?.role !== 'admin') return { success: false, message: 'User is not authorized' };
+  try {
+    const rows = await prisma.order.findMany({
+      where: {
+        isPaid: false,
+        OR: [
+          { paymentNote: { startsWith: 'CAPTURED_UNSETTLED' } },
+          { paymentNote: { startsWith: 'AMOUNT_MISMATCH' } },
+          { paymentNote: { startsWith: 'CURRENCY_MISMATCH' } },
+        ],
+      },
+      select: { id: true, createdAt: true, paymentNote: true },
+      orderBy: { createdAt: 'desc' },
+      take: 101,
+    });
+    return {
+      success: true,
+      truncated: rows.length > 100,
+      items: rows.slice(0, 100).map((r) => ({
+        orderId: r.id,
+        createdAt: r.createdAt.toISOString(),
+        note: (r.paymentNote ?? '').slice(0, 300),
+      })),
+    };
+  } catch (e) {
+    console.error('[reconciliation] unsettled query failed:', e instanceof Error ? e.name : 'error');
+    return { success: false, message: 'Could not load unsettled captures. The database may be unreachable.' };
+  }
+}
