@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { paymentMethodSchema } from '@/lib/validators';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ import { ArrowRight, Loader } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { updateUserPaymentMethod } from '@/lib/actions/user.actions';
 import T from '@/components/shared/i18n-text';
+import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
 const PaymentMethodForm = ({
   preferredPaymentMethod,
@@ -44,6 +45,12 @@ const PaymentMethodForm = ({
   });
 
   const [isPending, startTransition] = useTransition();
+
+  // Warm the next step's RSC payload + function while the user picks a
+  // method; GET-only read of the viewer's own data, no writes (D12).
+  useEffect(() => {
+    router.prefetch('/place-order');
+  }, [router]);
 
   const onSubmit = async (values: z.infer<typeof paymentMethodSchema>) => {
     startTransition(async () => {
@@ -129,6 +136,10 @@ const PaymentMethodForm = ({
                 )}{' '}
                 <T k='continueLabel' />
               </Button>
+              <CheckoutPendingNote
+                show={isPending}
+                label='Saving your payment method and loading the review step - this can take up to a minute on first load. No need to click again.'
+              />
             </div>
           </form>
         </Form>

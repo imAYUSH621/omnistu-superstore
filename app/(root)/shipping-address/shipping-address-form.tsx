@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { ShippingAddress } from '@/types';
 import { shippingAddressSchema } from '@/lib/validators';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,7 @@ import { ArrowRight, Loader } from 'lucide-react';
 import { updateUserAddress } from '@/lib/actions/user.actions';
 import { shippingAddressDefaultValues } from '@/lib/constants';
 import T from '@/components/shared/i18n-text';
+import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
 const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
   const router = useRouter();
@@ -33,6 +34,12 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
   });
 
   const [isPending, startTransition] = useTransition();
+
+  // Warm the next step's RSC payload + function while the user types;
+  // GET-only read of the viewer's own data, no writes (D12).
+  useEffect(() => {
+    router.prefetch('/payment-method');
+  }, [router]);
 
   const onSubmit: SubmitHandler<z.infer<typeof shippingAddressSchema>> = async (
     values
@@ -184,6 +191,10 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                 )}{' '}
                 <T k='continueLabel' />
               </Button>
+              <CheckoutPendingNote
+                show={isPending}
+                label='Saving your address and loading payment options - this can take up to a minute on first load. No need to click again.'
+              />
             </div>
           </form>
         </Form>

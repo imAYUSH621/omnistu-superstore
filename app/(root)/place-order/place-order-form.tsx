@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { createOrder } from '@/lib/actions/order.actions';
 import { useToast } from '@/hooks/use-toast';
 import T from '@/components/shared/i18n-text';
+import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
 const PlaceOrderForm = () => {
   const router = useRouter();
@@ -50,6 +51,10 @@ const PlaceOrderForm = () => {
         )}{' '}
         <T k='placeOrder' />
       </Button>
+      <CheckoutPendingNote
+        show={pending}
+        label='Placing your order - this can take up to a minute on first load. No need to click again; a second submit reuses the same order.'
+      />
     </form>
   );
 };
