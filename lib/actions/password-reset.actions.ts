@@ -1,5 +1,6 @@
-import { authOrigin } from '@/lib/auth-origin';
 'use server';
+
+import { authOrigin } from '@/lib/auth-origin';
 
 import { z } from 'zod';
 import { hitLimit, limitKey, LIMITS } from '@/lib/auth-limits';
