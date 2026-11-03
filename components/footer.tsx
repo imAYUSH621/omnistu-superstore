@@ -35,6 +35,16 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link href='/services' className='hover:underline hover:text-white'>
+                <T k='footerServices' />
+              </Link>
+            </li>
+            <li>
+              <Link href='/blog' className='hover:underline hover:text-white'>
+                <T k='footerBlog' />
+              </Link>
+            </li>
+            <li>
               <Link href='/shipping-policy' className='hover:underline hover:text-white'>
                 <T k='footerShippingPolicy' />
               </Link>
