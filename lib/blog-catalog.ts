@@ -86,7 +86,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     slug: 'how-dropshipping-fulfilment-works',
     title: 'How dropshipping fulfilment works, and what to check before relying on it',
     summary:
-      'In dropshipping, a supplier ships directly to your customer. That removes inventory risk and adds new ones. Here is what to verify before you build a store on it.',
+      'In dropshipping, a supplier ships directly to your customer. That removes the need to hold stock - and adds new risks of its own. Here is what to verify before you build a store on it.',
     date: '2026-11-03',
     body: [
       {
