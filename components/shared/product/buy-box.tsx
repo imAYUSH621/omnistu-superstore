@@ -245,7 +245,7 @@ export default function BuyBox({
           <div className='flex justify-between py-0.5'>
             <span><T k='paymentLabel' /></span>
             <span className='font-medium text-foreground flex items-center gap-1'>
-              <Lock className='w-3 h-3 text-neutral-500' /> <T k='securePaymentNote' />
+              <Lock className='w-3 h-3 text-neutral-500' /> {testMode ? 'Simulated payment (test mode) - no card is charged.' : <T k='securePaymentNote' />}
             </span>
           </div>
         </div>

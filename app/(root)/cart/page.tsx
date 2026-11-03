@@ -1,4 +1,5 @@
 import CartTable from './cart-table';
+import { testCheckoutMode } from '@/lib/payment-capabilities';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { Metadata } from 'next';
 
@@ -12,7 +13,7 @@ export default async function CartPage() {
 
   return (
     <div className='w-full bg-[#f8fafc] dark:bg-[#0f172a] min-h-[85vh] font-sans'>
-      <CartTable cart={cart} />
+      <CartTable cart={cart} testMode={testCheckoutMode()} />
     </div>
   );
 }

@@ -117,7 +117,7 @@ function RemoveButton({ item }: { item: CartItem }) {
   );
 }
 
-const CartTable = ({ cart }: { cart?: Cart }) => {
+const CartTable = ({ cart, testMode = false }: { cart?: Cart; testMode?: boolean }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -177,7 +177,9 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                 <ul className='space-y-3 text-xs text-neutral-600 dark:text-neutral-300'>
                   <li className='flex items-start gap-2'>
                     <Truck className='w-4 h-4 text-amber-600 shrink-0 mt-0.5' />
-                    <span><strong>Shipping:</strong> $10 flat, free on item totals over $100 (as calculated at checkout).</span>
+                    <span>{testMode
+                      ? 'Simulated TEST shipping rates shown at checkout; no real shipment happens.'
+                      : 'Shipping is calculated at checkout.'}</span>
                   </li>
                   <li className='flex items-start gap-2'>
                     <ShieldCheck className='w-4 h-4 text-emerald-600 shrink-0 mt-0.5' />
@@ -185,7 +187,9 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                   </li>
                   <li className='flex items-start gap-2'>
                     <CheckCircle2 className='w-4 h-4 text-blue-600 shrink-0 mt-0.5' />
-                    <span><strong>Fulfilled by supplier partners</strong> (CJ Dropshipping, Printify). Delivery times vary by item.</span>
+                    <span>{testMode
+                      ? 'Simulated fulfillment only - no real supplier dispatch or delivery.'
+                      : 'Delivery times vary by item.'}</span>
                   </li>
                 </ul>
               </div>
@@ -348,12 +352,13 @@ const CartTable = ({ cart }: { cart?: Cart }) => {
                 Proceed to Checkout
               </Button>
 
-              <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-[11px] text-neutral-500 space-y-1.5'>
-                <div className='flex items-center gap-1 text-emerald-600 font-semibold'>
-                  <ShieldCheck className='w-3.5 h-3.5' /> 256-bit Bank Grade Encryption
+              {testMode && (
+                <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-[11px] text-neutral-500 space-y-1.5'>
+                  <div className='flex items-center gap-1'>
+                    <ShieldCheck className='w-3.5 h-3.5' /> Demo checkout: simulated payment only - no card is charged.
+                  </div>
                 </div>
-                <div>We accept Visa, Mastercard, AMEX, PayPal, and Apple Pay.</div>
-              </div>
+              )}
             </div>
           </div>
         )}
