@@ -9,7 +9,8 @@ export default function SearchInput() {
 
   useEffect(() => {
     const apply = (lang: string) => setPlaceholder(translate(lang, 'searchPlaceholder'));
-    const saved = localStorage.getItem('omnistu_lang');
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)omnistu_lang=([^;]+)/);
+    const saved = (cookieMatch ? decodeURIComponent(cookieMatch[1]) : null) || localStorage.getItem('omnistu_lang');
     if (saved) apply(saved);
     const onChange = (e: Event) => {
       const lang = (e as CustomEvent<{ lang: string }>).detail?.lang;

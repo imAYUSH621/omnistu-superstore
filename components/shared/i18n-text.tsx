@@ -13,7 +13,8 @@ export default function T({ k, className }: { k: DictionaryKey; className?: stri
 
   useEffect(() => {
     const apply = (lang: string) => setText(translate(lang, k));
-    const saved = localStorage.getItem('omnistu_lang');
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)omnistu_lang=([^;]+)/);
+    const saved = (cookieMatch ? decodeURIComponent(cookieMatch[1]) : null) || localStorage.getItem('omnistu_lang');
     if (saved) apply(saved);
     const onChange = (e: Event) => {
       const lang = (e as CustomEvent<{ lang: SupportedLang }>).detail?.lang;

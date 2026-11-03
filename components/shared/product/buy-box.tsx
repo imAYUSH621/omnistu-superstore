@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { isTestFixtureSlug, isTestCatalogSlug } from '@/lib/test-fixture';
 import T from '@/components/shared/i18n-text';
+import LocalizedPrice from '@/components/shared/localized-price';
 import { useRouter } from 'next/navigation';
 import { Product, Cart } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -119,13 +120,11 @@ export default function BuyBox({
         {/* Price & Savings Header */}
         <div className='space-y-1'>
           <div className='flex items-baseline gap-2'>
-            <span className='text-3xl font-extrabold tracking-tight'>
-              <sup className='text-sm align-super font-medium'>$</sup>
-              {Math.floor(priceNum)}
-              <sup className='text-sm align-super font-medium'>
-                {(priceNum % 1).toFixed(2).slice(2)}
-              </sup>
-            </span>
+            <LocalizedPrice
+              amountUsd={priceNum}
+              className='text-3xl font-extrabold tracking-tight'
+              supClassName='text-sm align-super font-medium'
+            />
           </div>
         </div>
 

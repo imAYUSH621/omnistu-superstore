@@ -23,13 +23,35 @@ describe('exchange rate labelling', () => {
   it('returns page does not promise live carrier status (source check)', () => {
     expect(fs.readFileSync('app/(root)/returns/page.tsx', 'utf8')).not.toMatch(/live real-time carrier/i);
   });
-  it('selector carries no currency conversion UI (conversion is not wired to any price)', () => {
-    // Currency selection converted nothing (no convertPrice callers; all
-    // prices render and settle in USD), so the dead control was removed.
+  it('selector currency UI is wired to real display conversion with honest USD-settlement disclosure', () => {
+    // Currency selection was re-added together with actual display
+    // conversion (LocalizedPrice on browsing surfaces). The guard now
+    // asserts the wiring exists AND the disclosure is honest: approximate
+    // reference conversion, hourly rates, checkout charges USD.
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
-    expect(src).not.toContain('SUPPORTED_CURRENCIES');
-    expect(src).not.toContain('/api/rates');
-    expect(src).not.toMatch(/currency/i);
+    expect(src).toContain('omnistu_currency');
+    expect(src).toContain('checkout charges USD');
+    const price = fs.readFileSync('components/shared/localized-price.tsx', 'utf8');
+    expect(price).toContain('/api/rates');
+    expect(price).toContain('convertPrice');
+    for (const f of [
+      'components/shared/product/product-card.tsx',
+      'components/shared/product/buy-box.tsx',
+      'components/shared/search/product-horizontal-card.tsx',
+    ]) {
+      expect(fs.readFileSync(f, 'utf8')).toContain('LocalizedPrice');
+    }
+  });
+  it('settlement surfaces stay USD (no display conversion in cart/checkout/orders)', () => {
+    for (const f of [
+      'app/(root)/cart/page.tsx',
+      'app/(root)/place-order/page.tsx',
+      'app/user/orders/page.tsx',
+    ]) {
+      if (fs.existsSync(f)) {
+        expect(fs.readFileSync(f, 'utf8')).not.toContain('LocalizedPrice');
+      }
+    }
   });
   it('selector says what is translated and keeps readable footer text (source check)', () => {
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
