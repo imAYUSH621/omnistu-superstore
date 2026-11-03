@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { searchPage } from '@/lib/search-input';
 import { getAllProducts, deleteProduct } from '@/lib/actions/product.actions';
 import { formatCurrency, formatId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ const AdminProductsPage = async (props: {
 
   const searchParams = await props.searchParams;
 
-  const page = Number(searchParams.page) || 1;
+  const page = searchPage(searchParams.page);
   const searchText = searchParams.query || '';
   const category = searchParams.category || '';
 

@@ -15,6 +15,7 @@ import sampleData from '@/db/sample-data';
 import { fixtureExclusion, hiddenSlugPrefixes, sampleCatalogAllowed } from '@/lib/test-fixture';
 import { queryMatchesName } from '@/lib/search-match';
 import { wordStartPattern } from '@/lib/search-sql';
+import { searchPage, searchLimit, searchPrice, searchRating, searchSort } from '@/lib/search-input';
 
 // Get latest products
 export async function getLatestProducts(): Promise<Product[]> {
@@ -121,6 +122,11 @@ export async function getAllProducts({
   rating?: string;
   sort?: string;
 }) {
+  page = searchPage(page);
+  limit = searchLimit(limit, PAGE_SIZE);
+  price = searchPrice(price);
+  rating = searchRating(rating);
+  sort = searchSort(sort);
   if (isDatabaseAvailable()) {
     try {
       // Database-level word-start matching (lib/search-sql.ts): filtering,
@@ -174,8 +180,9 @@ export async function getAllProducts({
         totalPages: Math.ceil(dataCount / limit),
         totalCount: dataCount,
       };
-    } catch (err: unknown) {
-      console.warn('Prisma getAllProducts fallback:', err);
+    } catch {
+      // Do not log raw Prisma errors: they can include SQL and request values.
+      console.warn('Catalog product search failed');
     }
   }
 
