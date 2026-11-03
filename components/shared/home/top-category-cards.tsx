@@ -9,6 +9,12 @@ import { ProductImage } from '@/components/shared/product/product-image';
 // not marketplace product photos. Illustrative imagery, not a specific product.
 const TOP_CARDS = [
   {
+    id: 'card-5',
+    title: 'Custom Apparel',
+    image: '/images/categories/custom-apparel-editorial.webp',
+    url: '/search?category=Custom%20Apparel',
+  },
+  {
     id: 'card-1',
     title: 'Royal Gourmet & Indian Food',
     image: '/images/categories/gourmet-indian-food.jpg',
@@ -32,12 +38,7 @@ const TOP_CARDS = [
     image: '/images/categories/home-lifestyle.jpg',
     url: '/search?category=Home%20%26%20Lifestyle',
   },
-  {
-    id: 'card-5',
-    title: 'Custom Apparel',
-    image: '/images/categories/custom-apparel.jpg',
-    url: '/search?category=Custom%20Apparel',
-  },
+
   {
     id: 'card-6',
     title: 'Toys & Games',
@@ -57,7 +58,11 @@ export default function TopCategoryCards() {
   };
 
   return (
-    <div className='relative w-full max-w-[1520px] mx-auto pt-3 pb-2 px-3 sm:px-4 md:px-6 font-sans group'>
+    <section aria-label='Explore departments' className='relative w-full max-w-[1520px] mx-auto pt-3 pb-2 px-3 sm:px-4 md:px-6 font-sans group'>
+      <div className='flex items-baseline justify-between gap-3 mb-3'>
+        <h1 className='text-lg md:text-2xl font-bold text-[#0F1111] dark:text-white'>Find your everyday style</h1>
+        <Link href='#all-departments-heading' className='text-xs font-medium text-indigo-700 dark:text-indigo-300 whitespace-nowrap'>All departments</Link>
+      </div>
       {/* Left Paddle */}
       <button
         onClick={() => scroll('left')}
@@ -84,18 +89,19 @@ export default function TopCategoryCards() {
                 {card.title}
               </h2>
             </div>
-            <div className='relative w-full h-[280px] sm:h-[300px] md:h-[320px] overflow-hidden bg-neutral-100 dark:bg-neutral-800'>
+            <div className='relative w-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800'>
               <ProductImage
                 src={card.image}
-                alt={card.title}
+                alt={`${card.title} - illustrative category artwork`}
                 sizes='(max-width: 768px) 260px, 285px'
                 className='object-cover group-hover/card:scale-102 transition-transform duration-300'
-                priority
+                priority={card.id === 'card-5'}
               />
             </div>
           </Link>
         ))}
       </div>
+      <p className='text-[11px] text-neutral-600 dark:text-neutral-400 mt-2'>Category artwork is illustrative. Browse each department for current items.</p>
 
       {/* Right Paddle */}
       <button
@@ -105,6 +111,6 @@ export default function TopCategoryCards() {
       >
         <ChevronRight className='w-4 h-4 md:w-6 md:h-6 text-[#0F1111] dark:text-white' />
       </button>
-    </div>
+    </section>
   );
 }

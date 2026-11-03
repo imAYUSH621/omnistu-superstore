@@ -15,15 +15,11 @@ export const metadata: Metadata = {
 export default function Homepage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-16 font-sans'>
-      <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-3'>
-        {/* 1. Signed-in personalization / honest sign-in CTA */}
-        <PersonalHero />
-      </div>
-
-      {/* 2. The illustrated category rail is the single category navigation */}
+      {/* Apparel-first discovery, before account prompts. */}
       <TopCategoryCards />
 
       <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-2'>
+        <PersonalHero />
         {/* 3. Every department with its own art; empty ones say so */}
         <AllDepartments />
 
