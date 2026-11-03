@@ -12,7 +12,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const s = getService((await params).slug);
-  return { title: s ? s.title : 'Services' };
+  return { title: s && contentReviewMode ? s.title : 'Services' };
 }
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {

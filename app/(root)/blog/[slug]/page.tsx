@@ -11,7 +11,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const a = getArticle((await params).slug);
-  return a ? { title: a.title, description: a.summary } : { title: 'Blog' };
+  return a && contentReviewMode ? { title: a.title, description: a.summary } : { title: 'Blog' };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
