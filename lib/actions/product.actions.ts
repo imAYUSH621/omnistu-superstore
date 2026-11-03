@@ -1,5 +1,6 @@
 'use server';
 import { prisma } from '@/db/prisma';
+import { cache } from 'react';
 import { withVariantSummary } from '@/lib/product-variants';
 import { convertToPlainObject, formatError, isDatabaseAvailable } from '../utils';
 import { LATEST_PRODUCTS_LIMIT, PAGE_SIZE } from '../constants';
@@ -290,8 +291,10 @@ export async function updateProduct(data: z.infer<typeof updateProductSchema>) {
   }
 }
 
-// Get all categories
-export async function getAllCategories() {
+// React cache is scoped to one server-render request. Multiple header/home/search consumers share
+// this metadata read, without a cross-request TTL or invalidation dependency. Never use it for
+// product price/stock or checkout reads.
+const getAllCategoriesForRequest = cache(async () => {
   if (isDatabaseAvailable()) {
     try {
       const data = await prisma.product.groupBy({
@@ -321,6 +324,10 @@ export async function getAllCategories() {
     category,
     _count: count,
   }));
+});
+
+export async function getAllCategories() {
+  return getAllCategoriesForRequest();
 }
 
 // Get featured products
