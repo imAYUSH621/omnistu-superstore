@@ -10,12 +10,15 @@ import { prisma } from '@/db/prisma';
 export type UnsettledReason = 'ORDER_MISSING' | 'AMOUNT_MISMATCH' | 'DB_ERROR' | 'UNKNOWN';
 
 export function classifyUnsettledReason(cause: unknown): UnsettledReason | 'ALREADY_PAID' {
+  // Database-client errors first: their message embeds source code snippets (which can contain the
+  // words "already paid" or "not found"), so message matching must never run on them.
+  const name = cause instanceof Error ? cause.name : '';
+  const code = (cause as { code?: unknown } | null)?.code;
+  if (name.startsWith('PrismaClient') || (typeof code === 'string' && /^P\d{4}$/.test(code))) return 'DB_ERROR';
   const m = cause instanceof Error ? cause.message : '';
   if (/already paid/i.test(m)) return 'ALREADY_PAID';
   if (/not found/i.test(m)) return 'ORDER_MISSING';
   if (/does not match/i.test(m)) return 'AMOUNT_MISMATCH';
-  const code = (cause as { code?: unknown } | null)?.code;
-  if (typeof code === 'string' && /^P\d{4}$/.test(code)) return 'DB_ERROR';
   return 'UNKNOWN';
 }
 
@@ -32,7 +35,7 @@ export async function recordCapturedUnsettled(
   console.error(`[payments] CAPTURED_UNSETTLED order ${orderId} capture ${cap} reason ${reason}`);
   try {
     const marker = `CAPTURED_UNSETTLED reason=${reason} capture=${cap} amount=${amt} - needs manual review, no refund or retry performed`;
-    // Compare-and-set append: keep any earlier note (e.g. AMOUNT_MISMATCH or CURRENCY_MISMATCH) and add the
+    // Compare-and-set append (paymentNote is Postgres text, no length limit): keep any earlier note, whole, (e.g. AMOUNT_MISMATCH or CURRENCY_MISMATCH) and add the
     // incident after it. A concurrent writer changing the note between read and write makes the update a
     // no-op, so one retry re-reads. Never overwrites, never touches a paid order.
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -40,7 +43,7 @@ export async function recordCapturedUnsettled(
       if (!row) return;
       const prior = row.paymentNote ?? '';
       if (prior.includes(`capture=${cap}`) && prior.includes('CAPTURED_UNSETTLED')) return; // already recorded
-      const next = (prior ? `${prior.slice(0, 600)} | ${marker}` : marker).slice(0, 1000);
+      const next = prior ? `${prior} | ${marker}` : marker; // paymentNote is unbounded text: never truncate prior content
       const res = await prisma.order.updateMany({
         where: prior === ''
           ? { id: orderId, isPaid: false, OR: [{ paymentNote: null }, { paymentNote: '' }] }

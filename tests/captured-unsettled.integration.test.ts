@@ -67,6 +67,16 @@ const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('12
     expect(await note(id)).toBe(once);
   });
 
+  test('a very long existing note is preserved in full', async () => {
+    const { recordCapturedUnsettled } = await import('@/lib/captured-unsettled');
+    const long = 'OWNER NOTE ' + 'x'.repeat(5000);
+    const id = await mk({ paymentNote: long });
+    await recordCapturedUnsettled(id, 'CAPX5', '1.00', new Error('x'));
+    const n = (await note(id)) ?? '';
+    expect(n.startsWith(long)).toBe(true);
+    expect(n).toContain('CAPTURED_UNSETTLED reason=UNKNOWN capture=CAPX5');
+  });
+
   test('a paid order is never touched', async () => {
     const { recordCapturedUnsettled } = await import('@/lib/captured-unsettled');
     const id = await mk({ isPaid: true, paidAt: new Date() });
@@ -80,6 +90,6 @@ const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('12
       where: { id: { in: ids }, isPaid: false, OR: [{ paymentNote: { contains: 'CAPTURED_UNSETTLED' } }, { paymentNote: { contains: 'AMOUNT_MISMATCH' } }] },
       select: { id: true },
     });
-    expect(rows.length).toBe(3);
+    expect(rows.length).toBe(4);
   });
 });

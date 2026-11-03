@@ -354,7 +354,11 @@ export async function approvePayPalOrder(
       });
     } catch (settleError) {
       await recordCapturedUnsettled(orderId, captureData.id, capture.amount?.value, settleError);
-      throw settleError;
+      const msg = settleError instanceof Error ? settleError.message : '';
+      // Known, already-safe messages pass through; anything else (e.g. database errors, which embed
+      // internal details) is replaced by a generic, truthful message.
+      if (/already paid|does not match the order total/i.test(msg) && !/Invalid `/.test(msg)) throw settleError;
+      throw new Error('Your payment was received but the order could not be finalized yet. Please do not pay again.');
     }
 
     revalidatePath(`/order/${orderId}`);
