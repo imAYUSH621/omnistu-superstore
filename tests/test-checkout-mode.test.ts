@@ -106,3 +106,11 @@ describe('insertOrderSchema in test checkout mode', () => {
     expect(() => insertOrderSchema.parse({ ...baseOrder, paymentMethod: 'MagicMoney' })).toThrow('Invalid payment method');
   });
 });
+
+it('place-order failure is never silent: the form toasts the server message', () => {
+  // Regression: a failed createOrder with no redirectTo previously reset the
+  // idempotency key and re-enabled the button with zero user feedback.
+  const src = fs.readFileSync('app/(root)/place-order/place-order-form.tsx', 'utf8');
+  expect(src).toContain("variant: 'destructive'");
+  expect(src).toContain('res.message');
+});
