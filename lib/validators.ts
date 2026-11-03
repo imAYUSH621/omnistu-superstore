@@ -89,7 +89,10 @@ export const paymentMethodSchema = z
   .object({
     type: z.string().min(1, 'Payment method is required'),
   })
-  .refine((data) => PAYMENT_METHODS.includes(data.type), {
+  // 'TestPayment' is accepted here so the simulated checkout can select it;
+  // availability is enforced server-side by isPaymentMethodAvailable (it is
+  // only enabled while TEST_CHECKOUT_MODE=true).
+  .refine((data) => PAYMENT_METHODS.includes(data.type) || data.type === 'TestPayment', {
     path: ['type'],
     message: 'Invalid payment method',
   });

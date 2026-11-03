@@ -4,6 +4,7 @@ import T from '@/components/shared/i18n-text';
 import { notFound } from 'next/navigation';
 import ProductImages from '@/components/shared/product/product-images';
 import BuyBox from '@/components/shared/product/buy-box';
+import { testCheckoutMode } from '@/lib/payment-capabilities';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import ReviewList from './review-list';
 import { auth } from '@/auth';
@@ -113,7 +114,7 @@ const ProductDetailsPage = async (props: {
 
           {/* Authentic Buy Box Column (3 Cols) */}
           <div className='lg:col-span-3'>
-            <BuyBox product={product} cart={cart} />
+            <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />
           </div>
         </div>
       </section>
