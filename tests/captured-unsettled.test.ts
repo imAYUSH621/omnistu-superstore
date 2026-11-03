@@ -20,10 +20,20 @@ describe('recordCapturedUnsettled', () => {
     expect(arg.data.paymentNote).not.toContain('hunter2');
     expect(arg.data.paymentNote).not.toContain('db.internal');
   });
-  test('skips when a concurrent call already settled the order', async () => {
+  test('typed ALREADY_PAID on a really-paid order writes nothing (scoped to unpaid rows)', async () => {
     mockUpdateMany.mockClear();
-    await recordCapturedUnsettled('o1', 'CAP1', '64.23', new Error('Order is already paid'));
+    mockFindFirst.mockResolvedValue(null); // no unpaid row: the DB shows it paid
+    const e = Object.assign(new Error('Order is already paid'), { settlementCode: 'ALREADY_PAID' });
+    await recordCapturedUnsettled('o1', 'CAP1', '64.23', e);
     expect(mockUpdateMany).not.toHaveBeenCalled();
+  });
+  test('"already paid" text inside a database error is NOT treated as the benign race', async () => {
+    mockFindFirst.mockResolvedValue({ paymentNote: null });
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    const e = Object.assign(new Error("Invalid `tx.product.update()` ... throw new Error('Order is already paid')"), { name: 'PrismaClientKnownRequestError' });
+    await recordCapturedUnsettled('o2', 'CAP2', '1.00', e);
+    const arg = mockUpdateMany.mock.calls.at(-1)?.[0] as { data: { paymentNote: string } };
+    expect(arg.data.paymentNote).toContain('reason=DB_ERROR');
   });
   test('never throws when the note write itself fails', async () => {
     mockFindFirst.mockResolvedValue({ paymentNote: null });

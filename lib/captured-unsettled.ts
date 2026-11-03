@@ -8,33 +8,39 @@ import { prisma } from '@/db/prisma';
  */
 /** Bounded reason codes: raw error text (which can carry DB details) is never stored or logged. */
 export type UnsettledReason = 'ORDER_MISSING' | 'AMOUNT_MISMATCH' | 'DB_ERROR' | 'UNKNOWN';
+export type IncidentKind = 'CAPTURED_UNSETTLED' | 'CAPTURE_UNCONFIRMED';
 
 export function classifyUnsettledReason(cause: unknown): UnsettledReason | 'ALREADY_PAID' {
-  // Database-client errors first: their message embeds source code snippets (which can contain the
-  // words "already paid" or "not found"), so message matching must never run on them.
+  // Typed errors only. Message text is never matched: database-client errors embed source snippets
+  // that can contain any phrase.
+  const code = (cause as { settlementCode?: unknown } | null)?.settlementCode;
+  if (code === 'ALREADY_PAID' || code === 'ORDER_MISSING' || code === 'AMOUNT_MISMATCH') return code;
+  return DB_ERROR_RE(cause) ? 'DB_ERROR' : 'UNKNOWN';
+}
+
+function DB_ERROR_RE(cause: unknown): boolean {
   const name = cause instanceof Error ? cause.name : '';
   const code = (cause as { code?: unknown } | null)?.code;
-  if (name.startsWith('PrismaClient') || (typeof code === 'string' && /^P\d{4}$/.test(code))) return 'DB_ERROR';
-  const m = cause instanceof Error ? cause.message : '';
-  if (/already paid/i.test(m)) return 'ALREADY_PAID';
-  if (/not found/i.test(m)) return 'ORDER_MISSING';
-  if (/does not match/i.test(m)) return 'AMOUNT_MISMATCH';
-  return 'UNKNOWN';
+  return name.startsWith('PrismaClient') || (typeof code === 'string' && /^P\d{4}$/.test(code));
 }
 
 export async function recordCapturedUnsettled(
   orderId: string,
   captureId: string,
   amount: string | undefined,
-  cause: unknown
+  cause: unknown,
+  kind: IncidentKind = 'CAPTURED_UNSETTLED',
+  reasonOverride?: string
 ): Promise<void> {
-  const reason = classifyUnsettledReason(cause);
-  if (reason === 'ALREADY_PAID') return; // a concurrent call settled it: nothing to reconcile
+  const classified = classifyUnsettledReason(cause);
+  // "already paid" is benign only when the database really shows the order paid; the writes below are
+  // scoped to isPaid:false, so a genuinely paid order is never touched either way.
+  const reason = reasonOverride ? reasonOverride.replace(/[^A-Z_0-9]/g, '').slice(0, 30) : classified;
   const cap = String(captureId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
   const amt = String(amount ?? 'unknown').replace(/[^0-9.]/g, '').slice(0, 14) || 'unknown';
-  console.error(`[payments] CAPTURED_UNSETTLED order ${orderId} capture ${cap} reason ${reason}`);
+  console.error(`[payments] ${kind} order ${orderId} capture ${cap} reason ${reason}`);
   try {
-    const marker = `CAPTURED_UNSETTLED reason=${reason} capture=${cap} amount=${amt} - needs manual review, no refund or retry performed`;
+    const marker = `${kind} reason=${reason} capture=${cap} amount=${amt} - needs manual review, no refund or retry performed`;
     // Compare-and-set append (paymentNote is Postgres text, no length limit): keep any earlier note, whole, (e.g. AMOUNT_MISMATCH or CURRENCY_MISMATCH) and add the
     // incident after it. A concurrent writer changing the note between read and write makes the update a
     // no-op, so one retry re-reads. Never overwrites, never touches a paid order.
@@ -42,7 +48,7 @@ export async function recordCapturedUnsettled(
       const row = await prisma.order.findFirst({ where: { id: orderId, isPaid: false }, select: { paymentNote: true } });
       if (!row) return;
       const prior = row.paymentNote ?? '';
-      if (prior.includes(`capture=${cap}`) && prior.includes('CAPTURED_UNSETTLED')) return; // already recorded
+      if (prior.includes(`capture=${cap}`) && prior.includes(kind)) return; // already recorded
       const next = prior ? `${prior} | ${marker}` : marker; // paymentNote is unbounded text: never truncate prior content
       const res = await prisma.order.updateMany({
         where: prior === ''
@@ -52,8 +58,8 @@ export async function recordCapturedUnsettled(
       });
       if (res.count === 1) return;
     }
-    console.error(`[payments] CAPTURED_UNSETTLED note for order ${orderId} lost a write race twice`);
+    console.error(`[payments] ${kind} note for order ${orderId} lost a write race twice`);
   } catch {
-    console.error(`[payments] could not record CAPTURED_UNSETTLED for order ${orderId}`);
+    console.error(`[payments] could not record ${kind} for order ${orderId}`);
   }
 }

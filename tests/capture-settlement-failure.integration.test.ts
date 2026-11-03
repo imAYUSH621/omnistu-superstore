@@ -103,4 +103,41 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(mockMail).not.toHaveBeenCalled();
     expect(mockMirror).not.toHaveBeenCalled();
   });
+
+  const mkOrder = async (ppId: string) => {
+    const { prisma } = await import('@/db/prisma');
+    return (
+      await prisma.order.create({
+        data: { userId, shippingAddress: {}, paymentMethod: 'PayPal', itemsPrice: 5, shippingPrice: 0, taxPrice: 0, totalPrice: 5, paymentResult: { id: ppId } } as never,
+      })
+    ).id;
+  };
+
+  test('capture outcome UNKNOWN (network/5xx): review marker, never a "failed" or "received" claim', async () => {
+    const id = await mkOrder('PP-UNK');
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockRejectedValueOnce(Object.assign(new Error('PayPal capture UNKNOWN: NETWORK_OR_TIMEOUT'), { outcome: 'UNKNOWN', detail: 'NETWORK_OR_TIMEOUT' }));
+    const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+    const r = await approvePayPalOrder(id, { orderID: 'PP-UNK' });
+    expect(r.success).toBe(false);
+    expect(r.message).toContain('could not confirm');
+    expect(r.message).not.toMatch(/received|failed|declined/i);
+    const { prisma } = await import('@/db/prisma');
+    const n = (await prisma.order.findUnique({ where: { id }, select: { paymentNote: true, isPaid: true } }));
+    expect(n?.isPaid).toBe(false);
+    expect(n?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=NETWORK_OR_TIMEOUT');
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test('capture outcome REJECTED (declined): no incident, no money claim', async () => {
+    const id = await mkOrder('PP-REJ');
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockRejectedValueOnce(Object.assign(new Error('PayPal capture REJECTED: HTTP_422'), { outcome: 'REJECTED', detail: 'HTTP_422' }));
+    const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+    const r = await approvePayPalOrder(id, { orderID: 'PP-REJ' });
+    expect(r.success).toBe(false);
+    expect(r.message).toBe('PayPal did not complete the payment.');
+    const { prisma } = await import('@/db/prisma');
+    expect((await prisma.order.findUnique({ where: { id }, select: { paymentNote: true } }))?.paymentNote).toBeNull();
+  });
 });

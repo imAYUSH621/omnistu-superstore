@@ -310,7 +310,26 @@ export async function approvePayPalOrder(
     if (!order) throw new Error('Order not found');
     await requireOrderAccess(order.userId);
 
-    const captureData = await paypal.capturePayment(data.orderID);
+    let captureData;
+    try {
+      captureData = await paypal.capturePayment(data.orderID);
+    } catch (captureError) {
+      const outcome = (captureError as { outcome?: string } | null)?.outcome;
+      if (outcome === 'UNKNOWN') {
+        // Money may have been captured: leave a durable review marker and never tell the buyer it failed.
+        await recordCapturedUnsettled(
+          orderId,
+          String(data.orderID),
+          undefined,
+          captureError,
+          'CAPTURE_UNCONFIRMED',
+          String((captureError as { detail?: string }).detail ?? 'UNKNOWN')
+        );
+        throw new Error('We could not confirm the payment status yet. Please do not pay again until it has been checked.');
+      }
+      if (outcome === 'REJECTED') throw new Error('PayPal did not complete the payment.');
+      throw captureError;
+    }
 
     if (
       !captureData ||
@@ -354,10 +373,14 @@ export async function approvePayPalOrder(
       });
     } catch (settleError) {
       await recordCapturedUnsettled(orderId, captureData.id, capture.amount?.value, settleError);
-      const msg = settleError instanceof Error ? settleError.message : '';
-      // Known, already-safe messages pass through; anything else (e.g. database errors, which embed
-      // internal details) is replaced by a generic, truthful message.
-      if (/already paid|does not match the order total/i.test(msg) && !/Invalid `/.test(msg)) throw settleError;
+      // Allowlist by typed code, never by message text. "Already paid" passes through only when the
+      // database really shows the order paid; amount mismatch is a typed, already-recorded case.
+      const code = (settleError as { settlementCode?: string } | null)?.settlementCode;
+      if (code === 'AMOUNT_MISMATCH') throw settleError;
+      if (code === 'ALREADY_PAID') {
+        const paid = await prisma.order.findFirst({ where: { id: orderId, isPaid: true }, select: { id: true } }).catch(() => null);
+        if (paid) throw settleError;
+      }
       throw new Error('Your payment was received but the order could not be finalized yet. Please do not pay again.');
     }
 
