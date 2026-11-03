@@ -1,3 +1,4 @@
+import { searchPage, searchPrice, searchRating, searchSort } from '@/lib/search-input';
 import {
   getAllProducts,
   getAllCategories,
@@ -23,9 +24,11 @@ export async function generateMetadata(props: {
   const {
     q = 'all',
     category = 'all',
-    price = 'all',
-    rating = 'all',
+    price: rawPrice = 'all',
+    rating: rawRating = 'all',
   } = await props.searchParams;
+  const price = searchPrice(rawPrice);
+  const rating = searchRating(rawRating);
 
   const isQuerySet = q && q !== 'all' && q.trim() !== '';
   const isCategorySet = category && category !== 'all' && category.trim() !== '';
@@ -60,11 +63,16 @@ const SearchPage = async (props: {
   const {
     q = 'all',
     category = 'all',
-    price = 'all',
-    rating = 'all',
-    sort = 'newest',
-    page = '1',
+    price: rawPrice = 'all',
+    rating: rawRating = 'all',
+    sort: rawSort = 'newest',
+    page: rawPage = '1',
   } = await props.searchParams;
+  const price = searchPrice(rawPrice);
+  const rating = searchRating(rawRating);
+
+  const page = searchPage(rawPage);
+  const sort = searchSort(rawSort);
 
   // Fetch products and faceted categories dynamically from database / catalog
   const productsResult = await getAllProducts({
@@ -73,12 +81,12 @@ const SearchPage = async (props: {
     price,
     rating,
     sort,
-    page: Number(page),
+    page,
     limit: 24,
   });
 
   // A page past the end goes to the last real page (keeps the other filters).
-  const requestedPage = Math.max(1, Number(page) || 1);
+  const requestedPage = page;
   if (productsResult.totalPages > 0 && requestedPage > productsResult.totalPages) {
     const params = new URLSearchParams();
     if (q && q !== 'all') params.set('q', q);
@@ -123,7 +131,7 @@ const SearchPage = async (props: {
         <SearchResultsClient
           products={productsResult.data}
           totalResults={productsResult.totalCount}
-          page={Math.max(1, Number(page) || 1)}
+          page={page}
           pageSize={24}
           featuredDeals={featuredDeals}
           currentQ={q}
@@ -134,7 +142,7 @@ const SearchPage = async (props: {
         />
         {productsResult.totalPages > 1 && (
           <div className='flex justify-center py-4'>
-            <Pagination page={Math.max(1, Number(page) || 1)} totalPages={productsResult.totalPages} />
+            <Pagination page={page} totalPages={productsResult.totalPages} />
           </div>
         )}
         </div>
