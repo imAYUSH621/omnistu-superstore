@@ -11,7 +11,7 @@ import { insertOrderSchema } from '../validators';
 import { prisma } from '@/db/prisma';
 import { CartItem, PaymentResult } from '@/types';
 import { paypal } from '../paypal';
-import { isExpectedCurrency, sameLineItems } from '../payment-guards';
+import { firstUnavailableLine, isExpectedCurrency, sameLineItems } from '../payment-guards';
 import { revalidatePath } from 'next/cache';
 import { PAGE_SIZE } from '../constants';
 import { Prisma } from '@prisma/client';
@@ -44,6 +44,22 @@ export async function createOrder(idempotencyKey?: string) {
 
     if (!testCheckoutMode() && (cart.items as { slug?: string }[]).some((i) => isTestCatalogSlug(i.slug))) {
       return { success: false, message: TEST_CATALOG_MESSAGE, redirectTo: '/cart' };
+    }
+
+    {
+      const cartLines = cart.items as { productId: string; qty: number; name?: string }[];
+      const rows = await prisma.product.findMany({
+        where: { id: { in: cartLines.map((l) => l.productId) } },
+        select: { id: true, stock: true },
+      });
+      const short = firstUnavailableLine(cartLines, new Map(rows.map((r) => [r.id, r.stock])));
+      if (short) {
+        return {
+          success: false,
+          message: `Not enough stock for "${short}". Please update your cart.`,
+          redirectTo: '/cart',
+        };
+      }
     }
 
     if (!user.address) {
@@ -236,6 +252,18 @@ export async function createPayPalOrder(orderId: string) {
     if (order) {
       await requireOrderAccess(order.userId);
       if (order.isPaid) throw new Error('Order is already paid');
+      {
+        const lines = await prisma.orderItem.findMany({
+          where: { orderId },
+          select: { productId: true, qty: true, name: true },
+        });
+        const rows = await prisma.product.findMany({
+          where: { id: { in: lines.map((l) => l.productId) } },
+          select: { id: true, stock: true },
+        });
+        const short = firstUnavailableLine(lines, new Map(rows.map((r) => [r.id, r.stock])));
+        if (short) throw new Error(`Not enough stock for "${short}"`);
+      }
       // Create paypal order
       const paypalOrder = await paypal.createOrder(Number(order.totalPrice));
 

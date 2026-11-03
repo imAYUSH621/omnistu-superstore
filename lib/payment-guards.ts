@@ -53,3 +53,21 @@ export function stripeMinorToAmount(minor: number): string {
 export function isExpectedCurrency(currency: string | null | undefined, expected = 'USD'): boolean {
   return typeof currency === 'string' && currency.toUpperCase() === expected;
 }
+
+/**
+ * Pre-payment availability check. Returns the name/id of the first line whose
+ * requested quantity exceeds the current stock (or whose product is gone), else null.
+ * Runs before an order is created and before a PayPal order is created so a buyer is
+ * not asked to pay for stock that is already gone. It does not reserve stock: a small
+ * race between this check and capture remains by design (no reservation system).
+ */
+export function firstUnavailableLine(
+  lines: { productId: string; qty: number; name?: string }[],
+  stockById: Map<string, number>
+): string | null {
+  for (const l of lines) {
+    const stock = stockById.get(l.productId);
+    if (stock === undefined || stock < l.qty) return l.name || l.productId;
+  }
+  return null;
+}
