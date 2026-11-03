@@ -299,11 +299,19 @@ const OrderDetailsTable = ({
                 <span>{formatCurrency(itemsPrice)}</span>
               </div>
               <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Estimated Tax</span>
+                <span className='text-muted-foreground'>
+                  {paymentMethod === 'TestPayment'
+                    ? 'Simulated tax (TEST estimate - not a real tax rate)'
+                    : 'Estimated Tax'}
+                </span>
                 <span>{formatCurrency(taxPrice)}</span>
               </div>
               <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Shipping (Express)</span>
+                <span className='text-muted-foreground'>
+                  {paymentMethod === 'TestPayment'
+                    ? 'Simulated shipping (TEST estimate - not a real rate)'
+                    : 'Shipping (Express)'}
+                </span>
                 <span className='text-emerald-600 font-semibold'>
                   {Number(shippingPrice) === 0 ? 'FREE' : formatCurrency(shippingPrice)}
                 </span>
