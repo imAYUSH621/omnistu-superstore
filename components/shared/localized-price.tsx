@@ -51,13 +51,16 @@ export default function LocalizedPrice({
   amountUsd,
   className = '',
   supClassName = '',
+  showNote = false,
 }: {
   amountUsd: number;
   className?: string;
   supClassName?: string;
+  /** Show the approximate/USD-checkout note as visible text (use at the main price). */
+  showNote?: boolean;
 }) {
   const safe = Math.max(0, Number.isFinite(amountUsd) ? amountUsd : 0);
-  const [display, setDisplay] = useState<{ formatted: string; approx: boolean; title: string } | null>(null);
+  const [display, setDisplay] = useState<{ formatted: string; approx: boolean; title: string; note: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +73,8 @@ export default function LocalizedPrice({
       const info = await loadRatesInfo();
       if (cancelled) return;
       const { formatted } = convertPrice(safe, currency, info?.rates ?? undefined);
-      setDisplay({ formatted, approx: true, title: ratesDisclosure(info?.source).priceTitle });
+      const d = ratesDisclosure(info?.source);
+      setDisplay({ formatted, approx: true, title: d.priceTitle, note: d.noteText });
     };
     apply();
     const onChange = () => apply();
@@ -82,10 +86,18 @@ export default function LocalizedPrice({
   }, [safe]);
 
   if (display) {
-    return (
+    const price = (
       <span className={className} title={display.title}>
         {display.formatted}
-        <sup className={supClassName}>~</sup>
+        <sup className={supClassName} aria-hidden='true'>~</sup>
+        <span className='sr-only'> (approximate. {display.note})</span>
+      </span>
+    );
+    if (!showNote) return price;
+    return (
+      <span className='block'>
+        {price}
+        <span className='block text-xs font-normal text-muted-foreground mt-1'>{display.note}</span>
       </span>
     );
   }

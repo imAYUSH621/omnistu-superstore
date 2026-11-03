@@ -12,6 +12,8 @@ export interface RatesDisclosure {
   ratesClause: string;
   /** Tooltip for converted prices. */
   priceTitle: string;
+  /** Plain-text note shown or read at the point of price (touch and screen readers). */
+  noteText: string;
 }
 
 export function ratesDisclosure(source: RatesSource | string | null | undefined): RatesDisclosure {
@@ -19,6 +21,9 @@ export function ratesDisclosure(source: RatesSource | string | null | undefined)
   return {
     live,
     ratesClause: live ? 'hourly live rates' : 'reference rates - live rates temporarily unavailable',
+    noteText: live
+      ? 'Approximate price at hourly live rates. You are charged in USD at checkout.'
+      : 'Approximate price at reference rates (live rates temporarily unavailable). You are charged in USD at checkout.',
     priceTitle: live
       ? 'Approximate conversion at hourly live rates - checkout charges USD'
       : 'Approximate conversion at reference rates (live rates temporarily unavailable) - checkout charges USD',

@@ -34,3 +34,16 @@ describe('ratesDisclosure honesty copy', () => {
     }
   });
 });
+
+describe('ratesDisclosure noteText', () => {
+  it('states USD checkout and matches the source', () => {
+    for (const s of ['live_api', 'cache'] as const) {
+      expect(ratesDisclosure(s).noteText).toContain('hourly live rates');
+      expect(ratesDisclosure(s).noteText).toContain('charged in USD');
+    }
+    for (const s of ['default_safe', 'env_override'] as const) {
+      expect(ratesDisclosure(s).noteText).toContain('reference rates');
+      expect(ratesDisclosure(s).noteText).not.toContain('hourly live');
+    }
+  });
+});
