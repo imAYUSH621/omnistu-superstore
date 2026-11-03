@@ -23,9 +23,13 @@ describe('exchange rate labelling', () => {
   it('returns page does not promise live carrier status (source check)', () => {
     expect(fs.readFileSync('app/(root)/returns/page.tsx', 'utf8')).not.toMatch(/live real-time carrier/i);
   });
-  it('selector labels each rate source separately (source check)', () => {
+  it('selector carries no currency conversion UI (conversion is not wired to any price)', () => {
+    // Currency selection converted nothing (no convertPrice callers; all
+    // prices render and settle in USD), so the dead control was removed.
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
-    for (const k of ['default_safe', 'env_override', 'live_api']) expect(src).toContain(k);
+    expect(src).not.toContain('SUPPORTED_CURRENCIES');
+    expect(src).not.toContain('/api/rates');
+    expect(src).not.toMatch(/currency/i);
   });
   it('selector says what is translated and keeps readable footer text (source check)', () => {
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Menu from './menu';
 import CategoryDrawer from './category-drawer';
 import Search from './search';
-import { MapPin, Sparkles } from 'lucide-react';
 import T from '@/components/shared/i18n-text';
 import SiteSwitch from './site-switch';
 
@@ -20,30 +19,19 @@ const Header = () => {
             aria-label='Omnistu Superstore Home'
           >
             {/* Brand mark: user-supplied wide logo (pack v2), static at
-                40-44px with a CSS masked shine (reduced-motion safe). */}
-            <span className='logo-shine inline-block'>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src='/images/logo/omnistu-logo-wide-400.png'
-                alt='Omnistu Superstore'
-                className='h-10 sm:h-11 w-auto'
-                width={400}
-                height={137}
-                data-testid='site-logo'
-              />
-            </span>
+                40-44px. No animation: the shine sweep hurt small-size
+                readability, removed on owner feedback. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src='/images/logo/omnistu-logo-wide-400.png'
+              alt='Omnistu Superstore'
+              className='h-10 sm:h-11 w-auto'
+              width={400}
+              height={137}
+              data-testid='site-logo'
+            />
           </Link>
 
-          {/* Amazon Deliver to India Location Widget */}
-          <div className='hidden 2xl:flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white transition-colors'>
-            <MapPin className='w-4 h-4 text-white shrink-0 mt-1' />
-            <div className='flex flex-col text-left leading-tight'>
-              <T k='deliverTo' className='text-[11px] text-[#cccccc] font-normal leading-none' />
-              <span className='text-[13px] font-bold text-white leading-tight mt-0.5'>
-                India
-              </span>
-            </div>
-          </div>
         </div>
 
         <SiteSwitch className='hidden xl:inline-grid shrink-0' />
@@ -105,16 +93,6 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Right Direct Seller Central / Admin Trigger */}
-          <div className='flex items-center gap-2 shrink-0'>
-            <Link
-              href='/admin'
-              className='flex items-center gap-1.5 bg-[#4f46e5] hover:bg-[#f3a847] text-[#1e293b] px-2.5 py-1 rounded-xs text-[12px] font-bold transition-colors shadow-xs'
-            >
-              <Sparkles className='w-3.5 h-3.5 text-[#1e293b]' />
-              <span>Seller Central / Admin</span>
-            </Link>
-          </div>
         </div>
       </div>
     </header>

@@ -3,7 +3,6 @@
 import React from 'react';
 import T from '@/components/shared/i18n-text';
 import Link from 'next/link';
-import { APP_NAME } from '@/lib/constants';
 import GlobalSelector from '@/components/shared/header/global-selector';
 import { contentReviewMode } from '@/lib/content-review';
 
@@ -25,7 +24,7 @@ export default function Footer() {
       </button>
 
       {/* 2. 4-Column Directory */}
-      <div className='max-w-[1000px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-4 gap-8'>
+      <div className='max-w-[1000px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-3 gap-8'>
         {/* Column 1 */}
         <div>
           <h3 className='font-bold text-[15px] mb-3 text-white'><T k='getToKnowUs' /></h3>
@@ -60,38 +59,6 @@ export default function Footer() {
             <li>
               <Link href='/sustainability' className='hover:underline hover:text-white'>
                 <T k='footerSustainability' />
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Column 2 */}
-        <div>
-          <h3 className='font-bold text-[15px] mb-3 text-white'><T k='makeMoneyWithUs' /></h3>
-          <ul className='space-y-2 text-[#DDD]'>
-            <li>
-              <Link href='/admin' className='hover:underline text-amber-400 font-bold'>
-                ⚙ <T k='sellerCentral' />
-              </Link>
-            </li>
-            <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
-                <T k='footerSellOn' />
-              </Link>
-            </li>
-            <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
-                <T k='footerSupplyCJ' />
-              </Link>
-            </li>
-            <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
-                <T k='footerPrintify' />
-              </Link>
-            </li>
-            <li>
-              <Link href='/admin' className='hover:underline hover:text-white'>
-                <T k='footerAffiliate' />
               </Link>
             </li>
           </ul>

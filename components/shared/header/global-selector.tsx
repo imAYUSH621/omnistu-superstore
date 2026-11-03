@@ -2,18 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Globe, Check } from 'lucide-react';
-import {
-  SUPPORTED_CURRENCIES,
-  SUPPORTED_LANGUAGES,
-  type SupportedLang,
-} from '@/lib/i18n';
+import { SUPPORTED_LANGUAGES, type SupportedLang } from '@/lib/i18n';
 
 export default function GlobalSelector() {
   const [selectedLang, setSelectedLang] = useState<SupportedLang>('EN');
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ratesSource, setRatesSource] = useState<string>('');
 
   useEffect(() => {
     // Read from localStorage on mount
@@ -21,23 +15,6 @@ export default function GlobalSelector() {
     if (savedLang && ['EN', 'HI', 'ES', 'FR', 'DE', 'JA'].includes(savedLang)) {
       setSelectedLang(savedLang);
     }
-    const savedCurr = localStorage.getItem('omnistu_currency');
-    if (savedCurr && SUPPORTED_CURRENCIES[savedCurr]) {
-      setSelectedCurrency(savedCurr);
-    }
-
-    // Hydrate dynamic live rates from market API
-    fetch('/api/rates')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.rates) {
-          setRatesSource(String(data.source || ''));
-          window.dispatchEvent(
-            new CustomEvent('omnistu:rates-updated', { detail: { rates: data.rates } })
-          );
-        }
-      })
-      .catch(() => {});
 
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -55,15 +32,8 @@ export default function GlobalSelector() {
     window.dispatchEvent(new CustomEvent('omnistu:lang-change', { detail: { lang } }));
   };
 
-  const handleCurrencyChange = (curr: string) => {
-    setSelectedCurrency(curr);
-    localStorage.setItem('omnistu_currency', curr);
-    document.cookie = `omnistu_currency=${curr}; path=/; max-age=31536000`;
-    window.dispatchEvent(new CustomEvent('omnistu:currency-change', { detail: { currency: curr } }));
-  };
 
   const currentFlag = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.flag || '🇺🇸';
-  const currCfg = SUPPORTED_CURRENCIES[selectedCurrency] || SUPPORTED_CURRENCIES.USD;
 
   return (
     <div className='relative' ref={containerRef}>
@@ -71,12 +41,11 @@ export default function GlobalSelector() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white text-[13px] font-bold transition-colors select-none'
-        aria-label='Select Language and Currency'
+        aria-label='Select Language'
         aria-expanded={isOpen}
       >
         <span className='text-sm leading-none'>{currentFlag}</span>
         <span className='leading-none tracking-tight'>{selectedLang}</span>
-        <span className='text-[11px] text-[#4f46e5] font-normal ml-0.5'>{currCfg.code}</span>
         <ChevronDown className='w-3 h-3 text-[#a7acb2]' />
       </button>
 
@@ -113,40 +82,6 @@ export default function GlobalSelector() {
             </p>
           </div>
 
-          {/* Currency Section */}
-          <div>
-            <div className='mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
-              Currency Setting
-            </div>
-            <div className='grid grid-cols-2 gap-1'>
-              {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-                <button
-                  key={c.code}
-                  onClick={() => handleCurrencyChange(c.code)}
-                  className={`flex items-center justify-between px-2 py-1.5 rounded-xs text-xs text-left transition-colors ${
-                    selectedCurrency === c.code
-                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700'
-                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border border-transparent'
-                  }`}
-                >
-                  <span>
-                    <strong className='font-semibold'>{c.symbol}</strong> {c.code}
-                  </span>
-                  {selectedCurrency === c.code && <Check className='w-3 h-3 text-amber-600' />}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className='mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-[11px] leading-snug text-neutral-700 dark:text-neutral-200 text-center'>
-            {ratesSource === 'default_safe'
-              ? 'Converted amounts are estimates (fixed fallback rates; live rates unavailable).'
-              : ratesSource === 'env_override'
-                ? 'Converted amounts are estimates (rates set by the store).'
-                : ratesSource === 'live_api' || ratesSource === 'cache'
-                  ? 'Converted amounts are estimates from recent market rates.'
-                  : 'Converted amounts are estimates.'}
-          </div>
         </div>
       )}
     </div>
