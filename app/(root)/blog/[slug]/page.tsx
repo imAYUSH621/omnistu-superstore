@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { BLOG_ARTICLES, getArticle } from '@/lib/blog-catalog';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const a = getArticle((await params).slug);
-  if (!a) notFound();
+  if (!a || !contentReviewMode) notFound();
   return (
     <div className='max-w-[760px] mx-auto px-4 py-10 space-y-5'>
       <Link href='/blog' className='text-sm underline'>

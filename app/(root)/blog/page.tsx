@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { BLOG_ARTICLES } from '@/lib/blog-catalog';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
   title: 'Blog',
@@ -8,6 +9,14 @@ export const metadata: Metadata = {
 };
 
 export default function BlogPage() {
+  if (!contentReviewMode) {
+    return (
+      <div className='max-w-[900px] mx-auto px-4 py-16 text-center space-y-3'>
+        <h1 className='text-3xl font-bold'>Omnistu Blog</h1>
+        <p className='text-sm text-muted-foreground'>Our blog is launching soon.</p>
+      </div>
+    );
+  }
   return (
     <div className='max-w-[900px] mx-auto px-4 py-10 space-y-6'>
       <div className='space-y-2'>

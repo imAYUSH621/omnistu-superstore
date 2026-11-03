@@ -1,10 +1,24 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { SERVICES } from '@/lib/services-catalog';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = { title: 'Services' };
 
 export default function ServicesPage() {
+  if (!contentReviewMode) {
+    return (
+      <div className='max-w-[800px] mx-auto px-4 py-16 text-center space-y-3'>
+        <h1 className='text-3xl font-bold'>Omnistu Services</h1>
+        <p className='text-sm text-muted-foreground max-w-xl mx-auto'>
+          We are putting our services together. Tell us what you need and we will get back to you.
+        </p>
+        <p className='text-sm'>
+          <Link href='/contact' className='underline font-medium'>Contact us</Link>
+        </p>
+      </div>
+    );
+  }
   return (
     <div className='max-w-[1100px] mx-auto px-4 py-10 space-y-6'>
       <div className='space-y-2'>
