@@ -25,11 +25,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { type: 'email' },
         password: { type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (credentials == null) return null;
 
         const emailInput = (credentials.email as string)?.trim().toLowerCase();
         const passwordInput = (credentials.password as string)?.trim();
+
+        // Per-IP attempt ceiling. On Vercel, x-forwarded-for is overwritten by
+        // the edge with the real client IP and external values are NOT
+        // forwarded (anti-spoofing; vercel.com/docs/edge-network/headers).
+        // Without a trustworthy header (local/dev), skip: the per-email limit
+        // still applies. Refusal is the same generic null as a bad password.
+        const fwd =
+          (request as Request | undefined)?.headers?.get('x-forwarded-for') ?? '';
+        const clientIp = fwd.split(',')[0].trim();
+        if (clientIp) {
+          const ipLim = await hitLimit('signin-ip', clientIp, LIMITS.signinIp.max, LIMITS.signinIp.windowSec);
+          if (!ipLim.allowed) return null;
+        }
 
         // 1. DEV-ONLY admin bypass: active solely outside production when
         // DEV_ADMIN_BYPASS=true and a >=12-char DEV_ADMIN_PASSWORD is set.
