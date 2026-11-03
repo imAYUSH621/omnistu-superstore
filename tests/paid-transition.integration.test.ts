@@ -110,6 +110,22 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     expect(sendConfirm).toHaveBeenCalledTimes(1);
   }, 30000);
 
+
+  it.each(['sandbox', 'live', 'unknown'] as const)('preserves stored %s environment through settlement', async (paypalEnv) => {
+    const { order } = await makeOrder();
+    await prisma.order.update({ where: { id: order.id }, data: { paymentResult: { id: 'PP', paypalEnv } } });
+    await updateOrderToPaid({ orderId: order.id, paymentResult: { ...pr('42.50'), paypalEnv: 'live' } });
+    const paid = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(paid.paymentResult).toMatchObject({ paypalEnv });
+  });
+
+  it('legacy absence remains absent rather than adopting incoming or current environment', async () => {
+    const { order } = await makeOrder();
+    await updateOrderToPaid({ orderId: order.id, paymentResult: { ...pr('42.50'), paypalEnv: 'sandbox' } });
+    const paid = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(paid.paymentResult).not.toHaveProperty('paypalEnv');
+  });
+
   it('replay after paid is rejected and changes nothing', async () => {
     const { order, product } = await makeOrder();
     await updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') });

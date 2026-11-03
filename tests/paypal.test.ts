@@ -1,4 +1,4 @@
-import { generateAccessToken, paypal } from '../lib/paypal';
+import { generateAccessToken, paypal, paypalEnvironmentForOrigin } from '../lib/paypal';
 
 beforeEach(() => {
   global.fetch = jest.fn((url: RequestInfo | URL) => {
@@ -95,4 +95,12 @@ describe('capturePayment outcome typing', () => {
     withCapture(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.reject(new Error('bad json')) } as Response));
     expect(await run()).toMatchObject({ outcome: 'UNKNOWN', detail: 'UNREADABLE_RESPONSE' });
   });
+});
+
+
+test('environment provenance accepts only exact known API origins', () => {
+  expect(paypalEnvironmentForOrigin('https://api-m.sandbox.paypal.com')).toBe('sandbox');
+  expect(paypalEnvironmentForOrigin('https://api-m.paypal.com')).toBe('live');
+  expect(paypalEnvironmentForOrigin('https://api-m.paypal.com.evil.test')).toBe('unknown');
+  expect(paypalEnvironmentForOrigin('https://custom.example.test')).toBe('unknown');
 });
