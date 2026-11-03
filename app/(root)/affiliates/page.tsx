@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { Users, Link2, DollarSign, HelpCircle } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { redirect } from 'next/navigation';
 import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
@@ -15,14 +16,7 @@ export default function AffiliatesPage() {
   // No affiliate program exists yet - the page described commissions and a
   // dashboard that are not built. Hidden until the owner reviews it, same
   // gate as the blog/services drafts.
-  if (!contentReviewMode) {
-    return (
-      <div className='max-w-[900px] mx-auto px-4 py-16 text-center space-y-3'>
-        <h1 className='text-3xl font-bold'>Omnistu Affiliate Program</h1>
-        <p className='text-sm text-muted-foreground'>Our affiliate program is launching soon.</p>
-      </div>
-    );
-  }
+  if (!contentReviewMode) redirect('/');
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
