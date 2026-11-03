@@ -102,17 +102,18 @@ export interface FreightQuoteResult {
   fetchedAt: Date;
 }
 
-function isValidStored(e: any): e is StoredFreightEvidence {
+function isValidStored(value: unknown): value is StoredFreightEvidence {
+  if (!value || typeof value !== 'object') return false;
+  const e = value as Record<string, unknown>;
   return (
-    e &&
     typeof e.provider === 'string' &&
     typeof e.pid === 'string' &&
-    typeof e.quantity === 'number' &&
+    typeof e.quantity === 'number' && Number.isSafeInteger(e.quantity) && e.quantity > 0 &&
     typeof e.destinationCountry === 'string' &&
     typeof e.destinationPostal === 'string' &&
     e.currency === 'USD' &&
-    typeof e.shippingCents === 'number' &&
-    !!e.fetchedAt &&
+    typeof e.shippingCents === 'number' && Number.isSafeInteger(e.shippingCents) && e.shippingCents >= 0 &&
+    (typeof e.fetchedAt === 'string' || e.fetchedAt instanceof Date) &&
     !Number.isNaN(new Date(e.fetchedAt).getTime()) &&
     (e.source === 'live-cached' || e.source === 'simulated-fixture')
   );
