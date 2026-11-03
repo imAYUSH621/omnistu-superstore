@@ -1,16 +1,16 @@
 // Store-owned department list for the home page. The first six are the
-// original categories and keep their art. The rest are broad marketplace
+// original categories, with apparel first and updated editorial artwork. The rest are broad marketplace
 // departments chosen from general retail taxonomies (for example Target's
 // public shop-all page); this is not a copy or a parity claim of any
 // other store's list. A department with no products shows "No items yet".
 export type Department = { name: string; image: string };
 
 export const DEPARTMENTS: readonly Department[] = [
+  { name: 'Custom Apparel', image: '/images/categories/custom-apparel-editorial.webp' },
   { name: 'Gourmet & Indian Food', image: '/images/categories/gourmet-indian-food.jpg' },
   { name: 'Tech & Gadgets', image: '/images/categories/tech-gadgets.jpg' },
   { name: 'Jewelry & Watches', image: '/images/categories/jewelry-watches.jpg' },
   { name: 'Home & Lifestyle', image: '/images/categories/home-lifestyle.jpg' },
-  { name: 'Custom Apparel', image: '/images/categories/custom-apparel.jpg' },
   { name: 'Toys & Games', image: '/images/categories/toys-games.jpg' },
   { name: 'Beauty & Personal Care', image: '/images/categories/beauty-personal-care.jpg' },
   { name: 'Health & Wellness', image: '/images/categories/health-wellness.jpg' },
