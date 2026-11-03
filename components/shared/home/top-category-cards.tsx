@@ -60,7 +60,7 @@ export default function TopCategoryCards() {
   return (
     <section aria-label='Explore departments' className='relative w-full max-w-[1520px] mx-auto pt-3 pb-2 px-3 sm:px-4 md:px-6 font-sans group'>
       <div className='flex items-baseline justify-between gap-3 mb-3'>
-        <h1 className='text-xl md:text-2xl font-bold text-[#0F1111] dark:text-white'>Find your everyday style</h1>
+        <h1 className='text-lg md:text-2xl font-bold text-[#0F1111] dark:text-white'>Find your everyday style</h1>
         <Link href='#all-departments-heading' className='text-xs font-medium text-indigo-700 dark:text-indigo-300 whitespace-nowrap'>All departments</Link>
       </div>
       {/* Left Paddle */}

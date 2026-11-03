@@ -2,12 +2,12 @@ import { existsSync, readFileSync } from 'fs';
 import { DEPARTMENTS } from '@/lib/constants/departments';
 
 const ORIGINAL_SIX = [
-  'Gourmet & Indian Food', 'Tech & Gadgets', 'Jewelry & Watches',
-  'Home & Lifestyle', 'Custom Apparel', 'Toys & Games',
+  'Custom Apparel', 'Gourmet & Indian Food', 'Tech & Gadgets',
+  'Jewelry & Watches', 'Home & Lifestyle', 'Toys & Games',
 ];
 
 describe('home departments', () => {
-  it('keeps the original six first, with their art', () => {
+  it('keeps all original six with apparel first', () => {
     expect(DEPARTMENTS.slice(0, 6).map((d) => d.name)).toEqual(ORIGINAL_SIX);
   });
   it('has unique names and every image file exists', () => {
