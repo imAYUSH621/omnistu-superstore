@@ -65,13 +65,14 @@ describe('per-IP sign-in ceiling', () => {
 
   it('auth.ts applies the IP limit before any password hashing, from the Vercel-overwritten header only', () => {
     const src = fs.readFileSync('auth.ts', 'utf8');
-    expect(src).toContain("headers?.get('x-forwarded-for')");
-    expect(src).not.toContain("x-real-ip");
-    expect(src).not.toContain('x-vercel-forwarded-for');
-    expect(src.indexOf("hitLimit('signin-ip'")).toBeGreaterThan(-1);
+    const lib = fs.readFileSync('lib/auth-limits.ts', 'utf8');
+    expect(lib).toContain("headers?.get('x-forwarded-for')");
+    expect(lib).not.toContain("x-real-ip");
+    expect(lib).not.toContain('x-vercel-forwarded-for');
+    expect(src.indexOf('signinClientIp(')).toBeGreaterThan(-1);
     expect(src.indexOf("hitLimit('signin-ip'")).toBeLessThan(src.indexOf('await dummyVerify('));
     expect(src.indexOf("hitLimit('signin-ip'")).toBeLessThan(src.indexOf('await verifyPasswordGated('));
-    expect(src).toContain("split(',')[0]");
+    expect(lib).toContain("split(',')[0]");
   });
 
   it('per-email limit still applies under the IP limit (existing-user lockout unchanged)', () => {

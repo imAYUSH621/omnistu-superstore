@@ -57,3 +57,38 @@ export const LIMITS = {
   resetUse: { max: 10, windowSec: 15 * 60 },
   signup: { max: 5, windowSec: 60 * 60 },
 } as const;
+
+/**
+ * Sign-in gate decision for limiter outcomes. In production a BROKEN limiter
+ * store (table missing/permission error) must fail CLOSED: an unmigrated or
+ * erroring store otherwise means unthrottled sign-in, the exact regression
+ * readiness warns about (auth_tables_missing). In non-production it fails open
+ * so local/dev keeps working before migrations run.
+ */
+export function limiterBlocksSignin(lim: LimitResult, nodeEnv: string | undefined): boolean {
+  if (!lim.available) return nodeEnv === 'production';
+  return !lim.allowed;
+}
+
+let warnedNoIp = false;
+/**
+ * Client IP for the per-IP sign-in bucket, or null when there is no
+ * trustworthy source. On Vercel, x-forwarded-for is overwritten by the edge
+ * with the real client IP and external values are not forwarded (official
+ * anti-spoofing behaviour). Any other public runtime provides no trustworthy
+ * client-IP header here: the IP bucket then stays INACTIVE - an explicit,
+ * logged degradation in production, never a shared 'unknown' bucket (which
+ * would be a global lockout). If a proxy (e.g. Cloudflare) is ever placed in
+ * front of Vercel, this provenance must be revisited: the edge-observed IP
+ * becomes the proxy's, and the real client IP moves to a proxy-specific header.
+ */
+export function signinClientIp(req: Request | undefined, nodeEnv: string | undefined): string | null {
+  const fwd = req?.headers?.get('x-forwarded-for') ?? '';
+  const ip = fwd.split(',')[0].trim();
+  if (ip) return ip;
+  if (nodeEnv === 'production' && !warnedNoIp) {
+    warnedNoIp = true;
+    console.warn('sign-in IP limiter inactive: no trustworthy client-IP header on this runtime');
+  }
+  return null;
+}
