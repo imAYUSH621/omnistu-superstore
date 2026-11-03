@@ -10,6 +10,7 @@ import {
 import { auth, signIn, signOut } from '@/auth';
 import { isPaymentMethodAvailable } from '@/lib/payment-capabilities';
 import { safeCallbackPath } from '@/lib/safe-callback';
+import { authOrigin } from '@/lib/auth-origin';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { hashPassword } from '../password';
 import { hitLimit, LIMITS } from '../auth-limits';
@@ -34,7 +35,7 @@ export async function signInWithCredentials(
       password: formData.get('password'),
     });
 
-    await signIn('credentials', { ...user, redirectTo: safeCallbackPath(formData.get('callbackUrl'), process.env.NEXTAUTH_URL) });
+    await signIn('credentials', { ...user, redirectTo: safeCallbackPath(formData.get('callbackUrl'), authOrigin()) });
 
     return { success: true, message: 'Signed in successfully' };
   } catch (error) {
@@ -85,7 +86,7 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
     await signIn('credentials', {
       email: user.email,
       password: plainPassword,
-      redirectTo: safeCallbackPath(formData.get('callbackUrl'), process.env.NEXTAUTH_URL),
+      redirectTo: safeCallbackPath(formData.get('callbackUrl'), authOrigin()),
     });
 
     return { success: true, message: 'User registered successfully' };
