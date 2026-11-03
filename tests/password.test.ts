@@ -10,7 +10,7 @@ describe('password hashing', () => {
     const a = await hashPassword('Correct!Horse1');
     const b = await hashPassword('Correct!Horse1');
     expect(a).not.toBe(b);
-    expect(a.startsWith('scrypt$16384$8$1$')).toBe(true);
+    expect(a.startsWith('scrypt$16384$8$5$')).toBe(true);
     expect((await verifyPassword('Correct!Horse1', a)).ok).toBe(true);
     expect((await verifyPassword('Correct!Horse1', b)).needsUpgrade).toBe(false);
   });
@@ -18,7 +18,7 @@ describe('password hashing', () => {
     const a = await hashPassword('Correct!Horse1');
     expect((await verifyPassword('wrong', a)).ok).toBe(false);
     expect((await verifyPassword('x', '')).ok).toBe(false);
-    expect((await verifyPassword('x', 'scrypt$16384$8$1$')).ok).toBe(false);
+    expect((await verifyPassword('x', 'scrypt$16384$8$5$')).ok).toBe(false);
     expect((await verifyPassword('x', 'plaintext')).ok).toBe(false);
   });
   it('still verifies an old keyed-digest hash and flags it for upgrade', async () => {

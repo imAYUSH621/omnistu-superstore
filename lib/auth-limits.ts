@@ -49,6 +49,10 @@ export async function clearLimit(kind: string, key: string): Promise<void> {
 
 export const LIMITS = {
   signin: { max: 8, windowSec: 15 * 60 },
+  // Per-IP ceiling: stops distributed credential stuffing across many emails
+  // from one address while staying fair to shared NAT (40 per 15 min is far
+  // above legitimate human sign-in rates from one network). Keys are hashed.
+  signinIp: { max: 40, windowSec: 15 * 60 },
   resetRequest: { max: 3, windowSec: 60 * 60 },
   resetUse: { max: 10, windowSec: 15 * 60 },
   signup: { max: 5, windowSec: 60 * 60 },

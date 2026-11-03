@@ -2,9 +2,13 @@ import { randomBytes, scrypt as scryptCb, timingSafeEqual, ScryptOptions } from 
 import { hash as legacyHash } from '@/lib/encrypt';
 
 // Node-only (do not import from edge code such as middleware).
+// OWASP Password Storage Cheat Sheet (checked 2026-11-03) lists N=2^14 r=8 p=5
+// (16 MiB) as one of its minimum scrypt configurations; it fits the 64 MiB
+// maxmem budget and measured ~145ms/hash on a dev sandbox CPU. Old p=1 hashes
+// still verify (params are stored per-hash) and upgrade on next sign-in.
 const N = 16384;
 const R = 8;
-const P = 1;
+const P = 5;
 const KEYLEN = 64;
 const PREFIX = 'scrypt';
 
