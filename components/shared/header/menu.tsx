@@ -20,7 +20,7 @@ const Menu = async () => {
   return (
     <div className='flex justify-end gap-1.5 items-center font-sans'>
       <nav className='hidden md:flex items-center gap-1.5'>
-        {/* 1. Global Language & Currency Picker */}
+        {/* 1. Global Language Picker (currency selection was removed; label says what the control does) */}
         <div className='hidden lg:flex'>
           <GlobalSelector />
         </div>
@@ -70,7 +70,7 @@ const Menu = async () => {
               <T k='todaysDeals' />
             </Link>
             <div className='flex items-center justify-between py-2 border-b border-neutral-700 w-full'>
-              <span className='text-xs text-neutral-300'>Language & Currency</span>
+              <span className='text-xs text-neutral-300'>Language</span>
               <GlobalSelector />
             </div>
             <div className='flex items-center gap-3 pt-3 border-t border-neutral-700 w-full'>
