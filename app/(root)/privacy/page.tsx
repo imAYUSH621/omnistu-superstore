@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
+        <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
         {/* Header */}
         <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>
@@ -38,7 +39,7 @@ export default function PrivacyPage() {
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
               <li><strong>Contact & Shipping Data:</strong> Full name, delivery address, postal/PIN code, email address, and phone number for carrier contact during delivery.</li>
-              <li><strong>Payment Information:</strong> Processed securely via end-to-end tokenized payment gateways (Stripe, PayPal, UPI). We <em>never</em> store raw card numbers, CVVs, or bank credentials on our servers.</li>
+              <li><strong>Payment Information:</strong> No live payment provider is configured yet; checkout currently runs a simulated test payment only. When live payments are enabled they will be processed by tokenized third-party gateways, and we will <em>never</em> store raw card numbers, CVVs, or bank credentials on our servers.</li>
               <li><strong>Technical & Session Data:</strong> IP address, browser language preferences, selected currency, and device telemetry to ensure responsive edge rendering and currency conversion.</li>
             </ul>
           </section>

@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function ShippingPolicyPage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
+        <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
         {/* Header */}
         <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>
@@ -23,7 +24,7 @@ export default function ShippingPolicyPage() {
             {APP_NAME} Shipping & Delivery Policy
           </h1>
           <p className='text-xs sm:text-sm text-gray-500 mt-2'>
-            Direct Manufacturer Dispatch • Live Carrier Tracking • Customs-Cleared Delivery
+            Planned: Direct Manufacturer Dispatch • Live Carrier Tracking • Customs Handling
           </p>
         </div>
 
@@ -44,6 +45,7 @@ export default function ShippingPolicyPage() {
             <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2'>
               <Clock className='w-4 h-4 text-amber-500' /> 2. Estimated Shipping Timeframes & Carriers
             </h2>
+            <p className='mb-3 text-xs text-gray-500 dark:text-gray-400'>Indicative planning figures only - final carriers and delivery estimates will be confirmed with suppliers before live ordering starts.</p>
             <div className='overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg'>
               <table className='w-full text-left text-xs sm:text-sm divide-y divide-gray-200 dark:divide-gray-700'>
                 <thead className='bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-bold'>
@@ -102,10 +104,10 @@ export default function ShippingPolicyPage() {
             </h2>
             <ul className='list-disc pl-5 space-y-2'>
               <li>
-                <strong>Automated Tracking Dispatch:</strong> As soon as the manufacturer scans the item and generates the postal waybill, your tracking number is automatically emailed to you and reflected in your order dashboard.
+                <strong>Tracking:</strong> once an order is actually dispatched, the carrier and tracking number appear on your order page. Automated tracking emails are not live yet.
               </li>
               <li>
-                <strong>Customs & Import Duties:</strong> All standard consumer retail orders are dispatched with pre-cleared postal customs documentation (Delivered Duty Paid - DDP). You will not be asked to pay unexpected carrier ransom fees at your doorstep.
+                <strong>Customs &amp; Import Duties:</strong> customs handling for live orders has not been finalized; the applicable duties model will be published here before live ordering starts.
               </li>
               <li>
                 <strong>Separate Package Shipments:</strong> If you purchase items originating from different specialized suppliers (e.g., custom apparel from Printify and electronics from CJ Dropshipping), items may arrive in separate, individually tracked parcels.

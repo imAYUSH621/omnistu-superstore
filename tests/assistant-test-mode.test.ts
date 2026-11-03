@@ -26,6 +26,17 @@ describe('deterministic assistant test mode', () => {
     expect(a).not.toContain('30-day');
   });
 
+
+  it('plural intent stems route to the right branch (regression: trailing word boundary swallowed categories/orders/policies)', async () => {
+    const cat = await deterministicTestAnswer('what categories do you have');
+    expect(cat).toMatch(/Categor/i);
+    expect(cat).not.toContain('I found these in the live test catalog');
+    const ord = await deterministicTestAnswer('where are my orders');
+    expect(ord).toContain('do not retrieve order data');
+    const pol = await deterministicTestAnswer('what are your policies');
+    expect(pol.toLowerCase()).toContain('draft');
+  });
+
   it('route only uses test mode without a key and with explicit opt-in', () => {
     const src = fs.readFileSync('app/api/chat/route.ts', 'utf8');
     expect(src).toContain("process.env.ASSISTANT_TEST_MODE === 'true'");
