@@ -49,6 +49,14 @@ export function hiddenSlugPrefixes(env: Record<string, string | undefined> = pro
   return hidden;
 }
 
+// The bundled demo catalog (db/sample-data) exists for local development and
+// demos only. In the public production runtime an empty sellable catalog must
+// stay honest: no silent demo-product fallback (a demo row shown as a real
+// product is a false storefront). Same public-runtime rule as fixture hiding.
+export function sampleCatalogAllowed(env: Record<string, string | undefined> = process.env): boolean {
+  return !hideFixturesInPublic(env);
+}
+
 export function fixtureExclusion(env: Record<string, string | undefined> = process.env) {
   const hidden = hiddenSlugPrefixes(env);
   return hidden.length ? { AND: hidden.map((p) => ({ NOT: { slug: { startsWith: p } } })) } : {};

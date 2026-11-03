@@ -11,7 +11,7 @@ import { Prisma } from '@prisma/client';
 import { Product } from '@/types';
 
 import sampleData from '@/db/sample-data';
-import { fixtureExclusion, hiddenSlugPrefixes } from '@/lib/test-fixture';
+import { fixtureExclusion, hiddenSlugPrefixes, sampleCatalogAllowed } from '@/lib/test-fixture';
 import { queryMatchesName } from '@/lib/search-match';
 import { wordStartPattern } from '@/lib/search-sql';
 
@@ -33,6 +33,7 @@ export async function getLatestProducts(): Promise<Product[]> {
     }
   }
 
+  if (!sampleCatalogAllowed()) return [];
   return convertToPlainObject(
     sampleData.products.slice(0, LATEST_PRODUCTS_LIMIT).map((p, idx) => ({
       ...p,
@@ -58,6 +59,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     }
   }
 
+  if (!sampleCatalogAllowed()) return null;
   const sampleMatch = sampleData.products.find((p) => p.slug === slug);
   if (sampleMatch) {
     return convertToPlainObject({
@@ -85,6 +87,7 @@ export async function getProductById(productId: string): Promise<Product | null>
     }
   }
 
+  if (!sampleCatalogAllowed()) return null;
   const sampleMatch = sampleData.products.find(
     (p, idx) => `sample-${idx + 1}` === productId || `sample-${p.slug}` === productId
   );
@@ -175,6 +178,9 @@ export async function getAllProducts({
     }
   }
 
+  if (!sampleCatalogAllowed()) {
+    return { data: [], totalPages: 0, totalCount: 0 };
+  }
   let filtered = [...sampleData.products];
   if (query && query !== 'all') {
     filtered = filtered.filter((p) => queryMatchesName(p.name, query));
@@ -305,6 +311,7 @@ export async function getAllCategories() {
     }
   }
 
+  if (!sampleCatalogAllowed()) return [];
   const categoryCounts = new Map<string, number>();
   sampleData.products.forEach((p) => {
     categoryCounts.set(p.category, (categoryCounts.get(p.category) || 0) + 1);
@@ -335,6 +342,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     }
   }
 
+  if (!sampleCatalogAllowed()) return [];
   return convertToPlainObject(
     sampleData.products.filter(p => p.isFeatured).slice(0, 4).map((p, idx) => ({
       ...p,
@@ -396,6 +404,7 @@ export async function getFacetCounts({ query, category }: { query?: string; cate
       return { price: {}, rating: {} };
     }
   }
+  if (!sampleCatalogAllowed()) return out;
   let list = [...sampleData.products];
   if (query && query !== 'all') list = list.filter((p) => queryMatchesName(p.name, query));
   if (category && category !== 'all') list = list.filter((p) => p.category === category);
