@@ -1,17 +1,57 @@
 /**
  * DB-level word-start search against a real database. Runs only when
- * DATABASE_URL is set (env-gated like the other integration suites); it is
- * READ-ONLY (getAllProducts / getFacetCounts), it never writes.
+ * DATABASE_URL is set (env-gated like the other integration suites).
+ * Hermetic: the suite inserts its own fxt- fixture rows in beforeAll and
+ * deletes them in afterAll, so it does not depend on any pre-existing
+ * catalog content (standalone "Men" products) on the target database.
+ * Catalog data itself is only read, never written.
  */
-import { describe, expect, test } from '@jest/globals';
+import { beforeAll, afterAll, describe, expect, test } from '@jest/globals';
 import { isDatabaseAvailable } from '../lib/utils';
 import { getAllProducts, getFacetCounts } from '../lib/actions/product.actions';
+import { prisma } from '../db/prisma';
 
 const db = isDatabaseAvailable() ? test : test.skip;
 
 jest.setTimeout(30000); // remote dev DB round trips
 
-describe('SQL word-start search (read-only, env-gated)', () => {
+// fxt- rows are test fixtures (lib/test-fixture): visible to queries in a
+// test runtime, excluded from any production storefront by slug prefix.
+const FIXTURES = [
+  {
+    name: "Fixture Men's Trail Watch",
+    slug: 'fxt-men-trail-watch',
+    category: 'Fixture',
+    images: [] as string[],
+    description: 'word-start fixture',
+    stock: 1,
+    price: 1,
+  },
+  {
+    name: "Fixture Women's Shawl",
+    slug: 'fxt-women-shawl',
+    category: 'Fixture',
+    images: [] as string[],
+    description: 'word-start fixture',
+    stock: 1,
+    price: 1,
+  },
+];
+
+beforeAll(async () => {
+  if (!isDatabaseAvailable()) return;
+  for (const p of FIXTURES) {
+    await prisma.product.upsert({ where: { slug: p.slug }, update: {}, create: p });
+  }
+});
+
+afterAll(async () => {
+  if (!isDatabaseAvailable()) return;
+  await prisma.product.deleteMany({ where: { slug: { startsWith: 'fxt-' } } });
+  await prisma.$disconnect();
+});
+
+describe('SQL word-start search (env-gated, hermetic fixtures)', () => {
   db('q=men matches only names with standalone Men at a word start', async () => {
     const res = await getAllProducts({ query: 'men', category: 'all', price: 'all', rating: 'all', sort: 'newest', page: 1, limit: 50 });
     expect(res.data.length).toBeGreaterThan(0);

@@ -22,7 +22,7 @@ export async function getLatestProducts(): Promise<Product[]> {
       const data = await prisma.product.findMany({
         where: fixtureExclusion(),
         take: LATEST_PRODUCTS_LIMIT,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       });
       if (data && data.length > 0) {
         return convertToPlainObject(data);
@@ -147,12 +147,12 @@ export async function getAllProducts({
       const whereSql = Prisma.join(conditions, ' AND ');
       const orderSql =
         sort === 'lowest'
-          ? Prisma.sql`price ASC`
+          ? Prisma.sql`price ASC, "id" ASC`
           : sort === 'highest'
-          ? Prisma.sql`price DESC`
+          ? Prisma.sql`price DESC, "id" ASC`
           : sort === 'rating'
-          ? Prisma.sql`rating DESC`
-          : Prisma.sql`"createdAt" DESC`;
+          ? Prisma.sql`rating DESC, "id" ASC`
+          : Prisma.sql`"createdAt" DESC, "id" ASC`;
       const offset = (page - 1) * limit;
 
       const idRows = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -329,7 +329,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     try {
       const data = await prisma.product.findMany({
         where: { isFeatured: true, ...fixtureExclusion() },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         take: 4,
       });
       // Database mode: an empty result is an honest empty result. Never mix

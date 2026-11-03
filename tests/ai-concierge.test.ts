@@ -3,6 +3,13 @@ const mockProducts = [
   { name: 'Royal Kashmiri Mongra Saffron (2g)', slug: 'royal-kashmiri-mongra-saffron', price: '24.99', category: 'Gourmet & Indian Food', brand: 'Omnistu', description: 'Saffron threads.', stock: 0, rating: '4.9', numReviews: 1480 },
   { name: 'Authentic Masala Chai Tea Blend', slug: 'masala-chai', price: '16.99', category: 'Gourmet & Indian Food', brand: 'Omnistu', description: 'Chai tea.', stock: 9, rating: '5', numReviews: 9999 },
 ];
+// Keep this suite hermetic: findProducts switches to the real DB whenever
+// DATABASE_URL is set (e.g. in integration runs), bypassing the getAllProducts
+// mock above. This unit suite always exercises the no-DB catalog path.
+jest.mock('@/lib/utils', () => ({
+  ...jest.requireActual('@/lib/utils'),
+  isDatabaseAvailable: () => false,
+}));
 jest.mock('@/lib/actions/product.actions', () => ({
   getAllProducts: jest.fn(async () => ({ data: mockProducts, totalPages: 1 })),
 }));
