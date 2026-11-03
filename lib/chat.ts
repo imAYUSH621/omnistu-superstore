@@ -202,3 +202,50 @@ Rules:
 - You cannot issue refunds, replacements, cancellations or discount codes. For those, direct the customer to the team through the contact form at /contact.
 - Never say a product is a best seller, top rated, popular, trending or highly reviewed, and never quote star ratings or review counts: the store has no verified data for those claims.
 - Be brief, helpful, and friendly. Do not invent policies, prices, or unauthorized discount codes.`;
+
+// ---- Deterministic assistant TEST mode ------------------------------------
+// When ASSISTANT_TEST_MODE=true and no LLM key is configured, the chat route
+// answers from fixed rules over live store data instead of an external model.
+// Nothing leaves the server: no customer text or order data is disclosed to
+// any third party, and order help stays self-serve (fail-closed, same as the
+// LLM path). Every answer is labeled as a rule-based demo so nobody mistakes
+// it for the live generative assistant.
+export const ASSISTANT_TEST_LABEL = '[Assistant TEST MODE: rule-based demo - no AI model connected]';
+
+export async function deterministicTestAnswer(text: string): Promise<string> {
+  const q = text.toLowerCase();
+  const label = ASSISTANT_TEST_LABEL + '\n';
+
+  if (/\b(hi|hello|hey|namaste)\b/.test(q) && q.length < 40) {
+    return label + 'Hello! I can help you browse this test store: ask me what categories exist, search for a product by name, or ask how orders work. Checkout here is simulated - no real payment or shipment.';
+  }
+
+  if (/\b(order|track|delivery|shipping status|package)\b/.test(q)) {
+    return label + 'I do not retrieve order data in this demo. To see an order: sign in, then open "Returns & Orders" - your orders page is the source of truth. In this test deployment, orders are simulated (no real payment, no real shipment).';
+  }
+
+  if (/\b(categor|department|what do you sell|browse|what can i buy)\b/.test(q)) {
+    try {
+      const { getAllCategories } = await import('@/lib/actions/product.actions');
+      const cats = await getAllCategories();
+      if (cats.length) {
+        return label + 'Live categories right now: ' + cats.map((c) => `${c.category} (${c._count})`).join(', ') + '. Open one from the navigation bar, or ask me to find a product.';
+      }
+    } catch { /* fall through */ }
+    return label + 'Categories are listed in the navigation bar at the top of the page.';
+  }
+
+  if (/\b(payment|pay|checkout|cash|paypal|stripe|card)\b/.test(q)) {
+    return label + 'This test deployment offers one simulated payment method ("Test payment") so you can walk the full checkout without any real charge. Nothing is billed and no supplier order is placed.';
+  }
+
+  if (/\b(return|refund|replace|policy|guarantee|warranty)\b/.test(q)) {
+    return label + 'Store policies are still drafts awaiting owner approval, so I cannot quote them. The Returns page shows the current draft text; nothing here is a committed commercial term.';
+  }
+
+  const products = await findProducts(text);
+  if (products) {
+    return label + 'I found these in the live test catalog:\n' + products + '\nOpen a link to see the product page; Add to Cart there and check out with the simulated test payment.';
+  }
+  return label + 'I could not find a matching product in the current test catalog. Try a category name (for example "Tech & Gadgets" or "Jewelry & Watches"), or ask "what categories do you have".';
+}
