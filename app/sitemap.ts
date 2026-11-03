@@ -24,7 +24,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${BASE_URL}/s`,
+      // /s only redirects here; sitemaps list the canonical destination.
+      url: `${BASE_URL}/search`,
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.9,

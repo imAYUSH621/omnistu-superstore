@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Check } from 'lucide-react';
+
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { catalogSource } from '@/lib/utils';
@@ -189,7 +189,7 @@ export default async function BestSellersCategoryPage(props: {
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {items.map((item, idx) => (
+            {items.map((item) => (
               <div
                 key={item.slug}
                 className='border border-[#e7e7e7] dark:border-neutral-800/80 p-4 rounded-sm flex flex-col justify-between hover:shadow-md transition relative bg-white dark:bg-[#1a202c]'

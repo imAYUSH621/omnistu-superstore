@@ -10,7 +10,6 @@ import {
 import { Product } from '@/types';
 import Autoplay from 'embla-carousel-autoplay';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ProductImage } from '@/components/shared/product/product-image';
 
 const ProductCarousel = ({ data }: { data: Product[] }) => {

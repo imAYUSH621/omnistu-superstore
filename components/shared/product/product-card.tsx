@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types';
 import Rating from './rating';
-import { ShoppingCart, Heart, Truck, Loader2 } from 'lucide-react';
+import { ShoppingCart, Heart, Loader2 } from 'lucide-react';
 import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 
