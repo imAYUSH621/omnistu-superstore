@@ -114,3 +114,12 @@ it('place-order failure is never silent: the form toasts the server message', ()
   expect(src).toContain("variant: 'destructive'");
   expect(src).toContain('res.message');
 });
+
+it('simulated tax and shipping are labeled as TEST estimates, never real rates', () => {
+  const table = fs.readFileSync('app/(root)/order/[id]/order-details-table.tsx', 'utf8');
+  expect(table).toContain('Simulated tax (TEST estimate - not a real tax rate)');
+  expect(table).toContain('Simulated shipping (TEST estimate - not a real rate)');
+  const page = fs.readFileSync('app/(root)/place-order/page.tsx', 'utf8');
+  expect(page).toContain("data-testid='test-estimates-note'");
+  expect(page).toContain('not real tax or shipping rates');
+});

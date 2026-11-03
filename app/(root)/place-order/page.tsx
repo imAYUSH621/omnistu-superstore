@@ -20,6 +20,8 @@ import Image from 'next/image';
 import { formatCurrency } from '@/lib/utils';
 import PlaceOrderForm from './place-order-form';
 import T from '@/components/shared/i18n-text';
+import { isTestCatalogSlug } from '@/lib/test-fixture';
+import { testCheckoutMode } from '@/lib/payment-capabilities';
 
 export const metadata: Metadata = {
   title: 'Place Order',
@@ -37,6 +39,12 @@ const PlaceOrderPage = async () => {
   if (!cart || cart.items.length === 0) redirect('/cart');
   if (!user.address) redirect('/shipping-address');
   if (!user.paymentMethod) redirect('/payment-method');
+
+  // Simulated test checkout: tax and shipping are placeholder estimates, not
+  // real rates, and must be labeled as such wherever the summary shows.
+  const isSimulatedTestOrder =
+    testCheckoutMode() &&
+    (cart.items as { slug?: string }[]).some((i) => isTestCatalogSlug(i.slug));
 
   const userAddress = user.address as ShippingAddress;
 
@@ -134,6 +142,15 @@ const PlaceOrderPage = async () => {
                 <div><T k='totalLabel' /></div>
                 <div>{formatCurrency(cart.totalPrice)}</div>
               </div>
+              {isSimulatedTestOrder && (
+                <div
+                  className='rounded-md border border-sky-300 bg-sky-50 px-3 py-2.5 text-xs text-sky-900'
+                  data-testid='test-estimates-note'
+                >
+                  Simulated test order: the tax and shipping shown are TEST
+                  estimates, not real tax or shipping rates.
+                </div>
+              )}
               <PlaceOrderForm />
             </CardContent>
           </Card>
