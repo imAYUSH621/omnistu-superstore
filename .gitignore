@@ -41,3 +41,7 @@ next-env.d.ts
 
 # staging data
 /data/
+
+# Provider token responses must never enter source or deploy uploads
+.cache/cj/auth.json
+.cache/**/auth*.json
