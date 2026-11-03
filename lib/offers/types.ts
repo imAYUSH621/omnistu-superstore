@@ -26,6 +26,7 @@ export interface OfferDecision {
   considered: Array<{
     offer: Offer;
     eligible: boolean;
-    reasons: string[];     // why excluded, or how it ranked
+    reasons: string[];     // why excluded, or 'eligible'
   }>;
+  notes: string[];         // coverage caveats: not landed cost, excluded unknowns
 }
