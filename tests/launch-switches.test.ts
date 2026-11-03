@@ -29,6 +29,9 @@ describe('fixture hiding', () => {
   it('builds a prefix exclusion for both fixture prefixes', () => {
     expect(JSON.stringify(fixtureExclusion({ NODE_ENV: 'production' }))).toContain('cjstg-');
     expect(JSON.stringify(fixtureExclusion({ NODE_ENV: 'production' }))).toContain('fxt-');
-    expect(fixtureExclusion({ NODE_ENV: 'test' })).toEqual({});
+    // Test-catalog rows stay hidden outside test checkout, in every runtime.
+    expect(JSON.stringify(fixtureExclusion({ NODE_ENV: 'test' }))).toContain('cjt-');
+    expect(fixtureExclusion({ NODE_ENV: 'test', TEST_CHECKOUT_MODE: 'true' })).toEqual({});
+    expect(JSON.stringify(fixtureExclusion({ NODE_ENV: 'production', TEST_CHECKOUT_MODE: 'true' }))).not.toContain('cjt-');
   });
 });
