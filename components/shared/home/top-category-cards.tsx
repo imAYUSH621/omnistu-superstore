@@ -16,7 +16,7 @@ const TOP_CARDS = [
   },
   {
     id: 'card-1',
-    title: 'Gourmet & Indian Food',
+    title: 'Royal Gourmet & Indian Food',
     image: '/images/categories/gourmet-indian-food.jpg',
     url: '/search?category=Gourmet%20%26%20Indian%20Food',
   },
@@ -89,13 +89,13 @@ export default function TopCategoryCards() {
                 {card.title}
               </h2>
             </div>
-            <div className='relative w-full h-[280px] sm:h-[300px] md:h-[320px] overflow-hidden bg-neutral-100 dark:bg-neutral-800'>
+            <div className='relative w-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800'>
               <ProductImage
                 src={card.image}
                 alt={`${card.title} - illustrative category artwork`}
                 sizes='(max-width: 768px) 260px, 285px'
                 className='object-cover group-hover/card:scale-102 transition-transform duration-300'
-                priority
+                priority={card.id === 'card-5'}
               />
             </div>
           </Link>
