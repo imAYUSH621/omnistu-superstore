@@ -4,7 +4,6 @@ import { auth } from '@/auth';
 import { executeRefund } from '@/lib/refunds';
 import { reportEvent } from '@/lib/monitoring';
 import { prisma } from '@/db/prisma';
-import { Prisma } from '@prisma/client';
 
 /**
  * Returns / RMA flow (G3). Refund execution lives in lib/refunds.ts and is

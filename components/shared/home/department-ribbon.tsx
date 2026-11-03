@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  Laptop, Shirt, Home, Gamepad2, Sparkles, Watch, Utensils, LayoutGrid, Tag,
+  Laptop, Shirt, Home, Gamepad2, Watch, Utensils, Tag,
 } from 'lucide-react';
 import { getAllCategories } from '@/lib/actions/product.actions';
 import T from '@/components/shared/i18n-text';

@@ -1,6 +1,25 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Baseline security headers on every response. No CSP: checkout providers
+  // (Stripe/PayPal) and upload tooling load third-party scripts, and a wrong
+  // allowlist is worse than none while commerce is in test mode.
+  // HSTS is apex-only (no includeSubDomains) so other subdomain hosts are
+  // unaffected. No app code uses iframes, so framing is denied outright.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=()' },
+        ],
+      },
+    ];
+  },
   // Unbuilt-feature orphan pages (/affiliates program, /currency policy)
   // redirect to home on public builds. The content-review build
   // (NEXT_PUBLIC_CONTENT_REVIEW=true, protected preview only) skips these

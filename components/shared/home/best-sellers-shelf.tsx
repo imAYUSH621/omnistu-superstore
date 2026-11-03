@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ProductImage } from '@/components/shared/product/product-image';
-import { Star, Check } from 'lucide-react';
+
 
 export interface BestSellerProduct {
   id: string;
@@ -170,7 +170,7 @@ export default function BestSellersShelf() {
 
         {/* Product Cards Grid */}
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4'>
-          {filteredProducts.map((p, idx) => (
+          {filteredProducts.map((p) => (
             <div
               key={p.id}
               className='group flex flex-col justify-between border border-[#e7e7e7] dark:border-neutral-800/80 p-3 bg-white dark:bg-[#1a202c] rounded-sm hover:shadow-md transition relative'

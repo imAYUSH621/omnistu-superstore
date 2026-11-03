@@ -7,7 +7,7 @@ import { ProductImage } from '@/components/shared/product/product-image';
 import { Product } from '@/types';
 import Rating from '@/components/shared/product/rating';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, Heart, ShieldCheck, Zap, Loader2 } from 'lucide-react';
+import { ShoppingCart, Check, Heart, Loader2 } from 'lucide-react';
 import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 

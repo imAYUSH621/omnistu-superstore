@@ -14,7 +14,7 @@ import {
   SheetClose,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ShoppingCart, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, ArrowRight, Zap } from 'lucide-react';
 
 interface CartToastEventDetail {
   productId: string;

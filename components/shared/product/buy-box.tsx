@@ -19,7 +19,6 @@ import {
   Zap,
   ShieldCheck,
   RotateCcw,
-  Truck,
   Lock,
   Heart,
   Loader2,
