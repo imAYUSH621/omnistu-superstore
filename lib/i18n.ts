@@ -74,10 +74,15 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
   { code: 'JA', label: '日本語', flag: '🇯🇵' },
 ];
 
-export function convertPrice(amountUsd: number, targetCurrency = 'USD'): { amount: number; formatted: string } {
+export function convertPrice(
+  amountUsd: number,
+  targetCurrency = 'USD',
+  ratesOverride?: Record<string, number>
+): { amount: number; formatted: string } {
   const safeAmount = Math.max(0, Number.isFinite(amountUsd) ? amountUsd : 0);
   const cfg = getCurrencyConfig(targetCurrency);
-  const converted = safeAmount * cfg.rate;
+  const rate = (ratesOverride && ratesOverride[cfg.code]) || cfg.rate;
+  const converted = safeAmount * rate;
 
   let formatted: string;
   if (cfg.code === 'INR') {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
 import Link from 'next/link';
+import LocalizedPrice from '@/components/shared/localized-price';
 import { ProductImage } from '@/components/shared/product/product-image';
 import { Product } from '@/types';
 import Rating from '@/components/shared/product/rating';
@@ -23,8 +24,6 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
 
   const isFixture = isTestFixtureSlug(product.slug);
   const priceNum = Number(product.price);
-  const wholePrice = Math.floor(priceNum);
-  const fractionPrice = (priceNum % 1).toFixed(2).substring(2);
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -172,13 +171,11 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           {/* Pricing Row */}
           <div className='mt-2.5 flex items-baseline gap-2 flex-wrap'>
             <div className='flex items-start text-foreground'>
-              <span className='text-xs font-bold leading-none mt-1'>$</span>
-              <span className='text-2xl font-black tracking-tight leading-none'>
-                {wholePrice}
-              </span>
-              <span className='text-xs font-bold leading-none mt-0.5'>
-                {fractionPrice}
-              </span>
+              <LocalizedPrice
+                amountUsd={priceNum}
+                className='text-2xl font-black tracking-tight leading-none'
+                supClassName='text-xs font-bold leading-none mt-1'
+              />
             </div>
           </div>
 

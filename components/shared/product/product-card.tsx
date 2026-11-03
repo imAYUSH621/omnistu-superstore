@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
 import Link from 'next/link';
+import LocalizedPrice from '@/components/shared/localized-price';
 import { ProductImage } from '@/components/shared/product/product-image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -146,13 +147,11 @@ const ProductCard = ({ product }: { product: Product }) => {
             </p>
           ) : (
           <div className='flex items-baseline gap-2'>
-            <span className='text-xl font-extrabold text-foreground tracking-tight'>
-              <sup className='text-xs align-super font-normal'>$</sup>
-              {Math.floor(priceNum)}
-              <sup className='text-xs align-super font-normal'>
-                {(priceNum % 1).toFixed(2).slice(2)}
-              </sup>
-            </span>
+            <LocalizedPrice
+              amountUsd={priceNum}
+              className='text-xl font-extrabold text-foreground tracking-tight'
+              supClassName='text-xs align-super font-normal'
+            />
           </div>
           )}
 
