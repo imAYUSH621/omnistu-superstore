@@ -220,11 +220,11 @@ export async function deterministicTestAnswer(text: string): Promise<string> {
     return label + 'Hello! I can help you browse this test store: ask me what categories exist, search for a product by name, or ask how orders work. Checkout here is simulated - no real payment or shipment.';
   }
 
-  if (/\b(order|track|delivery|shipping status|package)\b/.test(q)) {
+  if (/\b(order|track|delivery|shipping status|package)/.test(q)) {
     return label + 'I do not retrieve order data in this demo. To see an order: sign in, then open "Returns & Orders" - your orders page is the source of truth. In this test deployment, orders are simulated (no real payment, no real shipment).';
   }
 
-  if (/\b(categor|department|what do you sell|browse|what can i buy)\b/.test(q)) {
+  if (/\b(categor|department|what do you sell|browse|what can i buy)/.test(q)) {
     try {
       const { getAllCategories } = await import('@/lib/actions/product.actions');
       const cats = await getAllCategories();
@@ -235,11 +235,11 @@ export async function deterministicTestAnswer(text: string): Promise<string> {
     return label + 'Categories are listed in the navigation bar at the top of the page.';
   }
 
-  if (/\b(payment|pay|checkout|cash|paypal|stripe|card)\b/.test(q)) {
+  if (/\b(payment|pay|checkout|cash|paypal|stripe|card)/.test(q)) {
     return label + 'This test deployment offers one simulated payment method ("Test payment") so you can walk the full checkout without any real charge. Nothing is billed and no supplier order is placed.';
   }
 
-  if (/\b(return|refund|replace|policy|guarantee|warranty)\b/.test(q)) {
+  if (/\b(return|refund|replace|polic|guarantee|warranty)/.test(q)) {
     return label + 'Store policies are still drafts awaiting owner approval, so I cannot quote them. The Returns page shows the current draft text; nothing here is a committed commercial term.';
   }
 

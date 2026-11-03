@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function InterestBasedAdsPage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
+        <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
         {/* Header */}
         <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>
@@ -67,7 +68,7 @@ export default function InterestBasedAdsPage() {
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
               <li><strong>Browser Settings:</strong> You can configure your browser to block third-party cookies or alert you when cookies are sent.</li>
-              <li><strong>Do Not Track (DNT) / GPC:</strong> Our systems honor standard Global Privacy Control (GPC) signals sent by modern web browsers.</li>
+              <li><strong>Do Not Track (DNT) / GPC:</strong> we do not run interest-based advertising or ad trackers today, so there is currently nothing to opt out of; this section describes the choices that would apply if such advertising is added.</li>
               <li><strong>Industry Opt-Out Portals:</strong> You can visit the <a href="https://optout.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-amber-600 underline">Digital Advertising Alliance (DAA)</a> or the <a href="https://youronlinechoices.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 underline">European Interactive Digital Advertising Alliance (EDAA)</a> to opt out across participating advertising networks.</li>
             </ul>
           </section>

@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default function CurrencyPolicyPage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
+        <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
       <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
         {/* Header */}
         <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>
@@ -81,12 +82,12 @@ export default function CurrencyPolicyPage() {
               <CreditCard className='w-4 h-4 text-amber-500' /> 3. Secure International Payment Rails
             </h2>
             <p className='mb-3'>
-              We partner with PCI-DSS Level 1 compliant processors to deliver seamless local payments in each supported region:
+              Planned payment methods (not live yet - today the store runs a simulated test payment only). When live payments are configured they will run through PCI-DSS compliant processors:
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Global Credit & Debit:</strong> Visa, Mastercard, American Express, and Discover with 3D-Secure 2.0 biometric fraud verification.</li>
-              <li><strong>PayPal Express:</strong> One-click checkout with automated currency routing and full PayPal Purchase Protection.</li>
-              <li><strong>Regional Rails:</strong> Instant bank transfers, UPI for India, and Apple Pay / Google Pay on supported mobile devices.</li>
+              <li><strong>Global Credit &amp; Debit (planned):</strong> major cards such as Visa and Mastercard with 3D-Secure, subject to the payment provider chosen at launch.</li>
+              <li><strong>PayPal (planned):</strong> subject to the payment provider chosen at launch.</li>
+              <li><strong>Regional Rails (planned):</strong> options such as UPI for India are under evaluation and are not committed yet.</li>
             </ul>
           </section>
 
