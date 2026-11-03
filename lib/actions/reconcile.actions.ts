@@ -72,9 +72,9 @@ export async function getUnsettledCaptures(): Promise<
       where: {
         isPaid: false,
         OR: [
-          { paymentNote: { startsWith: 'CAPTURED_UNSETTLED' } },
-          { paymentNote: { startsWith: 'AMOUNT_MISMATCH' } },
-          { paymentNote: { startsWith: 'CURRENCY_MISMATCH' } },
+          { paymentNote: { contains: 'CAPTURED_UNSETTLED' } },
+          { paymentNote: { contains: 'AMOUNT_MISMATCH' } },
+          { paymentNote: { contains: 'CURRENCY_MISMATCH' } },
         ],
       },
       select: { id: true, createdAt: true, paymentNote: true },

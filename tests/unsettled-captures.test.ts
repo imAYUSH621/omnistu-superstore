@@ -20,9 +20,9 @@ describe('getUnsettledCaptures', () => {
     mockFindMany.mockResolvedValue([{ id: 'o1', createdAt: new Date('2026-11-03T10:00:00Z'), paymentNote: 'CAPTURED_UNSETTLED reason=DB_ERROR capture=C1 amount=1.00' }]);
     const r = await getUnsettledCaptures();
     expect(r.success).toBe(true);
-    const arg = mockFindMany.mock.calls[0][0] as { where: { isPaid: boolean; OR: { paymentNote: { startsWith: string } }[] } };
+    const arg = mockFindMany.mock.calls[0][0] as { where: { isPaid: boolean; OR: { paymentNote: { contains: string } }[] } };
     expect(arg.where.isPaid).toBe(false);
-    expect(arg.where.OR.map((c) => c.paymentNote.startsWith).sort()).toEqual(['AMOUNT_MISMATCH', 'CAPTURED_UNSETTLED', 'CURRENCY_MISMATCH']);
+    expect(arg.where.OR.map((c) => c.paymentNote.contains).sort()).toEqual(['AMOUNT_MISMATCH', 'CAPTURED_UNSETTLED', 'CURRENCY_MISMATCH']);
   });
   test('db failure returns a generic message', async () => {
     mockAuth.mockResolvedValue({ user: { role: 'admin' } });

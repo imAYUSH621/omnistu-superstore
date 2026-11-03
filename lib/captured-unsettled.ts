@@ -31,11 +31,25 @@ export async function recordCapturedUnsettled(
   const amt = String(amount ?? 'unknown').replace(/[^0-9.]/g, '').slice(0, 14) || 'unknown';
   console.error(`[payments] CAPTURED_UNSETTLED order ${orderId} capture ${cap} reason ${reason}`);
   try {
-    const note = `CAPTURED_UNSETTLED reason=${reason} capture=${cap} amount=${amt} - needs manual review, no refund or retry performed`;
-    await prisma.order.updateMany({
-      where: { id: orderId, isPaid: false, OR: [{ paymentNote: null }, { paymentNote: '' }] },
-      data: { paymentNote: note },
-    });
+    const marker = `CAPTURED_UNSETTLED reason=${reason} capture=${cap} amount=${amt} - needs manual review, no refund or retry performed`;
+    // Compare-and-set append: keep any earlier note (e.g. AMOUNT_MISMATCH or CURRENCY_MISMATCH) and add the
+    // incident after it. A concurrent writer changing the note between read and write makes the update a
+    // no-op, so one retry re-reads. Never overwrites, never touches a paid order.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const row = await prisma.order.findFirst({ where: { id: orderId, isPaid: false }, select: { paymentNote: true } });
+      if (!row) return;
+      const prior = row.paymentNote ?? '';
+      if (prior.includes(`capture=${cap}`) && prior.includes('CAPTURED_UNSETTLED')) return; // already recorded
+      const next = (prior ? `${prior.slice(0, 600)} | ${marker}` : marker).slice(0, 1000);
+      const res = await prisma.order.updateMany({
+        where: prior === ''
+          ? { id: orderId, isPaid: false, OR: [{ paymentNote: null }, { paymentNote: '' }] }
+          : { id: orderId, isPaid: false, paymentNote: prior },
+        data: { paymentNote: next },
+      });
+      if (res.count === 1) return;
+    }
+    console.error(`[payments] CAPTURED_UNSETTLED note for order ${orderId} lost a write race twice`);
   } catch {
     console.error(`[payments] could not record CAPTURED_UNSETTLED for order ${orderId}`);
   }
