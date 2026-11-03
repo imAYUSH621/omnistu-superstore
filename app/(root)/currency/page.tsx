@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { Coins, Globe2, ShieldCheck, CreditCard, ArrowRightLeft } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
-import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function CurrencyPolicyPage() {
   // Draft policy for a multi-currency settlement model that is not built:
   // checkout settles in USD only. Hidden until the owner reviews it.
-  if (!contentReviewMode) notFound();
+  if (!contentReviewMode) redirect('/');
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
         <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
