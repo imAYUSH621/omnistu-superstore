@@ -56,6 +56,17 @@ describe('three global themes (light, dark, professional) + system', () => {
     expect(occurrences).toBe(2);
   });
 
+  it('professional palette is visibly distinct from light', () => {
+    const block = globals.match(/\.professional\s*\{([\s\S]*?)\}/)![1];
+    const light = globals.match(/:root\s*\{([\s\S]*?)\}/)![1];
+    const val = (b: string, k: string) => b.match(new RegExp(k + ':\\s*([^;]+);'))![1].trim();
+    // background and primary must differ from light by a perceptible step
+    expect(val(block, '--background')).not.toBe(val(light, '--background'));
+    expect(val(block, '--primary')).not.toBe(val(light, '--primary'));
+    const bgL = parseFloat(val(block, '--background').split(' ')[2]);
+    expect(bgL).toBeLessThanOrEqual(97); // not a near-invisible 98-100% white
+  });
+
   it('professional palette stays a token-only change (no layout edits)', () => {
     // The body chrome classes are unchanged from the light/dark design;
     // the theme only swaps CSS variables.
