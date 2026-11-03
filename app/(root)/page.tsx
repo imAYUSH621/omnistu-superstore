@@ -1,5 +1,5 @@
 import AllDepartments from '@/components/shared/home/all-departments';
-import TopCategoryCards from '@/components/shared/home/top-category-cards';
+import DepartmentMosaic from '@/components/shared/home/department-mosaic';
 import CategoryQuads from '@/components/shared/home/category-quads';
 import LatestArrivals from '@/components/shared/home/latest-arrivals';
 import PersonalHero from '@/components/shared/home/personal-hero';
@@ -16,7 +16,7 @@ export default function Homepage() {
   return (
     <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] pb-16 font-sans'>
       {/* Apparel-first discovery, before account prompts. */}
-      <TopCategoryCards />
+      <DepartmentMosaic />
 
       <div className='max-w-[1520px] mx-auto space-y-4 px-3 sm:px-4 md:px-6 pt-2'>
         <PersonalHero />

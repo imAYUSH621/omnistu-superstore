@@ -35,8 +35,8 @@ export default function SearchResultsClient({
   currentRating,
   currentSort,
 }: SearchResultsClientProps) {
-  // Default viewMode to 'list' for high-converting Amazon horizontal card layout
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  // Image-led browsing by default; list remains an explicit user choice.
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   return (
     <div className='flex-1 min-w-0'>
@@ -82,24 +82,9 @@ export default function SearchResultsClient({
           ))}
         </div>
       ) : (
-        /* Grid Layout Stream */
-        <div className='space-y-6'>
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-            {products.slice(0, 3).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {/* Embedded In-Grid Deal Carousel */}
-          {featuredDeals.length > 0 && <DealsCarouselStrip deals={featuredDeals} />}
-
-          {products.length > 3 && (
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-              {products.slice(3).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+        /* One responsive grid: two columns on phones, more only when space permits. */
+        <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4' data-testid='search-product-grid'>
+          {products.map(product => <ProductCard key={product.id} product={product} />)}
         </div>
       )}
     </div>
