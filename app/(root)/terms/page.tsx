@@ -66,7 +66,7 @@ export default function TermsPage() {
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
               <li><strong>Cancellation:</strong> during test operation, reach out via the contact page before any dispatch; a formal cancellation window will be published when live ordering starts.</li>
-              <li><strong>Automated Dispatch:</strong> Once tracking numbers are issued by carriers (USPS, YunExpress, DHL, India Post), orders are in transit and cannot be intercepted until delivered.</li>
+              {contentReviewMode && (<li><strong>Automated Dispatch:</strong> Once tracking numbers are issued by carriers (USPS, YunExpress, DHL, India Post), orders are in transit and cannot be intercepted until delivered.</li>)}
               <li><strong>Fraud Prevention:</strong> We reserve the right to void or refund orders identified as high risk or containing invalid shipping destinations.</li>
             </ul>
           </section>

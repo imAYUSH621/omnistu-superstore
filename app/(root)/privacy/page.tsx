@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             </p>)}
             <ul className='list-disc pl-5 space-y-1.5'>
               {contentReviewMode && (<li><strong>Fulfillment Networks:</strong> CJ Dropshipping Inc., Printify Inc., and certified regional suppliers for product packing and dispatch.</li>)}
-              <li><strong>Carriers & Customs Authorities:</strong> USPS, YunExpress, DHL Express, India Post, and Blue Dart solely to generate shipping waybills, compute customs tariffs, and transmit SMS/email delivery tracking.</li>
+              {contentReviewMode && (<li><strong>Carriers & Customs Authorities:</strong> USPS, YunExpress, DHL Express, India Post, and Blue Dart solely to generate shipping waybills, compute customs tariffs, and transmit SMS/email delivery tracking.</li>)}
               <li>We <strong>do not sell, rent, or trade</strong> customer data to third-party ad brokers or data aggregators.</li>
             </ul>
           </section>
