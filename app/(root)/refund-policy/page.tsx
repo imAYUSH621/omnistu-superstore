@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { RotateCcw, CheckCircle, AlertCircle, PackageCheck, HelpCircle } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
   title: `Refund & Replacement Policy | ${APP_NAME}`,
@@ -39,7 +40,7 @@ export default function RefundPolicyPage() {
                   Our Zero-Risk Buyer Promise
                 </h3>
                 <p className='text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm'>
-                  Because our store operates on direct automated supplier fulfillment (CJ Dropshipping, Printify, and artisan hubs), we adhere strictly to official fulfiller dispute resolution rules. If your item arrives broken, defective, or goes missing in transit, you are <strong>100% covered</strong> for an immediate free replacement or refund.
+                  {contentReviewMode && (<>Because our store operates on direct automated supplier fulfillment (CJ Dropshipping, Printify, and artisan hubs), we adhere strictly to official fulfiller dispute resolution rules. </>)}If your item arrives broken, defective, or goes missing in transit, you are <strong>100% covered</strong> for an immediate free replacement or refund.
                 </p>
               </div>
             </div>
@@ -73,9 +74,9 @@ export default function RefundPolicyPage() {
               <li>
                 <strong>Gourmet Indian Food & Botanicals:</strong> (Saffron, Vedic Ghee, Heritage Teas, Mango Puree). In accordance with international and domestic food safety regulations, consumable grocery products cannot be returned once the protective seal is broken. If damaged during transit, full refunds or replacements are granted upon photo submission of the parcel.
               </li>
-              <li>
+              {contentReviewMode && (<li>
                 <strong>Print-on-Demand Apparel (Printify):</strong> Items are custom printed individually for your order. Because inventory is not pre-mass-produced, please consult our sizing chart carefully prior to ordering. Size remorse returns cannot be restocked by the printer.
-              </li>
+              </li>)}
             </ul>
           </section>
 
