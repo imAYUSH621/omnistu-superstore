@@ -6,7 +6,7 @@ import { insertProductSchema, updateProductSchema } from '@/lib/validators';
 import { Product } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { ControllerRenderProps, SubmitHandler, useForm } from 'react-hook-form';
+import { ControllerRenderProps, Resolver, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
   Form,
@@ -39,10 +39,9 @@ const ProductForm = ({
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof insertProductSchema>>({
-    resolver:
-      type === 'Update'
-        ? zodResolver(updateProductSchema)
-        : zodResolver(insertProductSchema),
+    resolver: (type === 'Update'
+      ? zodResolver(updateProductSchema)
+      : zodResolver(insertProductSchema)) as unknown as Resolver<z.infer<typeof insertProductSchema>>,
     defaultValues:
       product && type === 'Update' ? product : productDefaultValues,
   });

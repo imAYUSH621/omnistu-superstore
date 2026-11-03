@@ -32,7 +32,7 @@ import { insertReviewSchema } from '@/lib/validators';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { StarIcon } from 'lucide-react';
 import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Resolver, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
   createUpdateReview,
@@ -53,7 +53,7 @@ const ReviewForm = ({
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof insertReviewSchema>>({
-    resolver: zodResolver(insertReviewSchema),
+    resolver: zodResolver(insertReviewSchema) as unknown as Resolver<z.infer<typeof insertReviewSchema>>,
     defaultValues: reviewFormDefaultValues,
   });
 

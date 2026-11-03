@@ -22,9 +22,9 @@ export function formatNumberWithDecimal(num: number): string {
 export function formatError(error: any) {
   if (error.name === 'ZodError') {
     // Handle Zod error
-    const fieldErrors = Object.keys(error.errors).map(
-      (field) => error.errors[field].message
-    );
+    // zod 4 removed ZodError.errors; issues exists in 3 and 4.
+    const issues: { message: string }[] = Array.isArray(error.issues) ? error.issues : [];
+    const fieldErrors = issues.map((i) => i.message);
 
     return fieldErrors.join('. ');
   } else if (
