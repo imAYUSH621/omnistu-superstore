@@ -4,15 +4,17 @@ import { authOrigin } from '@/lib/auth-origin';
 
 import { z } from 'zod';
 import { hitLimit, limitKey, LIMITS } from '@/lib/auth-limits';
-import { devOutboxEnabled } from '@/lib/dev-outbox';
+import { resolveMailTransport } from '@/lib/mail/transport';
 import { consumePasswordReset, requestPasswordReset } from '@/lib/password-reset';
 
 const emailSchema = z.string().trim().toLowerCase().email();
-const GENERIC = 'If an account exists for that email, a reset link has been prepared in the development outbox.';
+const GENERIC_OUTBOX = 'If an account exists for that email, a reset link has been prepared in the development outbox.';
+const GENERIC_SENT = 'If an account exists for that email, a reset link has been sent.';
 const UNAVAILABLE = 'Password reset is not available yet.';
 
 export async function requestReset(_prev: unknown, formData: FormData) {
-  if (!devOutboxEnabled()) return { success: false, message: UNAVAILABLE };
+  const transport = resolveMailTransport();
+  if (!transport) return { success: false, message: UNAVAILABLE };
   const parsed = emailSchema.safeParse(formData.get('email'));
   if (parsed.success) {
     const lim = await hitLimit('reset-req', parsed.data, LIMITS.resetRequest.max, LIMITS.resetRequest.windowSec);
@@ -23,7 +25,7 @@ export async function requestReset(_prev: unknown, formData: FormData) {
     }
   }
   // Same reply for unknown emails, bad emails and failures.
-  return { success: true, message: GENERIC };
+  return { success: true, message: transport.kind === 'smtp' ? GENERIC_SENT : GENERIC_OUTBOX };
 }
 
 const resetSchema = z

@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/db/prisma';
 import { bumpSessionVersion } from '@/lib/session-version';
 import { hashPassword } from '@/lib/password';
-import { devOutboxEnabled, writeDevOutbox } from '@/lib/dev-outbox';
+import { resolveMailTransport } from '@/lib/mail/transport';
 
 // Reset tokens live in the existing VerificationToken table, keyed by a
 // prefixed identifier, and only the SHA-256 of the token is stored.
@@ -20,13 +20,15 @@ export function resetIdentifier(email: string): string {
 }
 
 /**
- * Creates a reset token for a known email and hands the link to the dev
- * outbox. Returns nothing about whether the account exists. No mail is sent.
+ * Creates a reset token for a known email and hands the link to the
+ * configured mail transport (SMTP when its env exists, otherwise the dev
+ * outbox). Returns nothing about whether the account exists.
  */
 export async function requestPasswordReset(emailInput: string, baseUrl: string): Promise<void> {
-  // Nothing can deliver a link yet (no mail provider), so do not mint tokens
-  // that nobody can receive. Only the dev outbox can carry them.
-  if (!devOutboxEnabled()) return;
+  // Nothing can deliver a link without a configured transport, so do not
+  // mint tokens that nobody can receive.
+  const transport = resolveMailTransport();
+  if (!transport) return;
   const email = emailInput.trim().toLowerCase();
   if (!email) return;
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -38,7 +40,7 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string):
     data: { identifier, token: hashResetToken(raw), expires: new Date(Date.now() + RESET_TTL_MS) },
   });
   const link = `${baseUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(raw)}`;
-  writeDevOutbox({ to: email, subject: 'Reset your password', body: link });
+  await transport.send({ to: email, subject: 'Reset your password', text: link });
 }
 
 export type ResetResult = { ok: true } | { ok: false; reason: 'invalid' | 'expired' };
