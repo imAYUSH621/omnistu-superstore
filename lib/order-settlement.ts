@@ -118,6 +118,13 @@ export async function updateOrderToPaid({
     status: 'PAID',
   }).catch((e) => console.error('Supabase sync background error:', e));
 
+  // Supplier dispatch is opt-in. Having CJ/Printify keys configured is not enough to place real
+  // supplier orders: a paid order only dispatches when FULFILLMENT_DISPATCH_ENABLED=true.
+  if (process.env.FULFILLMENT_DISPATCH_ENABLED !== 'true') {
+    console.warn(`[fulfillment] dispatch skipped for order ${updatedOrder.id}: FULFILLMENT_DISPATCH_ENABLED is not true`);
+    return;
+  }
+
   // Auto-dispatch order items to CJ Dropshipping and Printify supplier fulfillment pipelines
   dispatchOrderFulfillment({
     id: updatedOrder.id,
