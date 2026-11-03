@@ -12,8 +12,10 @@ export class CjReadError extends Error {
 export function classifyCjResponse(status, body) {
   const code = Number(body?.code);
   if (code === 1600014) return 'SUSPENDED';
-  if (code === 1600201 || code === 16900500 || (status === 429 && body?.pointsInfo)) return 'QUOTA';
+  // pointsInfo is documented on every response, including rate-limit responses. Explicit
+  // provider codes outrank its mere presence; only generic code 429 + pointsInfo means quota.
   if (code === 1600200) return 'RATE_LIMIT';
+  if (code === 1600201 || code === 16900500 || (code === 429 && body?.pointsInfo)) return 'QUOTA';
   if (status === 429) return 'THROTTLED_UNKNOWN';
   if ([1600001, 1600002, 1600003, 1600004, 1600005, 1600006, 1600008].includes(code) || status === 401) return 'AUTH';
   if (status >= 500) return 'SERVER';
