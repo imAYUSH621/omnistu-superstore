@@ -62,3 +62,47 @@ describe('test checkout mode', () => {
     expect(table).toContain('Simulate payment (TEST - no real charge)');
   });
 });
+
+describe('insertOrderSchema in test checkout mode', () => {
+  // Regression: createOrder passed isPaymentMethodAvailable('TestPayment') but
+  // then failed insertOrderSchema.parse with 'Invalid payment method', so the
+  // simulated place-order leg could never succeed.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { insertOrderSchema } = require('@/lib/validators');
+
+  const baseOrder = {
+    userId: 'user-1',
+    shippingAddress: {
+      fullName: 'Flow Test',
+      streetAddress: '1 Test Street',
+      city: 'Testville',
+      postalCode: '110001',
+      country: 'IN',
+    },
+    itemsPrice: '10.00',
+    shippingPrice: '0.00',
+    taxPrice: '0.00',
+    totalPrice: '10.00',
+  };
+
+  const prev = process.env.TEST_CHECKOUT_MODE;
+  afterEach(() => {
+    if (prev === undefined) delete process.env.TEST_CHECKOUT_MODE;
+    else process.env.TEST_CHECKOUT_MODE = prev;
+  });
+
+  it('accepts TestPayment only while TEST_CHECKOUT_MODE=true', () => {
+    process.env.TEST_CHECKOUT_MODE = 'true';
+    expect(insertOrderSchema.parse({ ...baseOrder, paymentMethod: 'TestPayment' }).paymentMethod).toBe('TestPayment');
+  });
+
+  it('rejects TestPayment when test checkout mode is off', () => {
+    delete process.env.TEST_CHECKOUT_MODE;
+    expect(() => insertOrderSchema.parse({ ...baseOrder, paymentMethod: 'TestPayment' })).toThrow('Invalid payment method');
+  });
+
+  it('still rejects unknown methods even in test mode', () => {
+    process.env.TEST_CHECKOUT_MODE = 'true';
+    expect(() => insertOrderSchema.parse({ ...baseOrder, paymentMethod: 'MagicMoney' })).toThrow('Invalid payment method');
+  });
+});
