@@ -22,6 +22,12 @@ export async function syncOrderToSupabase(payload: CloudOrderPayload): Promise<{
     return { success: false, mode: 'unconfigured' };
   }
 
+  // Opt-in: configured SUPABASE_URL/keys alone must never mirror orders (production still points at the
+  // old ECOM project). Writing there requires an explicit CLOUD_ORDER_MIRROR_ENABLED=true.
+  if (process.env.CLOUD_ORDER_MIRROR_ENABLED !== 'true') {
+    return { success: false, mode: 'disabled' };
+  }
+
   try {
     const res = await fetch(`${url}/rest/v1/orders`, {
       method: 'POST',
