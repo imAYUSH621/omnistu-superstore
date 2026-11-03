@@ -87,7 +87,16 @@ DELETE FROM "User" WHERE id = '${userId}';`);
   const stockOf = async (id: string) => (await prisma.product.findUniqueOrThrow({ where: { id } })).stock;
   const settle = (ps: Promise<unknown>[]) => Promise.allSettled(ps);
 
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { jest.clearAllMocks(); process.env.FULFILLMENT_DISPATCH_ENABLED = 'true'; });
+  afterAll(() => { delete process.env.FULFILLMENT_DISPATCH_ENABLED; });
+
+  it('supplier dispatch is opt-in: paid order, keys present, FULFILLMENT_DISPATCH_ENABLED unset -> no supplier call, order still paid', async () => {
+    delete process.env.FULFILLMENT_DISPATCH_ENABLED;
+    const { order } = await makeOrder({ qty: 1, stock: 5 });
+    await updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') });
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(true);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
 
   it.each([2, 5])('%i concurrent paid calls: exactly one wins, stock decremented once, side effects once', async (n) => {
     const { order, product } = await makeOrder({ qty: 2, stock: 10 });
