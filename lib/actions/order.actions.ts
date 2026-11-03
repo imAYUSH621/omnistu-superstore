@@ -338,7 +338,7 @@ export async function approvePayPalOrder(
       throw new Error(message);
     };
     const NOT_CONFIRMED = 'We could not confirm the payment status yet. Please do not pay again until it has been checked.';
-    if (!captureData) throw new Error('PayPal did not complete the payment.');
+    if (!captureData) await unconfirmed('CAPTURE_UNCONFIRMED', 'NO_RESPONSE_DATA', NOT_CONFIRMED);
     const rawCapture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
     const capStatus: string | undefined = rawCapture?.status;
     if (captureData.id !== (order.paymentResult as PaymentResult)?.id) {
@@ -354,7 +354,9 @@ export async function approvePayPalOrder(
       );
     }
     if (capStatus === 'DECLINED' || capStatus === 'FAILED') throw new Error('PayPal did not complete the payment.');
-    if (captureData.status !== 'COMPLETED' && !rawCapture) throw new Error('PayPal did not complete the payment.');
+    if (captureData.status !== 'COMPLETED' && !rawCapture) {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'INCOMPLETE_CAPTURE_DATA', NOT_CONFIRMED);
+    }
     const capture = rawCapture;
     if (!capture) await unconfirmed('CAPTURE_UNCONFIRMED', 'NO_CAPTURE_DATA', NOT_CONFIRMED);
     if (capture!.status !== 'COMPLETED') {
@@ -381,7 +383,7 @@ export async function approvePayPalOrder(
         paymentResult: {
           id: captureData.id,
           status: captureData.status,
-          email_address: captureData.payer.email_address,
+          email_address: captureData.payer?.email_address ?? '',
           pricePaid:
             captureData.purchase_units[0]?.payments?.captures[0]?.amount?.value,
         },

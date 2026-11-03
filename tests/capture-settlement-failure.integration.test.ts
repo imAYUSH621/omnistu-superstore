@@ -196,9 +196,17 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=ORDER_ID_MISMATCH');
   });
 
-  test('order not COMPLETED and no capture (e.g. APPROVED): not paid, no marker', async () => {
+  test('order not COMPLETED and no capture (e.g. APPROVED): unknown, never a rejection claim', async () => {
     const { r, o } = await approveWith('PP-APPR', respond(undefined, 'APPROVED', 'PP-APPR'));
-    expect(r.message).toBe('PayPal did not complete the payment.');
-    expect(o?.paymentNote).toBeNull();
+    expect(r.message).toContain('could not confirm');
+    expect(o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=INCOMPLETE_CAPTURE_DATA');
+  });
+
+  test('empty response is unknown, never a rejection claim', async () => {
+    const { r, o } = await approveWith('PP-EMPTY', null);
+    expect(r.success).toBe(false);
+    expect(r.message).toContain('could not confirm');
+    expect(o?.isPaid).toBe(false);
+    expect(o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=NO_RESPONSE_DATA');
   });
 });
