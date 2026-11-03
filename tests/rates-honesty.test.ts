@@ -27,10 +27,19 @@ describe('exchange rate labelling', () => {
     // Currency selection was re-added together with actual display
     // conversion (LocalizedPrice on browsing surfaces). The guard now
     // asserts the wiring exists AND the disclosure is honest: approximate
-    // reference conversion, hourly rates, checkout charges USD.
+    // reference conversion, source-aware rates wording, checkout charges
+    // USD. The rates clause comes from lib/rates-disclosure.ts so the UI
+    // can never claim "hourly" while the feed is in fallback; the exact
+    // wording contract is locked by tests/rates-disclosure.test.ts.
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
     expect(src).toContain('omnistu_currency');
-    expect(src).toContain('checkout charges USD');
+    expect(src).toContain('disclosure.ratesClause');
+    expect(src).toContain('ratesDisclosure(null)'); // honest default before the feed answers
+    const disc = fs.readFileSync('lib/rates-disclosure.ts', 'utf8');
+    expect(disc).toContain('checkout charges USD');
+    expect(disc).toContain('temporarily unavailable');
+    const priceSrc = fs.readFileSync('components/shared/localized-price.tsx', 'utf8');
+    expect(priceSrc).toContain('display.title'); // converted price tooltip is source-aware too
     const price = fs.readFileSync('components/shared/localized-price.tsx', 'utf8');
     expect(price).toContain('/api/rates');
     expect(price).toContain('convertPrice');

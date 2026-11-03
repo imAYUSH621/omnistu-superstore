@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { convertPrice } from '@/lib/i18n';
+import { ratesDisclosure } from '@/lib/rates-disclosure';
 
 export const SUPPORTED_CURRENCY_CODES = ['USD', 'INR', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'] as const;
 export type DisplayCurrency = (typeof SUPPORTED_CURRENCY_CODES)[number];
@@ -17,13 +18,22 @@ export function readCurrencyPreference(): DisplayCurrency {
 }
 
 // Single-flight hourly-cached rates load; the /api/rates route itself
-// reports its source (live_api / env_override / cache / default_safe).
-let ratesPromise: Promise<Record<string, number> | null> | null = null;
-function loadRates(): Promise<Record<string, number> | null> {
+// reports its source (live_api / env_override / cache / default_safe), and
+// that source decides the honesty wording shown to visitors.
+export interface RatesInfo {
+  rates: Record<string, number>;
+  source: string | null;
+}
+let ratesPromise: Promise<RatesInfo | null> | null = null;
+export function loadRatesInfo(): Promise<RatesInfo | null> {
   if (!ratesPromise) {
     ratesPromise = fetch('/api/rates')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => (d && d.success && d.rates ? (d.rates as Record<string, number>) : null))
+      .then((d) =>
+        d && d.success && d.rates
+          ? { rates: d.rates as Record<string, number>, source: (d.source as string) ?? null }
+          : null
+      )
       .catch(() => null);
   }
   return ratesPromise;
@@ -47,7 +57,7 @@ export default function LocalizedPrice({
   supClassName?: string;
 }) {
   const safe = Math.max(0, Number.isFinite(amountUsd) ? amountUsd : 0);
-  const [display, setDisplay] = useState<{ formatted: string; approx: boolean } | null>(null);
+  const [display, setDisplay] = useState<{ formatted: string; approx: boolean; title: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,10 +67,10 @@ export default function LocalizedPrice({
         if (!cancelled) setDisplay(null);
         return;
       }
-      const rates = await loadRates();
+      const info = await loadRatesInfo();
       if (cancelled) return;
-      const { formatted } = convertPrice(safe, currency, rates ?? undefined);
-      setDisplay({ formatted, approx: true });
+      const { formatted } = convertPrice(safe, currency, info?.rates ?? undefined);
+      setDisplay({ formatted, approx: true, title: ratesDisclosure(info?.source).priceTitle });
     };
     apply();
     const onChange = () => apply();
@@ -73,7 +83,7 @@ export default function LocalizedPrice({
 
   if (display) {
     return (
-      <span className={className} title='Approximate conversion - checkout charges USD'>
+      <span className={className} title={display.title}>
         {display.formatted}
         <sup className={supClassName}>~</sup>
       </span>

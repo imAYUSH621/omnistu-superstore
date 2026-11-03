@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Globe, Check, Banknote } from 'lucide-react';
 import { SUPPORTED_LANGUAGES, CURRENCY_METADATA, type SupportedLang } from '@/lib/i18n';
-import { SUPPORTED_CURRENCY_CODES, type DisplayCurrency } from '@/components/shared/localized-price';
+import { SUPPORTED_CURRENCY_CODES, loadRatesInfo, type DisplayCurrency } from '@/components/shared/localized-price';
+import { ratesDisclosure, type RatesDisclosure } from '@/lib/rates-disclosure';
 
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
@@ -14,6 +15,8 @@ export default function GlobalSelector() {
   const [selectedLang, setSelectedLang] = useState<SupportedLang>('EN');
   const [selectedCurrency, setSelectedCurrency] = useState<DisplayCurrency>('USD');
   const [isOpen, setIsOpen] = useState(false);
+  // Honest default until the live feed answers: reference, not hourly.
+  const [disclosure, setDisclosure] = useState<RatesDisclosure>(ratesDisclosure(null));
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,6 +30,10 @@ export default function GlobalSelector() {
     if ((SUPPORTED_CURRENCY_CODES as readonly string[]).includes(savedCur)) {
       setSelectedCurrency(savedCur as DisplayCurrency);
     }
+
+    loadRatesInfo().then((info) => {
+      if (info) setDisclosure(ratesDisclosure(info.source));
+    });
 
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -125,7 +132,8 @@ export default function GlobalSelector() {
             </div>
             <p className='mt-2 text-[11px] leading-snug text-neutral-700 dark:text-neutral-200'>
               Only menus and checkout labels are translated. Product details and policy pages stay in
-              English. Currency converts for reference at hourly rates - checkout charges USD.
+              English. Currency converts for reference at {disclosure.ratesClause} - checkout charges
+              USD.
             </p>
           </div>
         </div>
