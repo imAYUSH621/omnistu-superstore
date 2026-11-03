@@ -8,7 +8,7 @@ import { prisma } from '@/db/prisma';
  */
 /** Bounded reason codes: raw error text (which can carry DB details) is never stored or logged. */
 export type UnsettledReason = 'ORDER_MISSING' | 'AMOUNT_MISMATCH' | 'DB_ERROR' | 'UNKNOWN';
-export type IncidentKind = 'CAPTURED_UNSETTLED' | 'CAPTURE_UNCONFIRMED';
+export type IncidentKind = 'CAPTURED_UNSETTLED' | 'CAPTURE_UNCONFIRMED' | 'CAPTURE_PENDING';
 
 export function classifyUnsettledReason(cause: unknown): UnsettledReason | 'ALREADY_PAID' {
   // Typed errors only. Message text is never matched: database-client errors embed source snippets

@@ -144,4 +144,61 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     const { prisma } = await import('@/db/prisma');
     expect((await prisma.order.findUnique({ where: { id }, select: { paymentNote: true } }))?.paymentNote).toBeNull();
   });
+
+  const respond = (captures: unknown, orderStatus = 'COMPLETED', id = 'PP-X') => ({
+    id,
+    status: orderStatus,
+    payer: { email_address: 'payer-secret@example.test' },
+    purchase_units: [{ payments: captures === undefined ? {} : { captures } }],
+  });
+  const approveWith = async (ppId: string, resp: unknown) => {
+    const id = await mkOrder(ppId);
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockResolvedValueOnce(resp);
+    const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+    const r = await approvePayPalOrder(id, { orderID: ppId });
+    const { prisma } = await import('@/db/prisma');
+    const o = await prisma.order.findUnique({ where: { id }, select: { isPaid: true, paymentNote: true } });
+    return { r, o };
+  };
+
+  test('capture PENDING (eCheck): marker, never "rejected" or "paid", payer email not leaked', async () => {
+    const { r, o } = await approveWith('PP-PEND', respond([{ status: 'PENDING', status_details: { reason: 'ECHECK' }, amount: { value: '5.00', currency_code: 'USD' } }], 'COMPLETED', 'PP-PEND'));
+    expect(r.success).toBe(false);
+    expect(r.message).toContain('pending with PayPal');
+    expect(r.message).not.toMatch(/declined|rejected|did not complete|payer-secret/i);
+    expect(o?.isPaid).toBe(false);
+    expect(o?.paymentNote).toContain('CAPTURE_PENDING reason=ECHECK');
+    expect(o?.paymentNote).not.toContain('payer-secret');
+  });
+
+  test('capture DECLINED / FAILED: definite not-paid message, no marker', async () => {
+    for (const st of ['DECLINED', 'FAILED']) {
+      const { r, o } = await approveWith(`PP-${st}`, respond([{ status: st, amount: { value: '5.00', currency_code: 'USD' } }], 'COMPLETED', `PP-${st}`));
+      expect(r.message).toBe('PayPal did not complete the payment.');
+      expect(o?.paymentNote).toBeNull();
+    }
+  });
+
+  test('order COMPLETED but no capture data, or an unexpected capture state: UNCONFIRMED, never paid', async () => {
+    const a = await approveWith('PP-NOCAP', respond(undefined, 'COMPLETED', 'PP-NOCAP'));
+    expect(a.o?.isPaid).toBe(false);
+    expect(a.o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=NO_CAPTURE_DATA');
+    const b = await approveWith('PP-REFD', respond([{ status: 'REFUNDED', amount: { value: '5.00', currency_code: 'USD' } }], 'COMPLETED', 'PP-REFD'));
+    expect(b.o?.isPaid).toBe(false);
+    expect(b.o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=UNEXPECTED_CAPTURE_STATE');
+    expect(a.r.message).toContain('could not confirm');
+  });
+
+  test('response for a different PayPal order id: UNCONFIRMED (ORDER_ID_MISMATCH), never paid', async () => {
+    const { o } = await approveWith('PP-IDA', respond([{ status: 'COMPLETED', amount: { value: '5.00', currency_code: 'USD' } }], 'COMPLETED', 'PP-OTHER'));
+    expect(o?.isPaid).toBe(false);
+    expect(o?.paymentNote).toContain('CAPTURE_UNCONFIRMED reason=ORDER_ID_MISMATCH');
+  });
+
+  test('order not COMPLETED and no capture (e.g. APPROVED): not paid, no marker', async () => {
+    const { r, o } = await approveWith('PP-APPR', respond(undefined, 'APPROVED', 'PP-APPR'));
+    expect(r.message).toBe('PayPal did not complete the payment.');
+    expect(o?.paymentNote).toBeNull();
+  });
 });

@@ -74,6 +74,7 @@ export async function getUnsettledCaptures(): Promise<
         OR: [
           { paymentNote: { contains: 'CAPTURED_UNSETTLED' } },
           { paymentNote: { contains: 'CAPTURE_UNCONFIRMED' } },
+          { paymentNote: { contains: 'CAPTURE_PENDING' } },
           { paymentNote: { contains: 'AMOUNT_MISMATCH' } },
           { paymentNote: { contains: 'CURRENCY_MISMATCH' } },
         ],

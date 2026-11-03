@@ -331,24 +331,39 @@ export async function approvePayPalOrder(
       throw captureError;
     }
 
-    if (
-      !captureData ||
-      captureData.id !== (order.paymentResult as PaymentResult)?.id ||
-      captureData.status !== 'COMPLETED'
-    ) {
-      throw new Error('Error in PayPal payment');
+    // Distinguish the capture states from the actual PayPal response; money may have moved in several of
+    // them, so only a definite DECLINED/FAILED (or an order that never completed) is reported as not paid.
+    const unconfirmed = async (kind: 'CAPTURE_PENDING' | 'CAPTURE_UNCONFIRMED', reason: string, message: string, amount?: string) => {
+      await recordCapturedUnsettled(orderId, String(captureData?.id ?? data.orderID), amount, null, kind, reason);
+      throw new Error(message);
+    };
+    const NOT_CONFIRMED = 'We could not confirm the payment status yet. Please do not pay again until it has been checked.';
+    if (!captureData) throw new Error('PayPal did not complete the payment.');
+    const rawCapture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+    const capStatus: string | undefined = rawCapture?.status;
+    if (captureData.id !== (order.paymentResult as PaymentResult)?.id) {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'ORDER_ID_MISMATCH', NOT_CONFIRMED);
     }
-
-    const capture = captureData.purchase_units[0]?.payments?.captures[0];
-    // Fail closed: without a COMPLETED capture carrying an amount, the amount check in
-    // updateOrderToPaid would be skipped (it only compares when pricePaid is present).
-    if (
-      !capture ||
-      capture.status !== 'COMPLETED' ||
-      capture.amount?.value == null ||
-      capture.amount.value === ''
-    ) {
-      throw new Error('PayPal capture is missing, incomplete or has no amount');
+    if (capStatus === 'PENDING') {
+      const why = String(rawCapture?.status_details?.reason ?? 'PENDING').toUpperCase();
+      await unconfirmed(
+        'CAPTURE_PENDING',
+        why,
+        'Your payment is pending with PayPal and has not been confirmed yet. Please do not pay again.',
+        rawCapture?.amount?.value
+      );
+    }
+    if (capStatus === 'DECLINED' || capStatus === 'FAILED') throw new Error('PayPal did not complete the payment.');
+    if (captureData.status !== 'COMPLETED' && !rawCapture) throw new Error('PayPal did not complete the payment.');
+    const capture = rawCapture;
+    if (!capture) await unconfirmed('CAPTURE_UNCONFIRMED', 'NO_CAPTURE_DATA', NOT_CONFIRMED);
+    if (capture!.status !== 'COMPLETED') {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'UNEXPECTED_CAPTURE_STATE', NOT_CONFIRMED, capture!.amount?.value);
+    }
+    // Fail closed: without an amount the amount check in updateOrderToPaid would be skipped (it only
+    // compares when pricePaid is present).
+    if (captureData.status !== 'COMPLETED' || capture!.amount?.value == null || capture!.amount.value === '') {
+      await unconfirmed('CAPTURE_UNCONFIRMED', 'INCOMPLETE_CAPTURE_DATA', NOT_CONFIRMED);
     }
     if (!isExpectedCurrency(capture?.amount?.currency_code)) {
       const note = `CURRENCY_MISMATCH: captured ${capture?.amount?.currency_code ?? 'unknown'}, expected USD`;
