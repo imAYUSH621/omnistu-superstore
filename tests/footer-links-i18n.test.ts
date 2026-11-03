@@ -11,9 +11,14 @@ const labels = ['Shipping Policy', 'Refund Policy', 'Sustainability', 'Become an
 // The 'Make Money With Us' column (Seller Central, Sell on Omnistu, Supply
 // via CJ, Printify Lab, Affiliate) was removed: every entry pointed at /admin
 // and advertised seller/supplier/affiliate programs that are not built.
-const keys = ['backToTop', 'footerDemoNote', 'footerAbout', 'footerShippingPolicy', 'footerRefundPolicy', 'footerSustainability', 'footerPrivacy', 'footerTerms', 'footerYourAccount', 'footerOrdersTracking', 'footerContact', 'footerHelpCenter', 'footerShippingRates', 'footerReturns', 'footerShippingCarrier', 'footerReturnsRefunds'];
+const keys = ['backToTop', 'footerDemoNote', 'footerAbout', 'footerShippingPolicy', 'footerRefundPolicy', 'footerPrivacy', 'footerTerms', 'footerYourAccount', 'footerOrdersTracking', 'footerContact', 'footerHelpCenter', 'footerShippingRates', 'footerReturns', 'footerShippingCarrier', 'footerReturnsRefunds'];
 
 describe('footer link labels i18n (G4)', () => {
+  it('sustainability link stays out while the page is gated for fabricated claims', () => {
+    expect(footer).not.toContain("href='/sustainability'");
+    expect(footer).not.toContain("k='footerSustainability'");
+  });
+
   it('removed seller/supplier/affiliate column stays out of the footer', () => {
     for (const k of ['footerSellOn', 'footerSupplyCJ', 'footerPrintify', 'footerAffiliate', 'makeMoneyWithUs', 'sellerCentral']) {
       expect(footer).not.toContain(`k='${k}'`);

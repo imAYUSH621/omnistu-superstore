@@ -56,11 +56,6 @@ export default function Footer() {
                 <T k='footerRefundPolicy' />
               </Link>
             </li>
-            <li>
-              <Link href='/sustainability' className='hover:underline hover:text-white'>
-                <T k='footerSustainability' />
-              </Link>
-            </li>
           </ul>
         </div>
 

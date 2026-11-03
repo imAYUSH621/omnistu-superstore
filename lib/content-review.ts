@@ -9,7 +9,8 @@
  * NEXT_PUBLIC_CONTENT_REVIEW=true (build-time) shows the unreviewed content.
  * Set it ONLY on the protected review preview deployment (share-link), never
  * on the public apex. Default (unset) keeps public deployments honest:
- * /blog and /services render a "coming soon" state and article/detail pages
- * 404.
+ * /blog and /services render a "coming soon" state, article/detail pages 404,
+ * and the fabricated-claims marketing pages (/affiliates, /currency, /about,
+ * /press, /sustainability) redirect to home via next.config edge redirects.
  */
 export const contentReviewMode = process.env.NEXT_PUBLIC_CONTENT_REVIEW === 'true';

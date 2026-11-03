@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
       { source: '/affiliates/:path*', destination: '/', permanent: false },
       { source: '/currency', destination: '/', permanent: false },
       { source: '/currency/:path*', destination: '/', permanent: false },
+      // Marketing pages built on fabricated current-capability claims
+      // (supplier networks, AI sourcing engine, live fulfillment operations
+      // that do not exist). Redirected until the owner approves wording.
+      { source: '/about', destination: '/', permanent: false },
+      { source: '/about/:path*', destination: '/', permanent: false },
+      { source: '/press', destination: '/', permanent: false },
+      { source: '/press/:path*', destination: '/', permanent: false },
+      { source: '/sustainability', destination: '/', permanent: false },
+      { source: '/sustainability/:path*', destination: '/', permanent: false },
     ];
   },
   images: {
