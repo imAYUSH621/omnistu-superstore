@@ -11,6 +11,7 @@ const emailSchema = z.string().trim().toLowerCase().email();
 const GENERIC_OUTBOX = 'If an account exists for that email, a reset link has been prepared in the development outbox.';
 const GENERIC_SENT = 'If an account exists for that email, a reset link has been sent.';
 const UNAVAILABLE = 'Password reset is not available yet.';
+const SEND_FAILED = 'We could not send the reset email right now. Please try again later.';
 
 export async function requestReset(_prev: unknown, formData: FormData) {
   const transport = resolveMailTransport();
@@ -18,13 +19,19 @@ export async function requestReset(_prev: unknown, formData: FormData) {
   const parsed = emailSchema.safeParse(formData.get('email'));
   if (parsed.success) {
     const lim = await hitLimit('reset-req', parsed.data, LIMITS.resetRequest.max, LIMITS.resetRequest.windowSec);
-    if (lim.allowed) try {
-      await requestPasswordReset(parsed.data, authOrigin() || 'http://localhost:3000');
-    } catch (e) {
-      console.warn('password reset request failed', e instanceof Error ? e.name : 'error');
+    if (lim.allowed) {
+      let outcome: 'sent' | 'skipped' | 'failed' = 'failed';
+      try {
+        outcome = await requestPasswordReset(parsed.data, authOrigin() || 'http://localhost:3000');
+      } catch (e) {
+        console.warn('password reset request failed', e instanceof Error ? e.name : 'error');
+      }
+      // Never say "sent" unless the transport confirmed it. Unknown emails and
+      // bad emails get the same reply as a delivered link; a real delivery
+      // failure is reported honestly (only reachable when a send was attempted).
+      if (outcome === 'failed') return { success: false, message: SEND_FAILED };
     }
   }
-  // Same reply for unknown emails, bad emails and failures.
   return { success: true, message: transport.kind === 'smtp' ? GENERIC_SENT : GENERIC_OUTBOX };
 }
 

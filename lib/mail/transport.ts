@@ -19,7 +19,7 @@ export interface MailMessage {
 
 export interface MailTransport {
   kind: 'smtp' | 'dev-outbox';
-  /** Returns true when the message was accepted by the transport. */
+  /** Resolves true only when the transport confirmed acceptance; false on any failure. Never throws. */
   send(message: MailMessage): Promise<boolean>;
 }
 
@@ -31,20 +31,34 @@ function smtpTransport(env: NodeJS.ProcessEnv): MailTransport {
   return {
     kind: 'smtp',
     async send(message) {
-      // Lazy require: nodemailer only loads when SMTP is actually configured,
-      // so builds and non-SMTP environments never touch it.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const nodemailer = require('nodemailer');
-      const port = Number(env.SMTP_PORT || 587);
-      const transport = nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port,
-        secure: env.SMTP_SECURE === 'true' || port === 465,
-        auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-      });
-      const from = env.SMTP_FROM || `${APP_NAME} <${SENDER_EMAIL}>`;
-      await transport.sendMail({ from, to: message.to, subject: message.subject, text: message.text });
-      return true;
+      try {
+        // Lazy require: nodemailer only loads when SMTP is actually configured,
+        // so builds and non-SMTP environments never touch it.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const nodemailer = require('nodemailer');
+        const port = Number(env.SMTP_PORT || 587);
+        const transport = nodemailer.createTransport({
+          host: env.SMTP_HOST,
+          port,
+          secure: env.SMTP_SECURE === 'true' || port === 465,
+          requireTLS: !(env.SMTP_SECURE === 'true' || port === 465),
+          auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+          connectionTimeout: 10_000,
+          greetingTimeout: 10_000,
+          socketTimeout: 15_000,
+        });
+        const from = env.SMTP_FROM || `${APP_NAME} <${SENDER_EMAIL}>`;
+        const info = await transport.sendMail({ from, to: message.to, subject: message.subject, text: message.text });
+        // Success only when the server accepted this recipient and rejected none.
+        const accepted: unknown[] = Array.isArray(info?.accepted) ? info.accepted : [];
+        const rejected: unknown[] = Array.isArray(info?.rejected) ? info.rejected : [];
+        return accepted.length > 0 && rejected.length === 0;
+      } catch (e) {
+        // Never log the error message or config: it can echo credentials or addresses.
+        const code = (e as { code?: unknown })?.code;
+        console.warn('smtp send failed', e instanceof Error ? e.name : 'error', typeof code === 'string' ? code : '');
+        return false;
+      }
     },
   };
 }

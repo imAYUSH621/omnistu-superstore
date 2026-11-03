@@ -33,7 +33,7 @@ describe('resolveMailTransport gating', () => {
 
 describe('reset mail over a configured transport', () => {
   it('mints the token and sends the link via SMTP when SMTP is configured', async () => {
-    const sendMail = jest.fn().mockResolvedValue({});
+    const sendMail = jest.fn().mockResolvedValue({ accepted: ['user@x.test'], rejected: [] });
     const create = jest.fn().mockResolvedValue({});
     jest.resetModules();
     jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
@@ -57,6 +57,64 @@ describe('reset mail over a configured transport', () => {
     process.env = saved;
   });
 
+  async function runWith(sendMail: jest.Mock) {
+    const create = jest.fn().mockResolvedValue({});
+    const deleteMany = jest.fn().mockResolvedValue({});
+    jest.resetModules();
+    jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
+    jest.doMock('@/db/prisma', () => ({
+      prisma: {
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }) },
+        verificationToken: { create, deleteMany },
+      },
+    }));
+    const saved = { ...process.env };
+    process.env = { ...process.env, ...SMTP };
+    delete process.env.DEV_OUTBOX_DIR;
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { requestPasswordReset } = await import('@/lib/password-reset');
+    const outcome = await requestPasswordReset('user@x.test', 'https://omnistu.com');
+    const logged = JSON.stringify(warn.mock.calls);
+    warn.mockRestore();
+    process.env = saved;
+    return { outcome, create, deleteMany, logged };
+  }
+
+  it('reports sent only when the server accepted the recipient', async () => {
+    const r = await runWith(jest.fn().mockResolvedValue({ accepted: ['user@x.test'], rejected: [] }));
+    expect(r.outcome).toBe('sent');
+  });
+
+  it('a thrown send is a failure: token revoked, nothing logged but the error name', async () => {
+    const err = Object.assign(new Error('auth failed for user@x.test pass secret'), { code: 'EAUTH' });
+    const r = await runWith(jest.fn().mockRejectedValue(err));
+    expect(r.outcome).toBe('failed');
+    expect(r.create).toHaveBeenCalledTimes(1);
+    expect(r.deleteMany).toHaveBeenCalledTimes(2); // pre-clean + revoke after failed delivery
+    expect(r.logged).not.toContain('secret');
+    expect(r.logged).not.toContain('user@x.test');
+  });
+
+  it('a rejected recipient or empty accepted list is a failure, not success', async () => {
+    expect((await runWith(jest.fn().mockResolvedValue({ accepted: [], rejected: ['user@x.test'] }))).outcome).toBe('failed');
+    expect((await runWith(jest.fn().mockResolvedValue({}))).outcome).toBe('failed');
+  });
+
+  it('unknown account is skipped and sends nothing', async () => {
+    const sendMail = jest.fn();
+    jest.resetModules();
+    jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
+    jest.doMock('@/db/prisma', () => ({
+      prisma: { user: { findUnique: jest.fn().mockResolvedValue(null) }, verificationToken: { create: jest.fn(), deleteMany: jest.fn() } },
+    }));
+    const saved = { ...process.env };
+    process.env = { ...process.env, ...SMTP };
+    const { requestPasswordReset } = await import('@/lib/password-reset');
+    expect(await requestPasswordReset('nobody@x.test', 'https://omnistu.com')).toBe('skipped');
+    expect(sendMail).not.toHaveBeenCalled();
+    process.env = saved;
+  });
+
   it('still mints no token when no transport exists', async () => {
     const create = jest.fn();
     jest.resetModules();
@@ -70,7 +128,7 @@ describe('reset mail over a configured transport', () => {
     delete process.env.DEV_OUTBOX_DIR;
     delete process.env.SMTP_HOST; delete process.env.SMTP_USER; delete process.env.SMTP_PASS;
     const { requestPasswordReset } = await import('@/lib/password-reset');
-    await requestPasswordReset('a@b.test', 'http://localhost:3000');
+    expect(await requestPasswordReset('a@b.test', 'http://localhost:3000')).toBe('skipped');
     expect(create).not.toHaveBeenCalled();
     process.env = saved;
   });

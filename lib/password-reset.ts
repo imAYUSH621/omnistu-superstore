@@ -24,15 +24,17 @@ export function resetIdentifier(email: string): string {
  * configured mail transport (SMTP when its env exists, otherwise the dev
  * outbox). Returns nothing about whether the account exists.
  */
-export async function requestPasswordReset(emailInput: string, baseUrl: string): Promise<void> {
+export type RequestOutcome = 'sent' | 'skipped' | 'failed';
+
+export async function requestPasswordReset(emailInput: string, baseUrl: string): Promise<RequestOutcome> {
   // Nothing can deliver a link without a configured transport, so do not
   // mint tokens that nobody can receive.
   const transport = resolveMailTransport();
-  if (!transport) return;
+  if (!transport) return 'skipped';
   const email = emailInput.trim().toLowerCase();
-  if (!email) return;
+  if (!email) return 'skipped';
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (!user) return;
+  if (!user) return 'skipped';
   const identifier = resetIdentifier(email);
   await prisma.verificationToken.deleteMany({ where: { identifier } });
   const raw = newResetToken();
@@ -40,7 +42,18 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string):
     data: { identifier, token: hashResetToken(raw), expires: new Date(Date.now() + RESET_TTL_MS) },
   });
   const link = `${baseUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(raw)}`;
-  await transport.send({ to: email, subject: 'Reset your password', text: link });
+  let delivered = false;
+  try {
+    delivered = await transport.send({ to: email, subject: 'Reset your password', text: link });
+  } catch {
+    delivered = false;
+  }
+  if (!delivered) {
+    // Nobody received the link, so the token must not stay valid.
+    await prisma.verificationToken.deleteMany({ where: { identifier } });
+    return 'failed';
+  }
+  return 'sent';
 }
 
 export type ResetResult = { ok: true } | { ok: false; reason: 'invalid' | 'expired' };
