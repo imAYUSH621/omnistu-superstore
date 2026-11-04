@@ -1,4 +1,5 @@
 'use server';
+import { assertCheckoutSnapshot } from '@/lib/cart-checkout-snapshot';
 import { cartLinesMatchCatalog, cartTotalsConsistent } from '@/lib/cart-line-integrity';
 
 import { isPaymentMethodAvailable, testCheckoutMode } from '@/lib/payment-capabilities';
@@ -151,6 +152,8 @@ export async function createOrder(idempotencyKey?: string) {
 
     // Create a transaction to create order and order items in database
     const insertedOrderId = await prisma.$transaction(async (tx) => {
+      // Share the cart edit lock and refuse stale snapshots rather than clearing new edits.
+      await assertCheckoutSnapshot(tx, user.id, cart);
       // Create order
       const insertedOrder = await tx.order.create({ data: orderData });
       // Create order items from the cart items
