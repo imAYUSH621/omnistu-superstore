@@ -62,9 +62,9 @@ export async function updateOrderToPaid({
       const note = `AMOUNT_MISMATCH: captured ${paymentResult.pricePaid}, expected ${expected}`;
       // updateMany + isPaid:false so a concurrent legitimate payment is never overwritten.
       await prisma.order.updateMany({
-        where: { id: orderId, isPaid: false },
+        where: { id: orderId, isPaid: false, paymentNote: order.paymentNote },
         data: {
-          paymentNote: note,
+          paymentNote: [order.paymentNote, note].filter(Boolean).join(' | '),
           paymentResult: { ...paymentResult, status: 'AMOUNT_MISMATCH' },
         },
       });

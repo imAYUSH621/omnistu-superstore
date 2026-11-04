@@ -18,6 +18,7 @@ import { Prisma } from '@prisma/client';
 import { updateOrderToPaid, updateOrderToPaidSimulated } from '../order-settlement';
 import { requireAdmin } from '../auth-guard';
 import { recordCapturedUnsettled } from '../captured-unsettled';
+import { needsPaymentReview, PAYMENT_REVIEW_MESSAGE } from '../payment-review';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
@@ -242,6 +243,7 @@ async function requireOrderAccess(orderUserId: string) {
 
 // Create new paypal order
 export async function createPayPalOrder(orderId: string) {
+  let creationAttempted = false;
   try {
     // Get order from database
     const order = await prisma.order.findFirst({
@@ -253,6 +255,15 @@ export async function createPayPalOrder(orderId: string) {
     if (order) {
       await requireOrderAccess(order.userId);
       if (order.isPaid) throw new Error('Order is already paid');
+      if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
+      if (needsPaymentReview(order.paymentNote)) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      const stored = order.paymentResult as PaymentResult | null;
+      if (stored?.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      // Reuse the original, unattempted provider order rather than replace its binding.
+      if (stored?.id) {
+        if (stored.status) throw new Error(PAYMENT_REVIEW_MESSAGE);
+        return { success: true, message: 'Payment order already created', data: stored.id };
+      }
       {
         const lines = await prisma.orderItem.findMany({
           where: { orderId },
@@ -265,22 +276,26 @@ export async function createPayPalOrder(orderId: string) {
         const short = firstUnavailableLine(lines, new Map(rows.map((r) => [r.id, r.stock])));
         if (short) throw new Error(`Not enough stock for "${short}"`);
       }
-      // Create paypal order
+      // Claim before contacting PayPal. A crash leaves a durable, non-expiring review marker.
+      const priorResult = order.paymentResult ?? Prisma.DbNull;
+      const priorNote = order.paymentNote;
+      const marker = [priorNote, 'PAYPAL_CREATE_REQUESTED - needs manual review if interrupted; no automatic retry'].filter(Boolean).join(' | ');
+      const claim = await prisma.order.updateMany({
+        where: { id: orderId, isPaid: false, paymentNote: priorNote, paymentResult: { equals: priorResult } },
+        data: { paymentNote: marker },
+      });
+      if (claim.count !== 1) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      creationAttempted = true;
       const paypalOrder = await paypal.createOrder(Number(order.totalPrice));
-
-      // Update order with paypal order id
-      await prisma.order.update({
-        where: { id: orderId },
+      if (typeof paypalOrder?.id !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(paypalOrder.id)) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      const bound = await prisma.order.updateMany({
+        where: { id: orderId, isPaid: false, paymentNote: marker, paymentResult: { equals: priorResult } },
         data: {
-          paymentResult: {
-            id: paypalOrder.id,
-            paypalEnv: paypal.environment,
-            email_address: '',
-            status: '',
-            pricePaid: 0,
-          },
+          paymentNote: priorNote,
+          paymentResult: { id: paypalOrder.id, paypalEnv: paypal.environment, email_address: '', status: '', pricePaid: '' },
         },
       });
+      if (bound.count !== 1) throw new Error(PAYMENT_REVIEW_MESSAGE);
 
       return {
         success: true,
@@ -291,7 +306,7 @@ export async function createPayPalOrder(orderId: string) {
       throw new Error('Order not found');
     }
   } catch (error) {
-    return { success: false, message: formatError(error) };
+    return { success: false, message: creationAttempted ? PAYMENT_REVIEW_MESSAGE : formatError(error) };
   }
 }
 
@@ -311,6 +326,23 @@ export async function approvePayPalOrder(
     if (!order) throw new Error('Order not found');
     await requireOrderAccess(order.userId);
 
+    if (order.isPaid) throw new Error('Order is already paid');
+    if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
+    const stored = order.paymentResult as PaymentResult | null;
+    if (typeof data?.orderID !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(data.orderID) || !stored?.id || data.orderID !== stored.id) {
+      throw new Error('Payment order does not match this order');
+    }
+    if (needsPaymentReview(order.paymentNote) || stored.status) throw new Error(PAYMENT_REVIEW_MESSAGE);
+    if (stored.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
+    // One winner across processes, before any capture request. The marker survives timeouts/crashes.
+    // It is never automatically expired, cleared, or retried, even if the provider call was not sent.
+    const marker = [order.paymentNote, `CAPTURE_REQUESTED capture=${stored.id} - outcome not confirmed; needs manual review, no automatic retry`].filter(Boolean).join(' | ');
+    const claim = await prisma.order.updateMany({
+      where: { id: orderId, isPaid: false, paymentNote: order.paymentNote, paymentResult: { equals: order.paymentResult ?? Prisma.DbNull } },
+      data: { paymentNote: marker },
+    });
+    if (claim.count !== 1) throw new Error(PAYMENT_REVIEW_MESSAGE);
+
     let captureData;
     try {
       captureData = await paypal.capturePayment(data.orderID);
@@ -329,7 +361,9 @@ export async function approvePayPalOrder(
         throw new Error('We could not confirm the payment status yet. Please do not pay again until it has been checked.');
       }
       if (outcome === 'REJECTED') throw new Error('PayPal did not complete the payment.');
-      throw captureError;
+      // Pre-capture auth failures and untyped provider errors must not leak external response text.
+      // The durable attempt marker remains for review, even if capture was never sent.
+      throw new Error(PAYMENT_REVIEW_MESSAGE);
     }
 
     // Distinguish the capture states from the actual PayPal response; money may have moved in several of
@@ -369,10 +403,8 @@ export async function approvePayPalOrder(
       await unconfirmed('CAPTURE_UNCONFIRMED', 'INCOMPLETE_CAPTURE_DATA', NOT_CONFIRMED);
     }
     if (!isExpectedCurrency(capture?.amount?.currency_code)) {
-      const note = `CURRENCY_MISMATCH: captured ${capture?.amount?.currency_code ?? 'unknown'}, expected USD`;
-      await prisma.order.update({ where: { id: orderId }, data: { paymentNote: note } });
-      console.error(`[payments] ${note} on order ${orderId} - not marking paid`);
-      throw new Error('Captured currency does not match the order currency');
+      await recordCapturedUnsettled(orderId, captureData.id, capture?.amount?.value, null, 'CAPTURED_UNSETTLED', 'CURRENCY_MISMATCH');
+      throw new Error('The payment currency could not be matched to this order. Please do not pay again until it has been checked.');
     }
 
     // Update order to paid. The PayPal capture above is external and cannot roll back with a

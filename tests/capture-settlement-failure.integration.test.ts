@@ -14,6 +14,7 @@ const mockCreate = jest.fn();
 const mockDispatch = jest.fn();
 const mockMail = jest.fn();
 const mockMirror = jest.fn();
+jest.mock('@/lib/payment-capabilities', () => ({ isPaymentMethodAvailable: () => true, testCheckoutMode: () => false }));
 jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
 jest.mock('@/lib/paypal', () => ({ paypal: { capturePayment: (...a: unknown[]) => mockCapture(...a), createOrder: (...a: unknown[]) => mockCreate(...a), environment: 'sandbox' } }));
 jest.mock('@/lib/fulfillment-dispatcher', () => ({ dispatchOrderFulfillment: (...a: unknown[]) => mockDispatch(...a) }));
@@ -170,7 +171,96 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(r.success).toBe(false);
     expect(r.message).toBe('PayPal did not complete the payment.');
     const { prisma } = await import('@/db/prisma');
-    expect((await prisma.order.findUnique({ where: { id }, select: { paymentNote: true } }))?.paymentNote).toBeNull();
+    expect((await prisma.order.findUnique({ where: { id }, select: { paymentNote: true } }))?.paymentNote).toContain('CAPTURE_REQUESTED');
+  });
+
+  test('two concurrent approvals send exactly one capture; interrupted attempt remains durable and reviewable', async () => {
+    const id = await mkOrder('PP-RACE');
+    const { prisma } = await import('@/db/prisma');
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockClear();
+    let release!: () => void;
+    let entered!: () => void;
+    const enteredPromise = new Promise<void>(r => { entered = r; });
+    mockCapture.mockImplementationOnce(async () => {
+      entered();
+      await new Promise<void>(r => { release = r; });
+      throw Object.assign(new Error('provider reply lost'), { outcome: 'UNKNOWN', detail: 'NETWORK_OR_TIMEOUT' });
+    });
+    const { approvePayPalOrder, createPayPalOrder } = await import('@/lib/actions/order.actions');
+    const first = approvePayPalOrder(id, { orderID: 'PP-RACE' });
+    await enteredPromise;
+    const during = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(during.paymentNote).toContain('CAPTURE_REQUESTED capture=PP-RACE');
+    expect(during.isPaid).toBe(false);
+    // Even before a provider reply/incident write, the pre-call marker blocks another request.
+    const duplicate = await approvePayPalOrder(id, { orderID: 'PP-RACE' });
+    expect(duplicate.success).toBe(false);
+    expect(duplicate.message).toContain('do not pay again');
+    mockCreate.mockClear();
+    expect((await createPayPalOrder(id)).success).toBe(false);
+    expect(mockCreate).not.toHaveBeenCalled();
+    mockAuth.mockResolvedValue({ user: { id: 'adm', role: 'admin' } });
+    const { getUnsettledCaptures } = await import('@/lib/actions/reconcile.actions');
+    const listing = await getUnsettledCaptures();
+    expect(listing.success && listing.items.some(i => i.orderId === id)).toBe(true);
+    release();
+    expect((await first).success).toBe(false);
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+    const after = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(after.paymentNote).toContain('CAPTURE_REQUESTED');
+    expect(after.paymentNote).toContain('CAPTURE_UNCONFIRMED');
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test('concurrent PayPal creation binds once, never replaces an existing binding', async () => {
+    const id = await mkOrder('unused');
+    const { prisma } = await import('@/db/prisma');
+    const { Prisma } = await import('@prisma/client');
+    await prisma.order.update({ where: { id }, data: { paymentResult: Prisma.DbNull } });
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCreate.mockReset();
+    mockCreate.mockResolvedValue({ id: 'PP-ONCE' });
+    const { createPayPalOrder } = await import('@/lib/actions/order.actions');
+    await Promise.all([createPayPalOrder(id), createPayPalOrder(id)]);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id } })).paymentResult).toMatchObject({ id: 'PP-ONCE' });
+    expect((await createPayPalOrder(id)).success).toBe(true);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+  });
+
+  test('interrupted provider creation stays reviewable and does not expose provider error', async () => {
+    const id = await mkOrder('unused-creation');
+    const { prisma } = await import('@/db/prisma');
+    const { Prisma } = await import('@prisma/client');
+    await prisma.order.update({ where: { id }, data: { paymentResult: Prisma.DbNull } });
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCreate.mockReset(); mockCreate.mockRejectedValue(new Error('provider-secret-response'));
+    const { createPayPalOrder } = await import('@/lib/actions/order.actions');
+    const r = await createPayPalOrder(id);
+    expect(r.success).toBe(false);
+    expect(r.message).not.toContain('provider-secret');
+    expect(r.message).toContain('do not pay again');
+    expect((await prisma.order.findUniqueOrThrow({ where: { id } })).paymentNote).toContain('PAYPAL_CREATE_REQUESTED');
+    await createPayPalOrder(id);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+  });
+
+  test('amount mismatch preserves pre-call claim and earlier note, blocks a second capture', async () => {
+    const id = await mkOrder('PP-AMOUNT');
+    const { prisma } = await import('@/db/prisma');
+    await prisma.order.update({ where: { id }, data: { paymentNote: 'OWNER NOTE keep me' } });
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockClear();
+    mockCapture.mockResolvedValue({ id: 'PP-AMOUNT', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '1.00', currency_code: 'USD' } }] } }] });
+    const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+    expect((await approvePayPalOrder(id, { orderID: 'PP-AMOUNT' })).success).toBe(false);
+    const row = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(row.paymentNote).toContain('OWNER NOTE keep me');
+    expect(row.paymentNote).toContain('CAPTURE_REQUESTED');
+    expect(row.paymentNote).toContain('AMOUNT_MISMATCH');
+    await approvePayPalOrder(id, { orderID: 'PP-AMOUNT' });
+    expect(mockCapture).toHaveBeenCalledTimes(1);
   });
 
   const respond = (captures: unknown, orderStatus = 'COMPLETED', id = 'PP-X') => ({
@@ -204,7 +294,7 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     for (const st of ['DECLINED', 'FAILED']) {
       const { r, o } = await approveWith(`PP-${st}`, respond([{ status: st, amount: { value: '5.00', currency_code: 'USD' } }], 'COMPLETED', `PP-${st}`));
       expect(r.message).toBe('PayPal did not complete the payment.');
-      expect(o?.paymentNote).toBeNull();
+      expect(o?.paymentNote).toContain('CAPTURE_REQUESTED');
     }
   });
 
@@ -240,6 +330,9 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
 
   test('creation stores the API instance environment on the local order', async () => {
     const id = await mkOrder('PP-BEFORE');
+    const { prisma: setupDb } = await import('@/db/prisma');
+    const { Prisma } = await import('@prisma/client');
+    await setupDb.order.update({ where: { id }, data: { paymentResult: Prisma.DbNull } });
     mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
     mockCreate.mockResolvedValueOnce({ id: 'PP-CREATED' });
     const { createPayPalOrder } = await import('@/lib/actions/order.actions');
