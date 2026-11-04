@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
+import { PAYMENT_REVIEW_MARKERS } from '@/lib/payment-review';
 import { findPaidOrdersNeedingAttentionPage, type ReconcileItem } from '@/lib/paid-reconciliation';
 
 /** Admin-only, read-only. Lists paid orders whose dispatch record is missing or not complete. */
@@ -71,13 +72,7 @@ export async function getUnsettledCaptures(): Promise<
     const rows = await prisma.order.findMany({
       where: {
         isPaid: false,
-        OR: [
-          { paymentNote: { contains: 'CAPTURED_UNSETTLED' } },
-          { paymentNote: { contains: 'CAPTURE_UNCONFIRMED' } },
-          { paymentNote: { contains: 'CAPTURE_PENDING' } },
-          { paymentNote: { contains: 'AMOUNT_MISMATCH' } },
-          { paymentNote: { contains: 'CURRENCY_MISMATCH' } },
-        ],
+        OR: PAYMENT_REVIEW_MARKERS.map(marker => ({ paymentNote: { contains: marker } })),
       },
       select: { id: true, createdAt: true, paymentNote: true },
       orderBy: { createdAt: 'desc' },

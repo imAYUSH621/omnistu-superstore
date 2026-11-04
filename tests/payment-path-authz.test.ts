@@ -1,5 +1,7 @@
 const mockFindFirst = jest.fn();
 const mockUpdate = jest.fn();
+const mockUpdateMany = jest.fn();
+const mockAvailable = jest.fn(() => true);
 const mockAuth = jest.fn();
 const mockCreatePP = jest.fn();
 const mockCapture = jest.fn();
@@ -10,6 +12,7 @@ jest.mock('@/db/prisma', () => ({
     order: {
       findFirst: (...a: unknown[]) => mockFindFirst(...a),
       findUnique: jest.fn(),
+      updateMany: (...a: unknown[]) => mockUpdateMany(...a),
       update: (...a: unknown[]) => mockUpdate(...a),
     },
     orderItem: { findMany: jest.fn(async () => [{ productId: 'p1', qty: 1, name: 'T' }]) },
@@ -17,6 +20,7 @@ jest.mock('@/db/prisma', () => ({
     $transaction: (...a: unknown[]) => mockUpdateToPaidInner(...a),
   },
 }));
+jest.mock('@/lib/payment-capabilities', () => ({ isPaymentMethodAvailable: () => mockAvailable(), testCheckoutMode: () => false }));
 jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
 jest.mock('@/lib/paypal', () => ({
   paypal: {
@@ -36,7 +40,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 import { createPayPalOrder, approvePayPalOrder } from '@/lib/actions/order.actions';
 import { stripeMinorToAmount, isExpectedCurrency, isAmountMismatch } from '@/lib/payment-guards';
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => { jest.clearAllMocks(); mockAvailable.mockReturnValue(true); mockUpdateMany.mockResolvedValue({ count: 1 }); });
 
 const OWNER = { user: { id: 'owner', role: 'user' } };
 const OTHER = { user: { id: 'other', role: 'user' } };
@@ -45,7 +49,7 @@ const ADMIN = { user: { id: 'adm', role: 'admin' } };
 describe('createPayPalOrder', () => {
   it('rejects an unauthenticated caller before any PayPal call', async () => {
     mockAuth.mockResolvedValue(null);
-    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', isPaid: false, totalPrice: '10.00' });
+    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', paymentMethod: 'PayPal', paymentNote: null, isPaid: false, totalPrice: '10.00' });
     const r = await createPayPalOrder('o1');
     expect(r.success).toBe(false);
     expect(mockCreatePP).not.toHaveBeenCalled();
@@ -53,21 +57,21 @@ describe('createPayPalOrder', () => {
   });
   it("rejects another user's order", async () => {
     mockAuth.mockResolvedValue(OTHER);
-    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', isPaid: false, totalPrice: '10.00' });
+    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', paymentMethod: 'PayPal', paymentNote: null, isPaid: false, totalPrice: '10.00' });
     const r = await createPayPalOrder('o1');
     expect(r.success).toBe(false);
     expect(mockCreatePP).not.toHaveBeenCalled();
   });
   it('refuses an already-paid order (would overwrite paymentResult)', async () => {
     mockAuth.mockResolvedValue(OWNER);
-    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', isPaid: true, totalPrice: '10.00' });
+    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', paymentMethod: 'PayPal', paymentNote: null, isPaid: true, totalPrice: '10.00' });
     const r = await createPayPalOrder('o1');
     expect(r.success).toBe(false);
     expect(mockUpdate).not.toHaveBeenCalled();
   });
   it('lets the owner create the PayPal order', async () => {
     mockAuth.mockResolvedValue(OWNER);
-    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', isPaid: false, totalPrice: '10.00' });
+    mockFindFirst.mockResolvedValue({ id: 'o1', userId: 'owner', paymentMethod: 'PayPal', paymentNote: null, isPaid: false, totalPrice: '10.00' });
     mockCreatePP.mockResolvedValue({ id: 'PP-1' });
     const r = await createPayPalOrder('o1');
     expect(r.success).toBe(true);
@@ -76,7 +80,7 @@ describe('createPayPalOrder', () => {
 });
 
 describe('approvePayPalOrder', () => {
-  const order = { id: 'o1', userId: 'owner', paymentResult: { id: 'PP-1' } };
+  const order = { id: 'o1', userId: 'owner', paymentMethod: 'PayPal', paymentNote: null, isPaid: false, paymentResult: { id: 'PP-1' } };
   it("never captures for a non-owner non-admin", async () => {
     mockAuth.mockResolvedValue(OTHER);
     mockFindFirst.mockResolvedValue(order);
@@ -91,6 +95,43 @@ describe('approvePayPalOrder', () => {
     expect(r.success).toBe(false);
     expect(mockCapture).not.toHaveBeenCalled();
   });
+  it.each([
+    ['paid', { isPaid: true }],
+    ['review', { paymentNote: 'CAPTURE_UNCONFIRMED capture=PP-1' }],
+    ['attempt already claimed', { paymentNote: 'CAPTURE_REQUESTED capture=PP-1' }],
+    ['creation interrupted', { paymentNote: 'PAYPAL_CREATE_REQUESTED' }],
+    ['wrong method', { paymentMethod: 'Stripe' }],
+    ['missing binding', { paymentResult: null }],
+    ['environment changed', { paymentResult: { id: 'PP-1', paypalEnv: 'live' } }],
+  ])('never contacts capture for %s', async (_name, override) => {
+    mockAuth.mockResolvedValue(OWNER);
+    mockFindFirst.mockResolvedValue({ ...order, ...override });
+    const r = await approvePayPalOrder('o1', { orderID: 'PP-1' });
+    expect(r.success).toBe(false);
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+  it('checks requested id before contacting PayPal', async () => {
+    mockAuth.mockResolvedValue(OWNER); mockFindFirst.mockResolvedValue(order);
+    await approvePayPalOrder('o1', { orderID: 'PP-OTHER' });
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+  it('server master switch refuses old orders before provider calls', async () => {
+    mockAuth.mockResolvedValue(OWNER); mockFindFirst.mockResolvedValue(order); mockAvailable.mockReturnValue(false);
+    expect((await approvePayPalOrder('o1', { orderID: 'PP-1' })).success).toBe(false);
+    expect((await createPayPalOrder('o1')).success).toBe(false);
+    expect(mockCapture).not.toHaveBeenCalled(); expect(mockCreatePP).not.toHaveBeenCalled();
+  });
+  it('failed durable claim means no capture', async () => {
+    mockAuth.mockResolvedValue(OWNER); mockFindFirst.mockResolvedValue(order); mockUpdateMany.mockResolvedValue({ count: 0 });
+    expect((await approvePayPalOrder('o1', { orderID: 'PP-1' })).success).toBe(false);
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
+  it('unavailable claim database never contacts capture', async () => {
+    mockAuth.mockResolvedValue(OWNER); mockFindFirst.mockResolvedValue(order);
+    mockUpdateMany.mockRejectedValueOnce(new Error('database unavailable'));
+    expect((await approvePayPalOrder('o1', { orderID: 'PP-1' })).success).toBe(false);
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
   it('rejects a capture in a non-USD currency and records a note, without marking paid', async () => {
     mockAuth.mockResolvedValue(ADMIN);
     mockFindFirst.mockResolvedValue(order);
@@ -101,7 +142,7 @@ describe('approvePayPalOrder', () => {
     const r = await approvePayPalOrder('o1', { orderID: 'PP-1' });
     expect(r.success).toBe(false);
     expect(r.message).toMatch(/currency/i);
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: { paymentNote: expect.stringContaining('CURRENCY_MISMATCH') } }));
+    expect(mockUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { paymentNote: expect.stringContaining('CURRENCY_MISMATCH') } }));
     expect(mockUpdateToPaidInner).not.toHaveBeenCalled();
   });
   const cap = (captures: unknown[], id = 'PP-1') => ({ id, status: 'COMPLETED', payer: { email_address: 'a@b.co' }, purchase_units: [{ payments: { captures } }] });

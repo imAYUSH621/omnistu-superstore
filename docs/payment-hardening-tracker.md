@@ -1,6 +1,20 @@
 # Payment / order hardening tracker (1 Nov 2026)
 Status words: DONE-LOCAL = merged + tested locally (unit and/or disposable Postgres), NOT deployed, NOT production-qualified.
 
+## 4 Nov 2026: current bounded release ledger
+
+Older entries below are historical snapshots, not the current deployment checklist.
+
+| Item | Code/test result | Release status | Remaining limit |
+| --- | --- | --- | --- |
+| Separate-order stock contention | PR203: atomic stock>=qty decrement inside paid transaction; stable product lock order; typed STOCK_UNAVAILABLE; real+simulated paths. Baseline double-winner reproduced. Full disposable Postgres suite717pass/3skip, including true DB-trigger failure and captured-unsettled preservation. | LIVE merge `4d0d89819574d940b190881307334807c087ae44`, deployment `dpl_Do88LUYGecEvFoXcLiGDKpZMifCo` READY; public home/health/search200, catalog empty. | Does not reserve before provider capture. Different orders can still be charged before one loses allocation; manual reconciliation, no refund/retry chosen. |
+| Capture/create entry and crash-held attempts | PR204: server method/master-switch/paid/bound-ID/environment/review guards, durable pre-call CAS, one-winner create/capture, retained review markers, no automatic expiry or retry. Full disposable Postgres733pass/3skip, ordinary663pass/71envskip before final two tests; tsc and changed-file eslint clean. | Prepared and tested, NOT LIVE. Final head/merge CI and deployment qualification pending. | Ambiguous attempts deliberately stay closed for manual review, even when a crash may have happened before the request was sent. No automatic retry/refund. |
+| Post-paid side effects | Existing read-only reconciliation can find paid orders without complete dispatch after grace period. Passive outbox helper has local commit/abort tests. | No new wiring or worker enabled. | Fire-and-forget mail/receipt/mirror/dispatch can still be lost after commit. No claim of crash-safe delivery. |
+| Retail activation | No changes made. | OFF; catalog empty. | Current stock/rights/cost/shipping/tax/provider qualification still required. |
+
+Local disposable-DB results do not prove hosted DB behavior or real-provider end-to-end payment.
+No production DB migration, provider calls, real charges, email sends, supplier orders, automatic refunds or retries were part of PR203/204 qualification.
+
 ## Done (PRs #62-#67 line)
 - DONE-LOCAL admin/owner authz on paid/deliver/PayPal create+approve; chat lookup exact match + no service-role fallback (#62, #63)
 - DONE-LOCAL PayPal: USD capture, COMPLETED capture with amount required (fail-closed), PayPal order id bound to stored id (#63, #65)
@@ -15,7 +29,7 @@ Status words: DONE-LOCAL = merged + tested locally (unit and/or disposable Postg
 2. Supplier unknown outcome: dispatcher sends no idempotency key. A paid order with null/failed dispatch may already be accepted by a supplier. NEVER retry blindly.
 3. G7 queue (FulfillmentTask) is autonomy-OFF and unwired; no scheduler. Enabling a runner = autonomy + supplier-spend decision (owner).
 4. Supabase mirror is plain POST (re-sync fails on unique order_id; no self-heal).
-5. No oversell guard: stock can go negative (refusing after capture strands money; business decision).
+5. Updated by PR203 above: local stock cannot be allocated below zero through settlement. Pre-capture reservation is still absent, so a completed charge can require manual review after allocation fails.
 6. orders sync still writes with SERVICE_ROLE||ANON; no server-only restricted credential exists.
 7. No real-provider PayPal/Stripe E2E; no crash-recovery test for downstream effects.
 
