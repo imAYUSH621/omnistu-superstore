@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import SupportMessage from '@/components/shared/support-message';
 import T from '@/components/shared/i18n-text';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
 
@@ -131,7 +132,7 @@ export default function AiConcierge() {
                       : 'bg-white dark:bg-[#1a232f] text-[#0f172a] dark:text-[#ddd] border border-[#f8fafc] dark:border-[#334155] rounded-bl-none shadow-xs'
                   }`}
                 >
-                  {m.content || (
+                  {m.content ? <SupportMessage text={m.content} /> : (
                     <span className="inline-flex gap-1 items-center text-gray-400">
                       <span className="animate-bounce">●</span>
                       <span className="animate-bounce delay-100">●</span>

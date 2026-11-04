@@ -42,9 +42,9 @@ describe('deterministic assistant test mode', () => {
     expect(src).toContain("process.env.ASSISTANT_TEST_MODE === 'true'");
     const noKey = src.indexOf('if (!apiKey)');
     const testMode = src.indexOf("ASSISTANT_TEST_MODE === 'true'");
-    const s503 = src.indexOf('currently configuring keys', testMode);
+    const fallback = src.indexOf('await groundedSupportAnswer', testMode);
     expect(testMode).toBeGreaterThan(noKey);
-    expect(s503).toBeGreaterThan(testMode);
+    expect(fallback).toBeGreaterThan(testMode);
   });
 
   it('deterministic mode never calls an external model', () => {

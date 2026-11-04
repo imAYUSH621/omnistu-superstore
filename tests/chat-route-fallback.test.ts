@@ -1,0 +1,7 @@
+jest.mock('@/lib/grounded-support',()=>({groundedSupportAnswer:jest.fn().mockResolvedValue('Automated store help (no external AI)\nOpen /contact.')}));
+jest.mock('@/lib/chat',()=>({MAX_MESSAGES:12,MAX_CHARS:1500,PROVIDERS:{groq:{key:()=>undefined},nvidia:{key:()=>undefined}},limited:()=>false,findProducts:jest.fn(),lookupOrder:jest.fn(),SYSTEM_PROMPT:'',deterministicTestAnswer:jest.fn()}));
+jest.mock('@/lib/store-knowledge',()=>({findStoreKnowledge:jest.fn()}));
+import {POST} from '@/app/api/chat/route';import {groundedSupportAnswer} from '@/lib/grounded-support';
+afterEach(()=>jest.clearAllMocks());
+it('no-key route returns grounded fallback and never external fetch',async()=>{delete process.env.ASSISTANT_TEST_MODE;const spy=jest.spyOn(global,'fetch');const r=await POST(new Request('http://local/api/chat',{method:'POST',body:JSON.stringify({messages:[{role:'user',content:'support'}]})}));expect(r.status).toBe(200);expect(r.headers.get('cache-control')).toBe('no-store');expect(await r.text()).toContain('no external AI');expect(groundedSupportAnswer).toHaveBeenCalledWith('support');expect(spy).not.toHaveBeenCalled();spy.mockRestore();});
+it.each([null,{}, {messages:{}},{messages:[]},{messages:[null]}])('malformed messages do not crash fallback',async(body)=>{const r=await POST(new Request('http://local/api/chat',{method:'POST',body:JSON.stringify(body)}));expect(r.status).toBe(400);});

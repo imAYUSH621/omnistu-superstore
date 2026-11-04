@@ -1,3 +1,4 @@
+import { groundedSupportAnswer } from '@/lib/grounded-support';
 import {
   MAX_MESSAGES,
   MAX_CHARS,
@@ -26,13 +27,15 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('Invalid JSON', { status: 400 });
   }
 
+  if (!body || typeof body !== 'object' || !Array.isArray(body.messages)) return new Response('Invalid messages', { status: 400 });
+
   if (!apiKey) {
     // Deterministic grounded TEST mode: rule-based answers over live store
     // data, clearly labeled, nothing sent to any external model. Explicit
-    // opt-in via ASSISTANT_TEST_MODE; otherwise the honest 503 stands.
+    // opt-in via ASSISTANT_TEST_MODE; otherwise public grounded help below uses no external model.
     if (process.env.ASSISTANT_TEST_MODE === 'true') {
       const raw = (body.messages ?? [])
-        .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
         .slice(-MAX_MESSAGES)
         .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) }));
       const lastTestUser = [...raw].reverse().find((m) => m.role === 'user');
@@ -40,11 +43,15 @@ export async function POST(req: Request): Promise<Response> {
       const answer = await deterministicTestAnswer(lastTestUser.content);
       return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
     }
-    return new Response('AI Concierge assistant is currently configuring keys. Please check back shortly.', { status: 503 });
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const lastUser = [...messages].reverse().find(m => m?.role === 'user' && typeof m.content === 'string');
+    if (!lastUser) return new Response('No message', { status: 400 });
+    const answer = await groundedSupportAnswer(lastUser.content.slice(0, MAX_CHARS));
+    return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
   }
 
   const messages = (body.messages ?? [])
-    .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .slice(-MAX_MESSAGES)
     .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) }));
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
