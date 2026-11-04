@@ -22,7 +22,7 @@ describe('getUnsettledCaptures', () => {
     expect(r.success).toBe(true);
     const arg = mockFindMany.mock.calls[0][0] as { where: { isPaid: boolean; OR: { paymentNote: { contains: string } }[] } };
     expect(arg.where.isPaid).toBe(false);
-    expect(arg.where.OR.map((c) => c.paymentNote.contains).sort()).toEqual(['AMOUNT_MISMATCH', 'CAPTURED_UNSETTLED', 'CAPTURE_PENDING', 'CAPTURE_REQUESTED', 'CAPTURE_UNCONFIRMED', 'CURRENCY_MISMATCH', 'PAYPAL_CREATE_REQUESTED']);
+    expect(arg.where.OR.map((c) => c.paymentNote.contains).sort()).toEqual(['AMOUNT_MISMATCH', 'CAPTURED_UNSETTLED', 'CAPTURE_PENDING', 'CAPTURE_REQUESTED', 'CAPTURE_UNCONFIRMED', 'CURRENCY_MISMATCH', 'PAYPAL_CREATE_REQUESTED', 'STRIPE_SETTLEMENT_REQUESTED']);
   });
   test('db failure returns a generic message', async () => {
     mockAuth.mockResolvedValue({ user: { role: 'admin' } });
