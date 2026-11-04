@@ -143,6 +143,41 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     expect(sendConfirm).not.toHaveBeenCalled();
   });
 
+  it('paid claim commits passive evidence once; replay does not duplicate it; never runnable', async () => {
+    const { order } = await makeOrder();
+    await updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') });
+    const tasks = await prisma.fulfillmentTask.findMany({ where: { orderId: order.id, supplier: 'PAYMENT_EFFECT_REVIEW' } });
+    expect(tasks).toHaveLength(1); expect(tasks[0].status).toBe('REVIEW_ONLY'); expect(tasks[0].maxAttempts).toBe(0);
+    await expect(updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') })).rejects.toThrow('already paid');
+    expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id, supplier: 'PAYMENT_EFFECT_REVIEW' } })).toBe(1);
+    const { dueFulfillmentTasks } = await import('@/lib/fulfillment-queue');
+    expect((await dueFulfillmentTasks()).some(t => t.id === tasks[0].id)).toBe(false);
+  });
+
+  it('crash after paid commit retains passive evidence and does not make it runnable', async () => {
+    const { order } = await makeOrder();
+    sendConfirm.mockImplementationOnce(() => { throw new Error('injected crash after paid commit'); });
+    await expect(updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') })).rejects.toThrow('injected crash');
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(true);
+    expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id, status: 'REVIEW_ONLY' } })).toBe(1);
+    const { dueFulfillmentTasks } = await import('@/lib/fulfillment-queue');
+    expect((await dueFulfillmentTasks()).some(t => t.orderId === order.id)).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('passive evidence failure rolls back stock and paid claim, with no side effects', async () => {
+    const { order, product } = await makeOrder();
+    psql(`CREATE OR REPLACE FUNCTION pt_fail_review() RETURNS trigger AS $b$ BEGIN RAISE EXCEPTION 'injected passive evidence failure'; END; $b$ LANGUAGE plpgsql;`);
+    psql(`CREATE TRIGGER pt_fail_review_trg BEFORE INSERT ON "FulfillmentTask" FOR EACH ROW WHEN (NEW."orderId" = '${order.id}') EXECUTE FUNCTION pt_fail_review()`);
+    try {
+      await expect(updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') })).rejects.toThrow();
+      expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(false);
+      expect(await stockOf(product.id)).toBe(10);
+      expect(await prisma.fulfillmentTask.count({ where: { orderId: order.id } })).toBe(0);
+      expect(dispatch).not.toHaveBeenCalled(); expect(sendConfirm).not.toHaveBeenCalled();
+    } finally { psql('DROP TRIGGER IF EXISTS pt_fail_review_trg ON "FulfillmentTask"'); psql('DROP FUNCTION IF EXISTS pt_fail_review()'); }
+  });
+
   it.each(['sandbox', 'live', 'unknown'] as const)('preserves stored %s environment through settlement', async (paypalEnv) => {
     const { order } = await makeOrder();
     await prisma.order.update({ where: { id: order.id }, data: { paymentResult: { id: 'PP', paypalEnv } } });

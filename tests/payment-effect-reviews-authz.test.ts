@@ -1,0 +1,9 @@
+const mockAuth = jest.fn(); const mockRead = jest.fn();
+jest.mock('@/auth', () => ({ auth: (...a: unknown[]) => mockAuth(...a) }));
+jest.mock('@/db/prisma', () => ({ prisma: { fulfillmentTask: { findMany: (...a: unknown[]) => mockRead(...a) } } }));
+import { getPaymentEffectReviews } from '@/lib/actions/reconcile.actions';
+beforeEach(() => { jest.clearAllMocks(); mockAuth.mockResolvedValue({ user: { role: 'admin' } }); mockRead.mockResolvedValue([]); });
+it('anonymous and nonadmin never read', async () => { mockAuth.mockResolvedValue(null); expect((await getPaymentEffectReviews()).success).toBe(false); mockAuth.mockResolvedValue({ user: { role: 'user' } }); expect((await getPaymentEffectReviews()).success).toBe(false); expect(mockRead).not.toHaveBeenCalled(); });
+it('pages passive evidence only with no payload/customer data or mutations', async () => { const rows = Array.from({ length: 51 }, (_, i) => ({ id: `row-${i}`, orderId: `order-${i}`, createdAt: new Date('2026-11-04T00:00:00Z') })); mockRead.mockResolvedValue(rows); const r = await getPaymentEffectReviews(); expect(r.success && r.items.length).toBe(50); expect(r.success && r.next).toBe('row-49'); expect(mockRead).toHaveBeenCalledWith({ where: { supplier: 'PAYMENT_EFFECT_REVIEW', status: 'REVIEW_ONLY' }, select: { id: true, orderId: true, createdAt: true }, orderBy: { id: 'asc' }, take: 51 }); });
+it('cursor is validated before read', async () => { expect((await getPaymentEffectReviews('bad')).success).toBe(false); expect(mockRead).not.toHaveBeenCalled(); });
+it('DB outage is explicit, generic and never a clean result', async () => { mockRead.mockRejectedValue(new Error('private-host')); const r = await getPaymentEffectReviews(); expect(r.success).toBe(false); expect(JSON.stringify(r)).not.toContain('private-host'); });
