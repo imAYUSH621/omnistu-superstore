@@ -20,7 +20,7 @@ export default async function AllDepartments() {
     >
       <div className='flex flex-wrap items-baseline justify-between gap-2 mb-3'>
         <h2 id='all-departments-heading' className='text-[18px] md:text-[20px] font-bold text-[#0f172a] dark:text-white tracking-tight'>
-          Shop all departments
+          More ways to browse
         </h2>
         <Link href='/search' className='text-[13px] text-[#4f46e5] dark:text-[#56b6c2] hover:underline font-medium'>
           Browse all products

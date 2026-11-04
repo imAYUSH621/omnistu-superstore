@@ -4,18 +4,18 @@ import { DEPARTMENTS } from '@/lib/constants/departments';
 
 // Editorial browsing groups reuse exact working category routes, not invented subcategories/SKUs.
 const groups = [
-  { title: 'Style & everyday care', names: ['Custom Apparel', 'Jewelry & Watches', 'Beauty & Personal Care', 'Health & Wellness'] },
-  { title: 'Make room for living', names: ['Home & Lifestyle', 'Household Essentials', 'Garden & Patio', 'Arts & Crafts'] },
-  { title: 'Play, learn & explore', names: ['Toys & Games', 'Baby & Kids', 'Books & Stationery', 'Sports & Outdoors'] },
-  { title: 'Useful finds, different departments', names: ['Tech & Gadgets', 'Automotive & Tools', 'Luggage & Travel', 'Pet Supplies'] },
+  { title: 'Put your everyday look together', names: ['Custom Apparel', 'Jewelry & Watches', 'Beauty & Personal Care', 'Health & Wellness'] },
+  { title: 'Make yourself at home', names: ['Home & Lifestyle', 'Household Essentials', 'Garden & Patio', 'Arts & Crafts'] },
+  { title: 'Make more room for fun', names: ['Toys & Games', 'Baby & Kids', 'Books & Stationery', 'Sports & Outdoors'] },
+  { title: 'Small things. Useful every day.', names: ['Tech & Gadgets', 'Automotive & Tools', 'Luggage & Travel', 'Pet Supplies'] },
 ];
 const tile = (name: string) => DEPARTMENTS.find(d => d.name === name)!;
 const route = (name: string) => `/search?category=${encodeURIComponent(name)}`;
 const highlights = [
-  { name: 'Beauty & Personal Care', color: 'bg-[#fce6e8] dark:bg-rose-950/30' },
-  { name: 'Home & Lifestyle', color: 'bg-[#e4f0e8] dark:bg-emerald-950/30' },
-  { name: 'Tech & Gadgets', color: 'bg-[#e3ecfa] dark:bg-blue-950/30' },
-  { name: 'Toys & Games', color: 'bg-[#fff0d4] dark:bg-amber-950/30' },
+  { name: 'Beauty & Personal Care', title: 'Refresh your daily routine', label: 'Browse beauty', color: 'bg-[#fce6e8] dark:bg-rose-950/30' },
+  { name: 'Home & Lifestyle', title: 'A little comfort for home', label: 'Browse home', color: 'bg-[#e4f0e8] dark:bg-emerald-950/30' },
+  { name: 'Tech & Gadgets', title: 'Plug into your day', label: 'Browse tech', color: 'bg-[#e3ecfa] dark:bg-blue-950/30' },
+  { name: 'Toys & Games', title: 'Make time for play', label: 'Browse toys & games', color: 'bg-[#fff0d4] dark:bg-amber-950/30' },
 ];
 
 export default function DepartmentMosaic() {
@@ -23,32 +23,33 @@ export default function DepartmentMosaic() {
     <section aria-labelledby='discovery-heading' className='max-w-[1520px] mx-auto px-3 sm:px-4 md:px-6 pt-4 pb-2'>
       <div className='flex flex-wrap items-baseline justify-between gap-2 mb-3'>
         <div>
-          <p className='text-[11px] uppercase tracking-[0.16em] font-semibold text-neutral-600 dark:text-neutral-400'>Explore Omnistu</p>
-          <h1 id='discovery-heading' className='text-2xl md:text-3xl font-bold text-slate-950 dark:text-white'>Find your everyday style</h1>
+          <p className='text-[11px] uppercase tracking-[0.16em] font-semibold text-neutral-600 dark:text-neutral-400'>A little inspiration for your day</p>
+          <h1 id='discovery-heading' className='text-2xl md:text-3xl font-bold text-slate-950 dark:text-white'>What will you find today?</h1>
         </div>
-        <Link href='#all-departments-heading' className='text-sm text-indigo-700 dark:text-indigo-300 hover:underline'>All 18 departments</Link>
+        <Link href='#all-departments-heading' className='text-sm text-indigo-700 dark:text-indigo-300 hover:underline'>Browse all categories</Link>
       </div>
       <div data-testid='department-mosaic' className='grid grid-cols-2 lg:grid-cols-6 gap-3'>
-        <Link href={route('Custom Apparel')} className='col-span-2 lg:row-span-2 bg-[#ebd6c2] dark:bg-stone-900 rounded-xl overflow-hidden group'>
-          <div className='p-4 md:p-5'>
-            <p className='text-xs font-medium text-stone-700 dark:text-stone-300'>Custom Apparel</p>
-            <h2 className='text-2xl md:text-3xl font-bold leading-tight text-stone-950 dark:text-white mt-1'>A little more you.</h2>
-            <span className='inline-block mt-2 text-sm underline underline-offset-4 text-stone-800 dark:text-stone-200'>Explore the department</span>
+        <Link href={route('Custom Apparel')} className='col-span-2 lg:row-span-2 bg-[#e8dfd4] dark:bg-stone-900 rounded-xl overflow-hidden group flex lg:flex-col min-h-[200px]'>
+          <div className='p-4 md:p-5 w-[48%] lg:w-full shrink-0 self-center lg:self-auto'>
+            <p className='text-xs font-medium text-stone-700 dark:text-stone-300'>Everyday style</p>
+            <h2 className='text-xl md:text-3xl font-bold leading-tight text-stone-950 dark:text-white mt-1'>Wear it your way.</h2>
+            <span className='inline-block mt-2 text-sm underline underline-offset-4 text-stone-800 dark:text-stone-200'>Browse clothing</span>
           </div>
-          <div className='relative aspect-square w-full overflow-hidden'>
-            <ProductImage src={tile('Custom Apparel').image} alt='Illustrative T-shirt and hoodie category artwork' sizes='(max-width: 1023px) 94vw, 33vw' priority className='object-cover transition-transform duration-300 group-hover:scale-[1.02]' />
+          <div className='relative w-[52%] lg:w-full min-h-[200px] lg:min-h-0 lg:aspect-square lg:flex-1 overflow-hidden'>
+            <ProductImage src={tile('Custom Apparel').image} alt='Illustrative hoodie on a hanger and folded clothing, with no model' sizes='(max-width: 1023px) 48vw, 33vw' priority className='object-cover transition-transform duration-300 group-hover:scale-[1.02]' />
           </div>
         </Link>
-        {highlights.map(({name,color}) => (
-          <Link key={name} href={route(name)} className={`lg:col-span-2 rounded-xl overflow-hidden p-3 md:p-4 group ${color}`}>
-            <h2 className='font-bold text-sm md:text-lg leading-tight text-slate-950 dark:text-white min-h-10 md:min-h-7'>{name}</h2>
-            <div className='relative aspect-[4/3] w-full mt-2 rounded-lg overflow-hidden'>
+        {highlights.map(({name,title,label,color}) => (
+          <Link key={name} href={route(name)} className={`lg:col-span-2 rounded-xl overflow-hidden p-3 md:p-4 group flex flex-col ${color}`}>
+            <h2 className='font-bold text-sm md:text-lg leading-tight text-slate-950 dark:text-white min-h-10 md:min-h-7'>{title}</h2>
+            <div className='relative aspect-[5/3] w-full mt-2 rounded-lg overflow-hidden'>
               <ProductImage src={tile(name).image} alt='' sizes='(max-width: 1023px) 45vw, 30vw' className='object-cover group-hover:scale-[1.03] transition-transform duration-300' />
             </div>
+            <span className='text-xs md:text-sm mt-2 underline underline-offset-2'>{label}</span>
           </Link>
         ))}
       </div>
-      <p className='text-xs text-neutral-600 dark:text-neutral-400 mt-2'>Illustrative category artwork, not product photography. Open a department to see current items.</p>
+      <p className='text-xs text-neutral-600 dark:text-neutral-400 mt-2'>Category images are illustrations, not items for sale. Browse a category to check the current catalog.</p>
       <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4' data-testid='department-collections'>
         {groups.map(group => (
           <section key={group.title} className='bg-white dark:bg-slate-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4'>

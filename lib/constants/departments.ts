@@ -6,7 +6,7 @@
 export type Department = { name: string; image: string };
 
 export const DEPARTMENTS: readonly Department[] = [
-  { name: 'Custom Apparel', image: '/images/categories/custom-apparel-editorial.webp' },
+  { name: 'Custom Apparel', image: '/images/categories/custom-apparel.jpg' },
   { name: 'Gourmet & Indian Food', image: '/images/categories/gourmet-indian-food.jpg' },
   { name: 'Tech & Gadgets', image: '/images/categories/tech-gadgets.jpg' },
   { name: 'Jewelry & Watches', image: '/images/categories/jewelry-watches.jpg' },
