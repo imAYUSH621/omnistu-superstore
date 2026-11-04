@@ -1,3 +1,4 @@
+jest.mock('@/lib/mail/transport', () => ({ resolveMailTransport: () => null }));
 import { describe, expect, test } from '@jest/globals';
 import { POST } from '@/app/api/contact/route';
 
@@ -42,7 +43,7 @@ describe('contact route recipient', () => {
     const savedEmail = process.env.SUPPORT_EMAIL;
     delete process.env.SUPPORT_EMAIL;
     process.env.RESEND_API_KEY = 'test-key';
-    const send = jest.fn().mockResolvedValue({ id: 'x' });
+    const send = jest.fn().mockResolvedValue({ data: {id: 'x'}, error:null });
     jest.doMock('resend', () => ({ Resend: jest.fn().mockImplementation(() => ({ emails: { send } })) }), { virtual: true });
     jest.resetModules();
     const { POST: PostWithMock } = await import('@/app/api/contact/route');

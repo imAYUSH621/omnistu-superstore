@@ -42,17 +42,17 @@ export default function ContactPage() {
       <div>
         <h1 className='text-2xl font-bold text-foreground'>Contact &amp; Support</h1>
         <p className='text-sm text-muted-foreground mt-1'>
-          This is a demo store in test mode. The fastest help channel right now is the on-site AI
-          assistant (bottom-right of every page).
+          Automated store help can guide you to products and your order page. To contact the team,
+          use the form below. It will tell you if message delivery is unavailable.
         </p>
       </div>
 
       <div className='grid sm:grid-cols-2 gap-4'>
         <div className='rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-1.5'>
           <MessageCircle className='w-5 h-5 text-amber-500' />
-          <h2 className='font-semibold text-sm'>AI Assistant</h2>
+          <h2 className='font-semibold text-sm'>Automated store help</h2>
           <p className='text-xs text-muted-foreground'>
-            Available on every page for product, order and policy questions.
+            Basic product and order-page guidance. It cannot send messages, inspect your orders or confirm policy terms.
           </p>
         </div>
         <Link
@@ -72,7 +72,7 @@ export default function ContactPage() {
         </div>
         {status === 'sent' ? (
           <p className='text-sm text-emerald-600 dark:text-emerald-400 font-medium'>
-            Message sent. We will reply to your email address.
+            Message accepted by the email service. This does not confirm inbox delivery or a reply time.
           </p>
         ) : (
           <>
