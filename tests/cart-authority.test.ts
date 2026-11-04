@@ -11,3 +11,5 @@ it('existing line reprices authoritative fields on increment',async()=>{findCart
 
 it('variant fields cannot silently become a base product purchase',async()=>{expect((await addItemToCart({...item,variantId:'v'} as never)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
 it('variant catalog item cannot enter real checkout without retail option qualification',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'normal',images:['/x'],price:'20',stock:5,_count:{variants:2}});expect((await addItemToCart(item)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
+
+it('existing cart honors requested quantity and combined stock',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'x',images:['/x'],price:'20',stock:2});findCart.mockResolvedValueOnce({id:'c',items:[{...item,qty:1}],itemsPrice:'20',totalPrice:'20',shippingPrice:'0',taxPrice:'0'});expect((await addItemToCart({...item,qty:2})).success).toBe(false);expect(updateCart).not.toHaveBeenCalled()});

@@ -55,8 +55,9 @@ export async function createOrder(idempotencyKey?: string) {
       const cartLines = cart.items as { productId: string; qty: number; name?: string }[];
       const rows = await prisma.product.findMany({
         where: { id: { in: cartLines.map((l) => l.productId) } },
-        select: { id: true, stock: true, price: true, slug: true },
+        select: { id: true, stock: true, price: true, slug: true, _count: { select: { variants: true } } },
       });
+      if (!testCheckoutMode() && rows.some(p => (p._count?.variants ?? 0) > 0)) return { success: false, message: 'Variant checkout is not available for this product yet.', redirectTo: '/cart' };
       if (!cartLinesMatchCatalog(cart.items as CartItem[], rows) || !cartTotalsConsistent(cart)) return { success: false, message: 'Product details changed. Please update your cart before placing the order.', redirectTo: '/cart' };
       const short = firstUnavailableLine(cartLines, new Map(rows.map((r) => [r.id, r.stock])));
       if (short) {
