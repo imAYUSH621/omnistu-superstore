@@ -1,0 +1,15 @@
+const findProduct=jest.fn(),findCart=jest.fn(),createCart=jest.fn(),updateCart=jest.fn();
+jest.mock('@/db/prisma',()=>({prisma:{product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}}));
+jest.mock('next/headers',()=>({cookies:async()=>({get:()=>({value:'session-a'})})}));jest.mock('@/auth',()=>({auth:async()=>null}));jest.mock('next/cache',()=>({revalidatePath:jest.fn()}));jest.mock('@/lib/utils',()=>({...jest.requireActual('@/lib/utils'),isDatabaseAvailable:()=>true}));
+import {addItemToCart} from '@/lib/actions/cart.actions';
+const item={productId:'p1',name:'FORGED',slug:'forged',image:'/forged',price:'0.01',qty:1};
+beforeEach(()=>{jest.clearAllMocks();findCart.mockResolvedValue(null);findProduct.mockResolvedValue({id:'p1',name:'Server name',slug:'server-slug',images:['/server'],price:'20.00',stock:2});createCart.mockResolvedValue({});});
+it('newcart ignores client price/name/slug/image',async()=>{expect((await addItemToCart(item)).success).toBe(true);expect(createCart.mock.calls[0][0].data.items[0]).toMatchObject({price:'20.00',name:'Server name',slug:'server-slug',image:'/server'});expect(createCart.mock.calls[0][0].data.itemsPrice).toBe('20.00')});
+it.each([0,-1,1.5,3])('newcart invalid or overstock quantity %s fails',async(qty)=>{expect((await addItemToCart({...item,qty})).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
+it('newcart outofstock fails beforewrite',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'x',images:['/x'],price:'20.00',stock:0});expect((await addItemToCart(item)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
+it('existing line reprices authoritative fields on increment',async()=>{findCart.mockResolvedValue({id:'c',items:[{...item,qty:1}],itemsPrice:'0.01',totalPrice:'0.01',shippingPrice:'0',taxPrice:'0'});expect((await addItemToCart(item)).success).toBe(true);expect(updateCart.mock.calls[0][0].data.items[0]).toMatchObject({qty:2,price:'20.00',name:'Server name'});expect(updateCart.mock.calls[0][0].data.itemsPrice).toBe('40.00')});
+
+it('variant fields cannot silently become a base product purchase',async()=>{expect((await addItemToCart({...item,variantId:'v'} as never)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
+it('variant catalog item cannot enter real checkout without retail option qualification',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'normal',images:['/x'],price:'20',stock:5,_count:{variants:2}});expect((await addItemToCart(item)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
+
+it('existing cart honors requested quantity and combined stock',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'x',images:['/x'],price:'20',stock:2});findCart.mockResolvedValueOnce({id:'c',items:[{...item,qty:1}],itemsPrice:'20',totalPrice:'20',shippingPrice:'0',taxPrice:'0'});expect((await addItemToCart({...item,qty:2})).success).toBe(false);expect(updateCart).not.toHaveBeenCalled()});

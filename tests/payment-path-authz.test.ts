@@ -16,7 +16,7 @@ jest.mock('@/db/prisma', () => ({
       update: (...a: unknown[]) => mockUpdate(...a),
     },
     orderItem: { findMany: jest.fn(async () => [{ productId: 'p1', qty: 1, name: 'T' }]) },
-    product: { findMany: jest.fn(async () => [{ id: 'p1', stock: 5 }]) },
+    product: { findMany: jest.fn(async () => [{ id: 'p1', stock: 5, price: '42.00', slug: 'thing' }]) },
     $transaction: (...a: unknown[]) => mockUpdateToPaidInner(...a),
   },
 }));
