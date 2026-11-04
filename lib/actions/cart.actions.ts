@@ -10,6 +10,7 @@ import { prisma } from '@/db/prisma';
 import { cartItemSchema, insertCartSchema } from '../validators';
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+type CartTx = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
 // Calculate cart prices
 const calcPrice = (items: CartItem[]) => {
@@ -28,7 +29,7 @@ const calcPrice = (items: CartItem[]) => {
   };
 };
 
-export async function addItemToCart(data: CartItem) {
+async function addItemLocked(data: CartItem, db: CartTx) {
   try {
     // Check for cart cookie
     const sessionCartId = (await cookies()).get('sessionCartId')?.value;
@@ -39,14 +40,14 @@ export async function addItemToCart(data: CartItem) {
     const userId = session?.user?.id ? (session.user.id as string) : undefined;
 
     // Get cart
-    const cart = await getMyCart();
+    const cart = await readMyCart(db);
 
     // Parse and validate item
     let item = cartItemSchema.parse(data);
     if (!Number.isSafeInteger(item.qty) || item.qty <= 0) throw new Error('Invalid quantity');
 
     // Find product in database
-    const product = await prisma.product.findFirst({
+    const product = await db.product.findFirst({
       where: { id: item.productId },
       include: { _count: { select: { variants: true } } },
     });
@@ -71,7 +72,7 @@ export async function addItemToCart(data: CartItem) {
       });
 
       // Add to database
-      await prisma.cart.create({
+      await db.cart.create({
         data: newCart,
       });
 
@@ -109,7 +110,7 @@ export async function addItemToCart(data: CartItem) {
       }
 
       // Save to database
-      await prisma.cart.update({
+      await db.cart.update({
         where: { id: cart.id },
         data: {
           items: cart.items as Prisma.CartUpdateitemsInput[],
@@ -134,7 +135,7 @@ export async function addItemToCart(data: CartItem) {
   }
 }
 
-export async function getMyCart() {
+async function readMyCart(db: Pick<typeof prisma, 'cart'> = prisma) {
   if (!isDatabaseAvailable()) {
     return undefined;
   }
@@ -148,7 +149,7 @@ export async function getMyCart() {
   const userId = session?.user?.id ? (session.user.id as string) : undefined;
 
   // Get user cart from database
-  const cart = await prisma.cart.findFirst({
+  const cart = await db.cart.findFirst({
     where: userId ? { userId: userId } : { sessionCartId: sessionCartId },
   });
 
@@ -165,20 +166,22 @@ export async function getMyCart() {
   });
 }
 
-export async function removeItemFromCart(productId: string) {
+export async function getMyCart() { return readMyCart(); }
+
+async function removeItemLocked(productId: string, db: CartTx) {
   try {
     // Check for cart cookie
     const sessionCartId = (await cookies()).get('sessionCartId')?.value;
     if (!sessionCartId) throw new Error('Cart session not found');
 
     // Get Product
-    const product = await prisma.product.findFirst({
+    const product = await db.product.findFirst({
       where: { id: productId },
     });
     if (!product) throw new Error('Product not found');
 
     // Get user cart
-    const cart = await getMyCart();
+    const cart = await readMyCart(db);
     if (!cart) throw new Error('Cart not found');
 
     // Check for item
@@ -200,7 +203,7 @@ export async function removeItemFromCart(productId: string) {
     }
 
     // Update cart in database
-    await prisma.cart.update({
+    await db.cart.update({
       where: { id: cart.id },
       data: {
         items: cart.items as Prisma.CartUpdateitemsInput[],
@@ -217,4 +220,23 @@ export async function removeItemFromCart(productId: string) {
   } catch (error) {
     return { success: false, message: formatError(error) };
   }
+}
+
+async function withCartLock<T>(operation: (tx: CartTx) => Promise<T>) {
+  const sessionCartId = (await cookies()).get('sessionCartId')?.value;
+  if (!sessionCartId) throw new Error('Cart session not found');
+  const session = await auth();
+  const identity = session?.user?.id ? `user:${session.user.id}` : `guest:${sessionCartId}`;
+  return prisma.$transaction(async tx => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${identity}))`;
+    return operation(tx);
+  }, { maxWait: 15000, timeout: 15000 });
+}
+export async function addItemToCart(data: CartItem) {
+  try { return await withCartLock(tx => addItemLocked(data, tx)); }
+  catch (error) { return { success: false, message: formatError(error) }; }
+}
+export async function removeItemFromCart(productId: string) {
+  try { return await withCartLock(tx => removeItemLocked(productId, tx)); }
+  catch (error) { return { success: false, message: formatError(error) }; }
 }

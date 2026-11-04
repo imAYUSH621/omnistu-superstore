@@ -1,5 +1,5 @@
 const findProduct=jest.fn(),findCart=jest.fn(),createCart=jest.fn(),updateCart=jest.fn();
-jest.mock('@/db/prisma',()=>({prisma:{product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}}));
+jest.mock('@/db/prisma',()=>({prisma:{$transaction:async(fn:(tx:unknown)=>Promise<unknown>)=>fn({$executeRaw:jest.fn(),product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}),product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}}));
 jest.mock('next/headers',()=>({cookies:async()=>({get:()=>({value:'session-a'})})}));jest.mock('@/auth',()=>({auth:async()=>null}));jest.mock('next/cache',()=>({revalidatePath:jest.fn()}));jest.mock('@/lib/utils',()=>({...jest.requireActual('@/lib/utils'),isDatabaseAvailable:()=>true}));
 import {addItemToCart} from '@/lib/actions/cart.actions';
 const item={productId:'p1',name:'FORGED',slug:'forged',image:'/forged',price:'0.01',qty:1};
