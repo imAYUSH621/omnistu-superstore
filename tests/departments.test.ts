@@ -39,8 +39,11 @@ it('leads discovery with clearly illustrative apparel artwork before the account
 
 it('mosaic uses only existing category routes and keeps a full directory', () => {
  const src = readFileSync('components/shared/home/department-mosaic.tsx', 'utf8');
- expect(src).toContain('Illustrative category artwork, not product photography.');
- expect(src).toContain('All 18 departments');
+ expect(src).toContain('Category images are illustrations, not items for sale.');
+ expect(src).toContain('Browse all categories');
+ expect(src).toContain('Browse clothing');
+ expect(src).not.toContain('Explore the department');
+ expect(DEPARTMENTS[0].image).toBe('/images/categories/custom-apparel.jpg');
  expect(src).not.toMatch(/bestseller|free shipping|under \$|in stock|women.s clothing|men.s clothing/i);
  const home = readFileSync('app/(root)/page.tsx', 'utf8');
  expect(home).toContain('<AllDepartments />');
