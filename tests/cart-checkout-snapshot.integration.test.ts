@@ -4,4 +4,12 @@ maybe('checkout snapshot stale edits on real isolated DB',()=>{let uid='',cid=''
 it('unchanged snapshot survives decimal formatting and JSON key order',async()=>{await prisma.$transaction(tx=>assertCheckoutSnapshot(tx,uid,{...snapshot,items:[{price:'20',qty:1,productId:'p'}]}))});
 it('intervening add refuses order clearing and preserves newer cart',async()=>{await prisma.cart.update({where:{id:cid},data:{items:[{productId:'p',qty:2,price:'20'}],itemsPrice:40,totalPrice:56,taxPrice:6}});await expect(prisma.$transaction(async tx=>{await assertCheckoutSnapshot(tx,uid,snapshot);await tx.cart.update({where:{id:cid},data:{items:[]}})})).rejects.toThrow('cart changed');expect((await prisma.cart.findUniqueOrThrow({where:{id:cid}})).items).toHaveLength(1);expect(((await prisma.cart.findUniqueOrThrow({where:{id:cid}})).items[0] as {qty:number}).qty).toBe(2)});
 it('same snapshot id cannot be cleared by another user',async()=>{await expect(prisma.$transaction(tx=>assertCheckoutSnapshot(tx,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',snapshot))).rejects.toThrow('cart changed')});
+it('checkout waits for concurrent edit lock then refuses stale snapshot',async()=>{
+ await prisma.cart.update({where:{id:cid},data:{items:snapshot.items as never,itemsPrice:20,totalPrice:33,taxPrice:3}});
+ let entered!:()=>void,release!:()=>void;const ready=new Promise<void>(r=>entered=r),gate=new Promise<void>(r=>release=r);
+ const edit=prisma.$transaction(async tx=>{await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`user:${uid}`}))`;entered();await gate;await tx.cart.update({where:{id:cid},data:{items:[{productId:'p',qty:3,price:'20'}],itemsPrice:60,taxPrice:9,totalPrice:79}})});
+ await ready;let settled=false;const checkout=prisma.$transaction(async tx=>{await assertCheckoutSnapshot(tx,uid,snapshot);await tx.cart.update({where:{id:cid},data:{items:[]}})}).finally(()=>{settled=true});
+ await new Promise(r=>setTimeout(r,20));expect(settled).toBe(false);release();await edit;await expect(checkout).rejects.toThrow('cart changed');expect(((await prisma.cart.findUniqueOrThrow({where:{id:cid}})).items[0] as {qty:number}).qty).toBe(3);
+});
+
 });
