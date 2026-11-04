@@ -12,7 +12,7 @@ import { persistDispatchSummary } from './fulfillment-persistence';
 import { revalidatePath } from 'next/cache';
 
 /** Typed settlement failures: callers branch on `settlementCode`, never on message text. */
-export type SettlementCode = 'ORDER_MISSING' | 'ALREADY_PAID' | 'AMOUNT_MISMATCH';
+export type SettlementCode = 'ORDER_MISSING' | 'ALREADY_PAID' | 'AMOUNT_MISMATCH' | 'STOCK_UNAVAILABLE';
 export class SettlementError extends Error {
   settlementCode: SettlementCode;
   constructor(code: SettlementCode, message: string) {
@@ -85,11 +85,20 @@ export async function updateOrderToPaid({
     });
     if (claim.count !== 1) throw new SettlementError('ALREADY_PAID', 'Order is already paid');
 
-    for (const item of order.orderitems) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: -item.qty } },
+    // A precheck cannot protect separate orders racing for the last unit. Lock products in a
+    // stable order and decrement only when enough stock remains. Failure rolls back every earlier
+    // decrement AND the paid claim. Never retry a provider capture here.
+    for (const item of [...order.orderitems].sort((a, b) => a.productId.localeCompare(b.productId))) {
+      if (!Number.isSafeInteger(item.qty) || item.qty <= 0) {
+        throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
+      }
+      const allocated = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.qty } },
+        data: { stock: { decrement: item.qty } },
       });
+      if (allocated.count !== 1) {
+        throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
+      }
     }
   });
 
@@ -190,11 +199,20 @@ export async function updateOrderToPaidSimulated(orderId: string) {
       },
     });
     if (claim.count !== 1) throw new Error('Order is already paid');
-    for (const item of order.orderitems) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: -item.qty } },
+    // A precheck cannot protect separate orders racing for the last unit. Lock products in a
+    // stable order and decrement only when enough stock remains. Failure rolls back every earlier
+    // decrement AND the paid claim. Never retry a provider capture here.
+    for (const item of [...order.orderitems].sort((a, b) => a.productId.localeCompare(b.productId))) {
+      if (!Number.isSafeInteger(item.qty) || item.qty <= 0) {
+        throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
+      }
+      const allocated = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.qty } },
+        data: { stock: { decrement: item.qty } },
       });
+      if (allocated.count !== 1) {
+        throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
+      }
     }
   });
 

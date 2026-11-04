@@ -1,10 +1,9 @@
 /**
  * Capture -> settlement failure regression through the REAL approvePayPalOrder orchestration.
- * PayPal is mocked (a COMPLETED capture, no network); the DB is a disposable Postgres with a temporary
- * CHECK (stock >= 0) so the paid transaction fails for real. Asserts: the buyer sees an error, the order
+ * PayPal is mocked (a COMPLETED capture, no network); the DB is a disposable Postgres with insufficient stock so the paid transaction fails for real. Asserts: the buyer sees an error, the order
  * stays unpaid, the CAPTURED_UNSETTLED incident is recorded (prior note kept), the admin query lists it,
  * and no dispatch, mail, mirror or second capture happens. Runs ONLY when REFUND_ITEST_DATABASE_URL equals
- * DATABASE_URL (explicit opt-in to a disposable DB), because it adds and drops a constraint.
+ * DATABASE_URL (explicit opt-in to a disposable DB).
  */
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB && process.env.DATABASE_URL === DB && !DB.includes('supabase') ? describe : describe.skip;
@@ -57,7 +56,7 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
         } as never,
       })
     ).id;
-    // From here a decrement below zero violates the constraint, so the paid transaction really fails.
+    // The new atomic stock guard rejects this shortage without relying on a schema constraint.
     await prisma.$executeRawUnsafe('ALTER TABLE "Product" ADD CONSTRAINT capfail_stock_nonneg CHECK (stock >= 0) NOT VALID');
   });
   afterAll(async () => {
@@ -86,7 +85,7 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     const o = await prisma.order.findUnique({ where: { id: orderId }, select: { isPaid: true, paymentNote: true } });
     expect(o?.isPaid).toBe(false);
     expect(o?.paymentNote?.startsWith('OWNER NOTE keep me')).toBe(true);
-    expect(o?.paymentNote).toContain('CAPTURED_UNSETTLED reason=DB_ERROR capture=PPCAPFAIL'.replace('PPCAPFAIL', 'PP-CAPFAIL'));
+    expect(o?.paymentNote).toContain('CAPTURED_UNSETTLED reason=STOCK_UNAVAILABLE capture=PPCAPFAIL'.replace('PPCAPFAIL', 'PP-CAPFAIL'));
     expect(o?.paymentNote).toContain('no refund or retry performed');
 
     // stock rolled back with the failed transaction

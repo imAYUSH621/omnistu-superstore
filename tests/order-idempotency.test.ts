@@ -128,7 +128,7 @@ describe('updateOrderToPaid amount guard (D12)', () => {
       .mockResolvedValueOnce(baseOrder) // guard read
       .mockResolvedValueOnce({ ...baseOrder, isPaid: true, orderitems: [], user: null }); // post-tx read
     mockTransaction.mockImplementationOnce(async (cb: any) =>
-      cb({ product: { update: jest.fn() }, order: { updateMany: jest.fn(async () => ({ count: 1 })) } })
+      cb({ product: { updateMany: jest.fn(async () => ({ count: 1 })) }, order: { updateMany: jest.fn(async () => ({ count: 1 })) } })
     );
     const res = await updateOrderToPaid({
       orderId: 'order-1',
