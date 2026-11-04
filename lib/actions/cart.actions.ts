@@ -48,8 +48,13 @@ export async function addItemToCart(data: CartItem) {
     // Find product in database
     const product = await prisma.product.findFirst({
       where: { id: item.productId },
+      include: { _count: { select: { variants: true } } },
     });
     if (!product) throw new Error('Product not found');
+    const supplied = data as CartItem & { variantId?: unknown; variantSku?: unknown; sku?: unknown };
+    if (supplied.variantId != null || supplied.variantSku != null || supplied.sku != null || ((product._count?.variants ?? 0) > 0 && !testCheckoutMode())) {
+      throw new Error('Variant checkout is not available for this product yet.');
+    }
     if (isTestFixtureSlug(product.slug)) throw new Error(TEST_FIXTURE_MESSAGE);
     if (isTestCatalogSlug(product.slug) && !testCheckoutMode()) throw new Error(TEST_CATALOG_MESSAGE);
 
