@@ -150,7 +150,7 @@ async function readMyCart(db: Pick<typeof prisma, 'cart'> = prisma) {
 
   // Get user cart from database
   const cart = await db.cart.findFirst({
-    where: userId ? { userId: userId } : { sessionCartId: sessionCartId },
+    where: userId ? { userId: userId } : { sessionCartId: sessionCartId, userId: null },
   });
 
   if (!cart) return undefined;

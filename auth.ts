@@ -173,7 +173,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
             if (sessionCartId && user.id && user.id !== 'master-admin-001') {
               const sessionCart = await prisma.cart.findFirst({
-                where: { sessionCartId },
+                where: { sessionCartId, userId: null },
               });
 
               if (sessionCart) {
