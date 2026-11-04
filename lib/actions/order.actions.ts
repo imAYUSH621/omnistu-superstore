@@ -259,11 +259,6 @@ export async function createPayPalOrder(orderId: string) {
       if (needsPaymentReview(order.paymentNote)) throw new Error(PAYMENT_REVIEW_MESSAGE);
       const stored = order.paymentResult as PaymentResult | null;
       if (stored?.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
-      // Reuse the original, unattempted provider order rather than replace its binding.
-      if (stored?.id) {
-        if (stored.status) throw new Error(PAYMENT_REVIEW_MESSAGE);
-        return { success: true, message: 'Payment order already created', data: stored.id };
-      }
       {
         const lines = await prisma.orderItem.findMany({
           where: { orderId },
@@ -275,6 +270,11 @@ export async function createPayPalOrder(orderId: string) {
         });
         const short = firstUnavailableLine(lines, new Map(rows.map((r) => [r.id, r.stock])));
         if (short) throw new Error(`Not enough stock for "${short}"`);
+      }
+      // Reuse the original, unattempted provider order rather than replace its binding.
+      if (stored?.id) {
+        if (stored.status) throw new Error(PAYMENT_REVIEW_MESSAGE);
+        return { success: true, message: 'Payment order already created', data: stored.id };
       }
       // Claim before contacting PayPal. A crash leaves a durable, non-expiring review marker.
       const priorResult = order.paymentResult ?? Prisma.DbNull;
