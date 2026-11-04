@@ -92,3 +92,24 @@ export async function getUnsettledCaptures(): Promise<
     return { success: false, message: 'Could not load unsettled captures. The database may be unreachable.' };
   }
 }
+
+/** Passive evidence only. Cursor by UUID reaches every row without running or clearing a task. */
+export async function getPaymentEffectReviews(after?: string): Promise<
+  { success: true; items: { id: string; orderId: string; createdAt: string }[]; next: string | null } |
+  { success: false; message: string }
+> {
+  const session = await auth();
+  if (session?.user?.role !== 'admin') return { success: false, message: 'User is not authorized' };
+  if (after && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(after)) return { success: false, message: 'That page link is not valid.' };
+  try {
+    const rows = await prisma.fulfillmentTask.findMany({
+      where: { supplier: 'PAYMENT_EFFECT_REVIEW', status: 'REVIEW_ONLY', ...(after ? { id: { gt: after } } : {}) },
+      select: { id: true, orderId: true, createdAt: true },
+      orderBy: { id: 'asc' }, take: 51,
+    });
+    const page = rows.slice(0, 50);
+    return { success: true, items: page.map(r => ({ ...r, createdAt: r.createdAt.toISOString() })), next: rows.length > 50 ? page[49].id : null };
+  } catch {
+    return { success: false, message: 'Could not load payment effect evidence. No tasks were changed.' };
+  }
+}

@@ -2,6 +2,7 @@
 // actions are callable from the network, and this must only run from trusted
 // server code (payment capture, the Stripe webhook, admin COD confirmation).
 import { prisma } from '@/db/prisma';
+import { recordPaymentEffectsForReview } from './payment-effect-review';
 import { PaymentResult, ShippingAddress } from '@/types';
 import { isAmountMismatch } from './payment-guards';
 import { sendPurchaseReceipt } from '@/email';
@@ -100,6 +101,9 @@ export async function updateOrderToPaid({
         throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
       }
     }
+    // Commit passive evidence with the paid claim, before any fire-and-forget side effect.
+    // REVIEW_ONLY is not eligible for the queue drain and never grants permission to resend.
+    await recordPaymentEffectsForReview(tx, orderId);
   });
 
   // Get updated order after transaction

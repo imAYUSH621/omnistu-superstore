@@ -1,4 +1,5 @@
-import { getPaidOrderReconciliation, getOversoldProducts, getUnsettledCaptures } from '@/lib/actions/reconcile.actions';
+import { getPaidOrderReconciliation, getOversoldProducts, getUnsettledCaptures, getPaymentEffectReviews } from '@/lib/actions/reconcile.actions';
+import { PaymentEffectReviews } from '@/components/shared/admin/payment-effect-reviews';
 import { requireAdmin } from '@/lib/auth-guard';
 
 export const metadata = { title: 'Paid order reconciliation' };
@@ -8,12 +9,13 @@ const fmt = (iso: string | null) => (iso ? `${iso.slice(0, 16).replace('T', ' ')
 const reasonText = (r: string) =>
   r === 'NO_DISPATCH_RECORD' ? 'No dispatch record' : 'Dispatch not complete';
 
-export default async function ReconciliationPage({ searchParams }: { searchParams?: Promise<{ after?: string }> }) {
+export default async function ReconciliationPage({ searchParams }: { searchParams?: Promise<{ after?: string; effectsAfter?: string }> }) {
   await requireAdmin(); // same guard as the other admin pages (non-admins go to /unauthorized)
   const sp = (await searchParams) ?? {};
   const res = await getPaidOrderReconciliation(sp.after);
   const oversold = await getOversoldProducts();
   const unsettled = await getUnsettledCaptures();
+  const effects = await getPaymentEffectReviews(sp.effectsAfter);
   if (!res.success) {
     return (
       <div className="space-y-2">
@@ -77,11 +79,12 @@ export default async function ReconciliationPage({ searchParams }: { searchParam
           . Pages follow the order id, not the paid time; each page is sorted by paid time. Orders can change while you page, so start again from page 1 for a fresh list.
         </p>
       )}
+      <PaymentEffectReviews result={effects} />
       {unsettled.success && unsettled.items.length > 0 && (
         <section className="space-y-2 rounded border border-red-300 bg-red-50 p-3 text-sm" aria-label="Captures needing review">
           <h2 className="font-semibold">Unpaid orders with a payment problem (needs review)</h2>
           <p>
-            Money may have been captured in PayPal while the order is not marked paid. Check each order in PayPal first.
+            A payment or payment-creation attempt needs review while the order is not marked paid. Check the recorded PayPal or Stripe state first; a creation marker alone does not mean money moved.
             This list is read-only: it does not retry, refund or dispatch anything.
           </p>
           {unsettled.truncated && <p className="font-medium">Showing the 100 most recent; more exist.</p>}
