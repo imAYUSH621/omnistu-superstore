@@ -21,7 +21,7 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 import { prisma } from '@/db/prisma';
 import { updateOrderToPaidCOD } from '@/lib/actions/order.actions';
-import { updateOrderToPaid } from '@/lib/order-settlement';
+import { updateOrderToPaid, updateOrderToPaidSimulated } from '@/lib/order-settlement';
 import { enqueueFulfillmentTask } from '@/lib/fulfillment-queue';
 import { findPaidOrdersNeedingAttention, findPaidOrdersNeedingAttentionPage } from '@/lib/paid-reconciliation';
 
@@ -110,6 +110,38 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     expect(sendConfirm).toHaveBeenCalledTimes(1);
   }, 30000);
 
+
+  it.each([false, true])('different orders race for one unit, simulated=%s: one paid, no negative stock', async (simulated) => {
+    const { order, product } = await makeOrder({ qty: 1, stock: 1, method: simulated ? 'TestPayment' : 'PayPal' });
+    const second = await prisma.order.create({ data: {
+      userId, shippingAddress: {}, paymentMethod: simulated ? 'TestPayment' : 'PayPal',
+      itemsPrice: '42.50', shippingPrice: 0, taxPrice: 0, totalPrice: '42.50',
+      orderitems: { create: [{ productId: product.id, qty: 1, price: '42.50', name: 'last unit', slug: product.slug, image: 'x' }] },
+    } });
+    const pay = (id: string) => simulated ? updateOrderToPaidSimulated(id) : updateOrderToPaid({ orderId: id, paymentResult: pr('42.50') });
+    const res = await settle([pay(order.id), pay(second.id)]);
+    expect(res.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+    const loser = res.find(r => r.status === 'rejected') as PromiseRejectedResult;
+    expect(loser.reason.settlementCode).toBe('STOCK_UNAVAILABLE');
+    expect(await stockOf(product.id)).toBe(0);
+    const rows = await prisma.order.findMany({ where: { id: { in: [order.id, second.id] } } });
+    expect(rows.filter(o => o.isPaid)).toHaveLength(1);
+    expect(rows.find(o => !o.isPaid)?.paidAt).toBeNull();
+    expect(dispatch).toHaveBeenCalledTimes(simulated ? 0 : 1);
+    expect(sendConfirm).toHaveBeenCalledTimes(simulated ? 0 : 1);
+  });
+
+  it('later unavailable line rolls back earlier stock and paid claim', async () => {
+    const { order, product } = await makeOrder({ qty: 1, stock: 2 });
+    const missing = await prisma.product.create({ data: { id: 'ffffffff-ffff-4fff-8fff-ffffffffffff', name: 'out', slug: `pt-${suffix}-out`, category: 'c', images: [], description: 'd', stock: 0, price: 1 } });
+    await prisma.orderItem.create({ data: { orderId: order.id, productId: missing.id, qty: 1, price: 1, name: 'out', slug: missing.slug, image: 'x' } });
+    await expect(updateOrderToPaid({ orderId: order.id, paymentResult: pr('42.50') })).rejects.toMatchObject({ settlementCode: 'STOCK_UNAVAILABLE' });
+    expect(await stockOf(product.id)).toBe(2);
+    expect(await stockOf(missing.id)).toBe(0);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).isPaid).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(sendConfirm).not.toHaveBeenCalled();
+  });
 
   it.each(['sandbox', 'live', 'unknown'] as const)('preserves stored %s environment through settlement', async (paypalEnv) => {
     const { order } = await makeOrder();

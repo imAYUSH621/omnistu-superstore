@@ -1,10 +1,9 @@
 /**
  * Capture -> settlement failure regression through the REAL approvePayPalOrder orchestration.
- * PayPal is mocked (a COMPLETED capture, no network); the DB is a disposable Postgres with a temporary
- * CHECK (stock >= 0) so the paid transaction fails for real. Asserts: the buyer sees an error, the order
+ * PayPal is mocked (a COMPLETED capture, no network); the DB is a disposable Postgres with insufficient stock so the paid transaction fails for real. Asserts: the buyer sees an error, the order
  * stays unpaid, the CAPTURED_UNSETTLED incident is recorded (prior note kept), the admin query lists it,
  * and no dispatch, mail, mirror or second capture happens. Runs ONLY when REFUND_ITEST_DATABASE_URL equals
- * DATABASE_URL (explicit opt-in to a disposable DB), because it adds and drops a constraint.
+ * DATABASE_URL (explicit opt-in to a disposable DB).
  */
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
 const maybe = DB && process.env.DATABASE_URL === DB && !DB.includes('supabase') ? describe : describe.skip;
@@ -57,7 +56,7 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
         } as never,
       })
     ).id;
-    // From here a decrement below zero violates the constraint, so the paid transaction really fails.
+    // The new atomic stock guard rejects this shortage without relying on a schema constraint.
     await prisma.$executeRawUnsafe('ALTER TABLE "Product" ADD CONSTRAINT capfail_stock_nonneg CHECK (stock >= 0) NOT VALID');
   });
   afterAll(async () => {
@@ -86,7 +85,7 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     const o = await prisma.order.findUnique({ where: { id: orderId }, select: { isPaid: true, paymentNote: true } });
     expect(o?.isPaid).toBe(false);
     expect(o?.paymentNote?.startsWith('OWNER NOTE keep me')).toBe(true);
-    expect(o?.paymentNote).toContain('CAPTURED_UNSETTLED reason=DB_ERROR capture=PPCAPFAIL'.replace('PPCAPFAIL', 'PP-CAPFAIL'));
+    expect(o?.paymentNote).toContain('CAPTURED_UNSETTLED reason=STOCK_UNAVAILABLE capture=PPCAPFAIL'.replace('PPCAPFAIL', 'PP-CAPFAIL'));
     expect(o?.paymentNote).toContain('no refund or retry performed');
 
     // stock rolled back with the failed transaction
@@ -103,6 +102,34 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(mockDispatch).not.toHaveBeenCalled();
     expect(mockMail).not.toHaveBeenCalled();
     expect(mockMirror).not.toHaveBeenCalled();
+  });
+
+  test('database trigger failure AFTER completed capture still records DB_ERROR and no downstream effects', async () => {
+    const { prisma } = await import('@/db/prisma');
+    await prisma.product.update({ where: { id: productId }, data: { stock: 5 } });
+    await prisma.$executeRawUnsafe(`CREATE OR REPLACE FUNCTION capfail_injected() RETURNS trigger AS $b$ BEGIN RAISE EXCEPTION 'injected database failure'; END; $b$ LANGUAGE plpgsql`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER capfail_injected_trg BEFORE UPDATE ON "Product" FOR EACH ROW WHEN (NEW.id = '${productId}') EXECUTE FUNCTION capfail_injected()`);
+    await prisma.order.update({ where: { id: orderId }, data: { paymentNote: 'OWNER NOTE keep me' } });
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockResolvedValue({ id: 'PP-CAPFAIL', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '5.00', currency_code: 'USD' } }] } }] });
+    mockCapture.mockClear();
+    try {
+      const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+      const result = await approvePayPalOrder(orderId, { orderID: 'PP-CAPFAIL' });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('do not pay again');
+      const row = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+      expect(row.isPaid).toBe(false);
+      expect(row.paymentNote).toContain('CAPTURED_UNSETTLED reason=DB_ERROR');
+      expect((await prisma.product.findUniqueOrThrow({ where: { id: productId } })).stock).toBe(5);
+      expect(mockCapture).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).not.toHaveBeenCalled();
+      expect(mockMail).not.toHaveBeenCalled();
+      expect(mockMirror).not.toHaveBeenCalled();
+    } finally {
+      await prisma.$executeRawUnsafe('DROP TRIGGER IF EXISTS capfail_injected_trg ON "Product"');
+      await prisma.$executeRawUnsafe('DROP FUNCTION IF EXISTS capfail_injected()');
+    }
   });
 
   const mkOrder = async (ppId: string) => {

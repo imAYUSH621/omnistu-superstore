@@ -7,14 +7,14 @@ import { prisma } from '@/db/prisma';
  * (and in PayPal), which is the residual risk. It performs no refund and no retry.
  */
 /** Bounded reason codes: raw error text (which can carry DB details) is never stored or logged. */
-export type UnsettledReason = 'ORDER_MISSING' | 'AMOUNT_MISMATCH' | 'DB_ERROR' | 'UNKNOWN';
+export type UnsettledReason = 'ORDER_MISSING' | 'AMOUNT_MISMATCH' | 'DB_ERROR' | 'UNKNOWN' | 'STOCK_UNAVAILABLE';
 export type IncidentKind = 'CAPTURED_UNSETTLED' | 'CAPTURE_UNCONFIRMED' | 'CAPTURE_PENDING';
 
 export function classifyUnsettledReason(cause: unknown): UnsettledReason | 'ALREADY_PAID' {
   // Typed errors only. Message text is never matched: database-client errors embed source snippets
   // that can contain any phrase.
   const code = (cause as { settlementCode?: unknown } | null)?.settlementCode;
-  if (code === 'ALREADY_PAID' || code === 'ORDER_MISSING' || code === 'AMOUNT_MISMATCH') return code;
+  if (code === 'ALREADY_PAID' || code === 'ORDER_MISSING' || code === 'AMOUNT_MISMATCH' || code === 'STOCK_UNAVAILABLE') return code;
   return DB_ERROR_RE(cause) ? 'DB_ERROR' : 'UNKNOWN';
 }
 
