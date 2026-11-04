@@ -263,6 +263,22 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(mockCapture).toHaveBeenCalledTimes(1);
   });
 
+  test('completed response settles once; later approval does not contact provider', async () => {
+    const id = await mkOrder('PP-SUCCESS');
+    mockMail.mockResolvedValue(undefined);
+    mockMirror.mockResolvedValue(undefined);
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockClear();
+    mockCapture.mockResolvedValue({ id: 'PP-SUCCESS', status: 'COMPLETED', payer: {}, purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '5.00', currency_code: 'USD' } }] } }] });
+    const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+    expect((await approvePayPalOrder(id, { orderID: 'PP-SUCCESS' })).success).toBe(true);
+    const { prisma } = await import('@/db/prisma');
+    expect((await prisma.order.findUniqueOrThrow({ where: { id } })).isPaid).toBe(true);
+    expect((await approvePayPalOrder(id, { orderID: 'PP-SUCCESS' })).success).toBe(false);
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+    mockMail.mockClear(); mockMirror.mockClear();
+  });
+
   const respond = (captures: unknown, orderStatus = 'COMPLETED', id = 'PP-X') => ({
     id,
     status: orderStatus,

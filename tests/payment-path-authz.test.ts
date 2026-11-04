@@ -126,6 +126,12 @@ describe('approvePayPalOrder', () => {
     expect((await approvePayPalOrder('o1', { orderID: 'PP-1' })).success).toBe(false);
     expect(mockCapture).not.toHaveBeenCalled();
   });
+  it('unavailable claim database never contacts capture', async () => {
+    mockAuth.mockResolvedValue(OWNER); mockFindFirst.mockResolvedValue(order);
+    mockUpdateMany.mockRejectedValueOnce(new Error('database unavailable'));
+    expect((await approvePayPalOrder('o1', { orderID: 'PP-1' })).success).toBe(false);
+    expect(mockCapture).not.toHaveBeenCalled();
+  });
   it('rejects a capture in a non-USD currency and records a note, without marking paid', async () => {
     mockAuth.mockResolvedValue(ADMIN);
     mockFindFirst.mockResolvedValue(order);
