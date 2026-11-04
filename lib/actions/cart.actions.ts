@@ -42,7 +42,8 @@ export async function addItemToCart(data: CartItem) {
     const cart = await getMyCart();
 
     // Parse and validate item
-    const item = cartItemSchema.parse(data);
+    let item = cartItemSchema.parse(data);
+    if (!Number.isSafeInteger(item.qty) || item.qty <= 0) throw new Error('Invalid quantity');
 
     // Find product in database
     const product = await prisma.product.findFirst({
@@ -51,6 +52,9 @@ export async function addItemToCart(data: CartItem) {
     if (!product) throw new Error('Product not found');
     if (isTestFixtureSlug(product.slug)) throw new Error(TEST_FIXTURE_MESSAGE);
     if (isTestCatalogSlug(product.slug) && !testCheckoutMode()) throw new Error(TEST_CATALOG_MESSAGE);
+
+    item = { ...item, name: product.name, slug: product.slug, image: product.images[0] || '/images/placeholder.svg', price: String(product.price) };
+    if (product.stock < item.qty) throw new Error('Not enough stock');
 
     if (!cart) {
       // Create new cart object
@@ -89,6 +93,7 @@ export async function addItemToCart(data: CartItem) {
         (cart.items as CartItem[]).find(
           (x) => x.productId === item.productId
         )!.qty = existItem.qty + 1;
+        Object.assign(existItem, { name: item.name, slug: item.slug, image: item.image, price: item.price });
       } else {
         // If item does not exist in cart
         // Check stock

@@ -1,4 +1,5 @@
 'use server';
+import { cartLinesMatchCatalog, cartTotalsConsistent } from '@/lib/cart-line-integrity';
 
 import { isPaymentMethodAvailable, testCheckoutMode } from '@/lib/payment-capabilities';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
@@ -22,6 +23,7 @@ import { needsPaymentReview, PAYMENT_REVIEW_MESSAGE } from '../payment-review';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
+  let authenticatedUserId: string | undefined;
   try {
     const session = await auth();
     if (!session) throw new Error('User is not authenticated');
@@ -29,6 +31,7 @@ export async function createOrder(idempotencyKey?: string) {
     const cart = await getMyCart();
     const userId = session?.user?.id;
     if (!userId) throw new Error('User not found');
+    authenticatedUserId = userId;
 
     const user = await getUserById(userId);
 
@@ -52,8 +55,9 @@ export async function createOrder(idempotencyKey?: string) {
       const cartLines = cart.items as { productId: string; qty: number; name?: string }[];
       const rows = await prisma.product.findMany({
         where: { id: { in: cartLines.map((l) => l.productId) } },
-        select: { id: true, stock: true },
+        select: { id: true, stock: true, price: true, slug: true },
       });
+      if (!cartLinesMatchCatalog(cart.items as CartItem[], rows) || !cartTotalsConsistent(cart)) return { success: false, message: 'Product details changed. Please update your cart before placing the order.', redirectTo: '/cart' };
       const short = firstUnavailableLine(cartLines, new Map(rows.map((r) => [r.id, r.stock])));
       if (short) {
         return {
@@ -92,7 +96,7 @@ export async function createOrder(idempotencyKey?: string) {
     // retries return the original order instead of charging twice.
     if (idempotencyKey) {
       const existing = await prisma.order.findUnique({
-        where: { idempotencyKey },
+        where: { idempotencyKey, userId: authenticatedUserId },
       });
       if (existing) {
         return {
@@ -193,7 +197,7 @@ export async function createOrder(idempotencyKey?: string) {
       (error as { code?: string }).code === 'P2002'
     ) {
       const existing = await prisma.order.findUnique({
-        where: { idempotencyKey },
+        where: { idempotencyKey, userId: authenticatedUserId },
       });
       if (existing) {
         return {

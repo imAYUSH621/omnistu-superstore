@@ -17,7 +17,7 @@ jest.mock('@/db/prisma', () => ({
       update: (...a: unknown[]) => mockOrderUpdate(...a),
       updateMany: (...a: unknown[]) => mockOrderUpdateMany(...a),
     },
-    product: { findMany: jest.fn(async () => [{ id: 'p1', stock: 5 }]) },
+    product: { findMany: jest.fn(async () => [{ id: 'p1', stock: 5, price: '42.00', slug: 'thing' }]) },
     $transaction: (...a: unknown[]) => mockTransaction(...a),
   },
 }));
@@ -61,6 +61,14 @@ beforeEach(() => {
 });
 
 describe('createOrder idempotency (D11)', () => {
+  it('binds both normal lookup and race recovery to current owner', async () => {
+    mockOrderFindUnique.mockResolvedValue(null);
+    mockTransaction.mockRejectedValueOnce({ code: 'P2002' });
+    await createOrder('foreign-key');
+    expect(mockOrderFindUnique).toHaveBeenCalledTimes(2);
+    for (const [arg] of mockOrderFindUnique.mock.calls) expect(arg.where).toEqual({idempotencyKey:'foreign-key',userId:'user-1'});
+  });
+
   it('a retried submit with the same key returns the original order, no second create', async () => {
     mockOrderFindUnique.mockResolvedValueOnce({ id: 'order-original' });
     const res = await createOrder('key-123');
