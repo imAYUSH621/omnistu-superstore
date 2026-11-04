@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import OrderDetailsTable from './order-details-table';
 import { ShippingAddress } from '@/types';
 import { auth } from '@/auth';
-import Stripe from 'stripe';
+import { stripeClientSecretForOrder } from '@/lib/stripe-intent';
 
 export const metadata: Metadata = {
   title: 'Order Details',
@@ -27,20 +27,7 @@ const OrderDetailsPage = async (props: {
     return redirect('/unauthorized');
   }
 
-  let client_secret = null;
-
-  // Check if is not paid and using stripe
-  if (order.paymentMethod === 'Stripe' && !order.isPaid && process.env.STRIPE_SECRET_KEY) {
-    // Init stripe instance
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(Number(order.totalPrice) * 100),
-      currency: 'USD',
-      metadata: { orderId: order.id },
-    });
-    client_secret = paymentIntent.client_secret;
-  }
+  const client_secret = await stripeClientSecretForOrder(order.id);
 
   return (
     <OrderDetailsTable
