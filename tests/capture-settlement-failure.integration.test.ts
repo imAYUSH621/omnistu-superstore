@@ -104,6 +104,34 @@ maybe('capture then settlement failure (real DB, mocked provider)', () => {
     expect(mockMirror).not.toHaveBeenCalled();
   });
 
+  test('database trigger failure AFTER completed capture still records DB_ERROR and no downstream effects', async () => {
+    const { prisma } = await import('@/db/prisma');
+    await prisma.product.update({ where: { id: productId }, data: { stock: 5 } });
+    await prisma.$executeRawUnsafe(`CREATE OR REPLACE FUNCTION capfail_injected() RETURNS trigger AS $b$ BEGIN RAISE EXCEPTION 'injected database failure'; END; $b$ LANGUAGE plpgsql`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER capfail_injected_trg BEFORE UPDATE ON "Product" FOR EACH ROW WHEN (NEW.id = '${productId}') EXECUTE FUNCTION capfail_injected()`);
+    await prisma.order.update({ where: { id: orderId }, data: { paymentNote: 'OWNER NOTE keep me' } });
+    mockAuth.mockResolvedValue({ user: { id: userId, role: 'user' } });
+    mockCapture.mockResolvedValue({ id: 'PP-CAPFAIL', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ status: 'COMPLETED', amount: { value: '5.00', currency_code: 'USD' } }] } }] });
+    mockCapture.mockClear();
+    try {
+      const { approvePayPalOrder } = await import('@/lib/actions/order.actions');
+      const result = await approvePayPalOrder(orderId, { orderID: 'PP-CAPFAIL' });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('do not pay again');
+      const row = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+      expect(row.isPaid).toBe(false);
+      expect(row.paymentNote).toContain('CAPTURED_UNSETTLED reason=DB_ERROR');
+      expect((await prisma.product.findUniqueOrThrow({ where: { id: productId } })).stock).toBe(5);
+      expect(mockCapture).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).not.toHaveBeenCalled();
+      expect(mockMail).not.toHaveBeenCalled();
+      expect(mockMirror).not.toHaveBeenCalled();
+    } finally {
+      await prisma.$executeRawUnsafe('DROP TRIGGER IF EXISTS capfail_injected_trg ON "Product"');
+      await prisma.$executeRawUnsafe('DROP FUNCTION IF EXISTS capfail_injected()');
+    }
+  });
+
   const mkOrder = async (ppId: string) => {
     const { prisma } = await import('@/db/prisma');
     return (
