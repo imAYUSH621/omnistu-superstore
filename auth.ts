@@ -1,3 +1,4 @@
+import { transferGuestCart } from '@/lib/auth-cart-lifecycle';
 import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
 import { PrismaAdapter } from '@auth/prisma-adapter';
@@ -172,22 +173,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const sessionCartId = cookiesObject.get('sessionCartId')?.value;
 
             if (sessionCartId && user.id && user.id !== 'master-admin-001') {
-              const sessionCart = await prisma.cart.findFirst({
-                where: { sessionCartId, userId: null },
-              });
-
-              if (sessionCart) {
-                // Delete current user cart
-                await prisma.cart.deleteMany({
-                  where: { userId: user.id },
-                });
-
-                // Assign new cart
-                await prisma.cart.update({
-                  where: { id: sessionCart.id },
-                  data: { userId: user.id },
-                });
-              }
+              await transferGuestCart(user.id, sessionCartId);
             }
           } catch (cartErr) {
             console.warn('Non-fatal cart synchronization notice:', cartErr);
