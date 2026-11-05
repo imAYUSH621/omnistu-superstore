@@ -32,3 +32,9 @@ test('auth responses are absent from the tracked deployment tree',async()=>{
  const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0');
  assert.equal(files.includes('.cache/cj/auth.json'),false);
 });
+
+test('stock success envelope without result is accepted only with code200 and success true',()=>{
+ assert.equal(classifyCjResponse(200,{code:200,success:true}),null);
+ assert.equal(classifyCjResponse(200,{code:200,success:true,result:false}),'REJECTED');
+ assert.equal(classifyCjResponse(200,{code:500,success:true}),'REJECTED');
+});

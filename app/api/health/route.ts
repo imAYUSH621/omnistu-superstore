@@ -25,6 +25,7 @@ export async function GET() {
     prisma.$queryRaw(s, ...v) as never
   );
   let source: string;
+  let catalogProbeFailed=false;
   if (!isDatabaseAvailable()) {
     source = sampleCatalogAllowed() ? 'demo-fallback' : 'unavailable';
   } else if (db !== 'ok') {
@@ -40,12 +41,12 @@ export async function GET() {
         SELECT EXISTS(SELECT 1 FROM "Product" WHERE ${Prisma.join(conditions, ' AND ')}) AS x`;
       visible = rows[0]?.x === true;
     } catch {
-      visible = false;
+      catalogProbeFailed=true;
     }
-    source = visible ? 'database' : sampleCatalogAllowed() ? 'demo-fallback' : 'empty';
+    source = catalogProbeFailed?'unavailable':visible ? 'database' : sampleCatalogAllowed() ? 'demo-fallback' : 'empty';
   }
   return NextResponse.json(
-    { status: db === 'ok' ? 'ok' : 'degraded', db, catalogSource: source, time: new Date().toISOString() },
-    { status: db === 'ok' ? 200 : 503 }
+    { status: db === 'ok'&&!catalogProbeFailed ? 'ok' : 'degraded', db, catalogSource: source, time: new Date().toISOString() },
+    { status: db === 'ok'&&!catalogProbeFailed ? 200 : 503 }
   );
 }

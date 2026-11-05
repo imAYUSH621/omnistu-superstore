@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import T from '@/components/shared/i18n-text';
+import { isCartToastEventDetail } from '@/lib/cart-event';
 
 export default function CartBadge({ initialCount = 0 }: { initialCount?: number }) {
   // Server provides the real cart count; a cookie-based seed was never
@@ -18,7 +19,9 @@ export default function CartBadge({ initialCount = 0 }: { initialCount?: number 
   useEffect(() => {
     const handleCartUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ qty: number }>;
-      setCount((prev) => prev + (customEvent.detail?.qty || 1));
+      if (isCartToastEventDetail(customEvent.detail)) {
+        setCount((prev) => prev + customEvent.detail.qty);
+      }
     };
 
     window.addEventListener('omnistu:cart-updated', handleCartUpdate);

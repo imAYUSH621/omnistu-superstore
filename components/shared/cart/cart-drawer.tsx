@@ -16,13 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ShoppingCart, ArrowRight, Zap } from 'lucide-react';
 
-interface CartToastEventDetail {
-  productId: string;
-  name: string;
-  price: string;
-  image: string;
-  qty: number;
-}
+import { isCartToastEventDetail, type CartToastEventDetail } from '@/lib/cart-event';
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -32,7 +26,7 @@ export default function CartDrawer() {
   useEffect(() => {
     const handleCartUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<CartToastEventDetail>;
-      if (customEvent.detail) {
+      if (isCartToastEventDetail(customEvent.detail)) {
         setLatestItem(customEvent.detail);
         setIsOpen(true);
       }
