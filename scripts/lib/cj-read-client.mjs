@@ -19,7 +19,7 @@ export function classifyCjResponse(status, body) {
   if (status === 429) return 'THROTTLED_UNKNOWN';
   if ([1600001, 1600002, 1600003, 1600004, 1600005, 1600006, 1600008].includes(code) || status === 401) return 'AUTH';
   if (status >= 500) return 'SERVER';
-  if (status < 200 || status >= 300 || body?.result !== true) return 'REJECTED';
+  if (status < 200 || status >= 300 || !(body?.result === true || (body?.result === undefined && body?.success === true && code === 200))) return 'REJECTED';
   return null;
 }
 export function createCjReadClient({ fetchImpl = fetch, sleep = ms => new Promise(r => setTimeout(r, ms)), now = Date.now } = {}) {

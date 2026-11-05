@@ -1,3 +1,4 @@
+import {containsRetailIdentity}from './retail-line-boundary';
 import { insertProductSchema } from '@/lib/validators';
 
 export type ImportRow = Record<string, unknown>;
@@ -21,6 +22,12 @@ export function planCatalogImport(rows: ImportRow[], existingSlugs: Set<string>,
   const seen = new Set<string>();
   rows.forEach((raw, index) => {
     const slug = typeof raw?.slug === 'string' ? raw.slug : '';
+    // Product-only schema strips unknown keys. Never silently flatten a supplier option
+    // or variant-priced offer into a base-product listing at an unrelated price/stock.
+    if (containsRetailIdentity(raw)) {
+      plan.invalid.push({index,slug,error:'Variant-bearing rows require a qualified retail variant import path'});
+      return;
+    }
     const parsed = insertProductSchema.safeParse({ isFeatured: false, banner: null, ...raw, price: normalisePrice(raw?.price) });
     if (!parsed.success) {
       plan.invalid.push({ index, slug, error: parsed.error.issues[0]?.message ?? 'invalid row' });

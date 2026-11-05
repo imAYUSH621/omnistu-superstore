@@ -38,6 +38,10 @@ describe('planCatalogImport', () => {
     expect(p.invalid).toHaveLength(0);
     expect(p.create.map((c) => c.brand ?? null)).toEqual([null, null]);
   });
+  it.each(['variants','variantId','variantSku','supplierVariantId','referenceCost'])('never strips %s into an apparently valid base-product retail listing',key=>{
+    const p=planCatalogImport([row({[key]:key==='variants'?[{sku:'supplier-size-M',referenceCost:'2.00'}]:'supplier-value'})],new Set(),false);
+    expect(p.create).toHaveLength(0);expect(p.update).toHaveLength(0);expect(p.invalid[0].error).toContain('qualified retail variant');
+  });
   it('accepts a numeric price', () => {
     expect(planCatalogImport([row({ price: 12 })], new Set(), false).create).toHaveLength(1);
   });
