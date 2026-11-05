@@ -117,7 +117,7 @@ function RemoveButton({ item }: { item: CartItem }) {
   );
 }
 
-const CartTable = ({ cart, testMode = false }: { cart?: Cart; testMode?: boolean }) => {
+const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: { cart?: Cart; testMode?: boolean; showDemoRecommendations?: boolean }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -196,9 +196,9 @@ const CartTable = ({ cart, testMode = false }: { cart?: Cart; testMode?: boolean
             </div>
 
             {/* Recommended Products Carousel Shelf */}
-            <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none'>
+            {showDemoRecommendations && <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none'>
               <h2 className='text-lg md:text-xl font-bold text-[#0f172a] dark:text-white mb-4'>
-                Customers who viewed items in your browsing history also bought
+                Demo product examples - not based on your browsing or purchases
               </h2>
               <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
                 {RECOMMENDED_ITEMS.map((item, idx) => (
@@ -237,7 +237,7 @@ const CartTable = ({ cart, testMode = false }: { cart?: Cart; testMode?: boolean
                   </div>
                 ))}
               </div>
-            </div>
+            </div>}
           </div>
         ) : (
           /* ========================================================

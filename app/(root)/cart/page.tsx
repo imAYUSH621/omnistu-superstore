@@ -1,3 +1,4 @@
+import {sampleCatalogAllowed}from '@/lib/test-fixture';
 import { auth } from '@/auth';
 import { cookies } from 'next/headers';
 import { hasPreservedGuestCart } from '@/lib/auth-cart-lifecycle';
@@ -20,7 +21,7 @@ export default async function CartPage() {
   return (
     <div className='w-full bg-[#f8fafc] dark:bg-[#0f172a] min-h-[85vh] font-sans'>
       {preserved && <p role='status' className='mx-auto max-w-6xl p-4 text-sm bg-amber-50 text-amber-950 border border-amber-200'>Your signed-in cart is shown below. Items from your guest visit were kept separately and were not merged or removed. They are not part of this checkout.</p>}
-      <CartTable cart={cart} testMode={testCheckoutMode()} />
+      <CartTable cart={cart} testMode={testCheckoutMode()} showDemoRecommendations={sampleCatalogAllowed()} />
     </div>
   );
 }
