@@ -1,6 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@/db/prisma';
-import { bumpSessionVersion } from '@/lib/session-version';
 import { hashPassword } from '@/lib/password';
 import { resolveMailTransport } from '@/lib/mail/transport';
 
@@ -33,8 +32,9 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string):
   if (!transport) return 'skipped';
   const email = emailInput.trim().toLowerCase();
   if (!email) return 'skipped';
-  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (!user) return 'skipped';
+  const users = await prisma.user.findMany({ where: { email: { equals: email, mode: 'insensitive' } }, take: 2, select: { id: true, email: true } });
+  if (users.length !== 1) return 'skipped';
+  const user = users[0];
   const identifier = resetIdentifier(email);
   await prisma.verificationToken.deleteMany({ where: { identifier } });
   const raw = newResetToken();
@@ -44,7 +44,7 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string):
   const link = `${baseUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(raw)}`;
   let delivered = false;
   try {
-    delivered = await transport.send({ to: email, subject: 'Reset your password', text: link });
+    delivered = await transport.send({ to: user.email, subject: 'Reset your password', text: link });
   } catch {
     delivered = false;
   }
@@ -58,26 +58,35 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string):
 
 export type ResetResult = { ok: true } | { ok: false; reason: 'invalid' | 'expired' };
 
-/** Single-use: the token row is deleted when consumed. */
+/** Token consumption, password change and old-session revocation commit together.
+ * Hashing stays outside the transaction; token freshness is rechecked inside. */
 export async function consumePasswordReset(rawToken: string, newPassword: string): Promise<ResetResult> {
   if (!rawToken) return { ok: false, reason: 'invalid' };
   const hashed = hashResetToken(rawToken);
-  const row = await prisma.verificationToken.findFirst({
+  const candidate = await prisma.verificationToken.findFirst({
     where: { token: hashed, identifier: { startsWith: RESET_PREFIX } },
   });
-  if (!row) return { ok: false, reason: 'invalid' };
-  const deleted = await prisma.verificationToken.deleteMany({
-    where: { identifier: row.identifier, token: hashed },
+  if (!candidate) return { ok: false, reason: 'invalid' };
+  const password = await hashPassword(newPassword);
+  return prisma.$transaction(async tx => {
+    const row = await tx.verificationToken.findFirst({
+      where: { token: hashed, identifier: candidate.identifier },
+    });
+    if (!row) return { ok: false, reason: 'invalid' } as const;
+    const deleted = await tx.verificationToken.deleteMany({
+      where: { identifier: row.identifier, token: hashed },
+    });
+    if (deleted.count !== 1) return { ok: false, reason: 'invalid' } as const;
+    if (row.expires.getTime() < Date.now()) return { ok: false, reason: 'expired' } as const;
+    const email = row.identifier.slice(RESET_PREFIX.length);
+    const users = await tx.user.findMany({ where: { email: { equals: email, mode: 'insensitive' } }, take: 2, select: { id: true } });
+    if (users.length !== 1) return { ok: false, reason: 'invalid' } as const;
+    const user = users[0];
+    await tx.user.update({ where: { id: user.id }, data: { password } });
+    // Do not use the best-effort legacy helper: failure MUST abort this reset.
+    await tx.$executeRaw`
+      INSERT INTO "UserSessionVersion" ("userId","version") VALUES (${user.id}::uuid, 1)
+      ON CONFLICT ("userId") DO UPDATE SET "version" = "UserSessionVersion"."version" + 1, "updatedAt" = now()`;
+    return { ok: true } as const;
   });
-  if (deleted.count !== 1) return { ok: false, reason: 'invalid' };
-  if (row.expires.getTime() < Date.now()) return { ok: false, reason: 'expired' };
-  const email = row.identifier.slice(RESET_PREFIX.length);
-  const updated = await prisma.user.updateMany({
-    where: { email },
-    data: { password: await hashPassword(newPassword) },
-  });
-  if (updated.count !== 1) return { ok: false, reason: 'invalid' };
-  const u = await prisma.user.findFirst({ where: { email }, select: { id: true } });
-  if (u) await bumpSessionVersion(u.id);
-  return { ok: true };
 }
