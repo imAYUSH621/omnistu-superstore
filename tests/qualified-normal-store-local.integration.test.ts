@@ -52,5 +52,22 @@ const RUN = process.env.QUALIFIED_RETAIL_NATIVE_TEST === 'true' && /^postgresql:
     expect((await readQualifiedCart(userId))!.lines).toHaveLength(1);
     await removeQualifiedItem(userId,{cartId:cart.id,lineKey:o.lineKey,snapshotId:o.snapshotId});
   });
+  it('changing a saved street address after review refuses order creation even in the same postal area',async()=>{
+    const o=offers[0];await addQualifiedItem(userId,{lineKey:o.lineKey,snapshotId:o.snapshotId,qty:1});
+    const cart=(await readQualifiedCart(userId))!,before=await prisma.order.count();
+    const user=await prisma.user.findUniqueOrThrow({where:{id:userId}});
+    await prisma.user.update({where:{id:userId},data:{address:{...(user.address as object),streetAddress:'Changed street, same postal area'}}});
+    await expect(createQualifiedTestOrder(userId,{cartId:cart.id,reviewToken:cart.reviewToken,idempotencyKey:randomUUID()})).rejects.toThrow('Cart details changed');
+    expect(await prisma.order.count()).toBe(before);await removeQualifiedItem(userId,{cartId:cart.id,lineKey:o.lineKey,snapshotId:o.snapshotId});
+  });
+  it('two customers racing for one remaining variant unit produce exactly one simulated payment and allocation',async()=>{
+    const o=offers[1];await prisma.user.update({where:{id:otherId},data:{paymentMethod:'TestPayment'}});
+    const orders=await Promise.all([userId,otherId].map(async owner=>{await addQualifiedItem(owner,{lineKey:o.lineKey,snapshotId:o.snapshotId,qty:1});const cart=(await readQualifiedCart(owner))!;return {owner,id:await createQualifiedTestOrder(owner,{cartId:cart.id,reviewToken:cart.reviewToken,idempotencyKey:randomUUID()})}}));
+    const results=await Promise.allSettled(orders.map(o=>payQualifiedTestOrder(o.owner,o.id)));
+    expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);expect(results.filter(r=>r.status==='rejected')).toHaveLength(1);
+    expect(await prisma.order.count({where:{id:{in:orders.map(o=>o.id)},isPaid:true}})).toBe(1);
+    expect(await prisma.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "lineKey"=${o.lineKey}`).toEqual([{availableQty:0}]);
+    expect(await prisma.$queryRaw`SELECT count(*)::int n FROM "RetailAllocation" WHERE "orderId"=ANY(${orders.map(o=>o.id)}::uuid[])`).toEqual([{n:1}]);
+  });
   it('immutable quote versions reject SQL edits',async()=>{await expect(prisma.$executeRaw`UPDATE "RetailQuote" SET snapshot=snapshot WHERE "snapshotId"=${offers[0].snapshotId}`).rejects.toThrow('immutable')});
 });

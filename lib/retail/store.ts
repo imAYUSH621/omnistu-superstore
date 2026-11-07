@@ -35,9 +35,10 @@ async function requireEnabled(userId: string) {
 }
 class DestinationRequiredError extends Error {}
 function destination(address: unknown) {
-  const a = address as { country?: unknown; postalCode?: unknown } | null;
+  const a = address as { country?: unknown; postalCode?: unknown; fullName?:unknown;streetAddress?:unknown;city?:unknown;state?:unknown } | null;
   if (!a || typeof a.country !== 'string' || !/^[A-Z]{2}$/.test(a.country) || typeof a.postalCode !== 'string' || !a.postalCode.trim()) throw new DestinationRequiredError('Save a two-letter country code and postal code before choosing an offer');
-  return { country: a.country, postal: a.postalCode.trim() };
+  const addressBinding=createHash('sha256').update(JSON.stringify([a.fullName,a.streetAddress,a.city,a.state,a.country,a.postalCode])).digest('hex');
+  return { country: a.country, postal: a.postalCode.trim(),addressBinding };
 }
 async function ownerDestination(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { address: true } });
@@ -69,7 +70,7 @@ export async function readQualifiedCart(userId: string) {
   await requireEnabled(userId);
   try {return await readQualifiedCartWithClient(prisma, userId, await ownerDestination(userId));} catch(error) {if(error instanceof DestinationRequiredError)return null;throw error;}
 }
-async function readQualifiedCartWithClient(db: Pick<typeof prisma, '$queryRaw'>, userId: string, d: {country:string;postal:string}) {
+async function readQualifiedCartWithClient(db: Pick<typeof prisma, '$queryRaw'>, userId: string, d: {country:string;postal:string;addressBinding:string}) {
   const carts = await db.$queryRaw<CartRow[]>`SELECT * FROM "RetailCart" WHERE "userId"=${userId}::uuid AND "destinationCountry"=${d.country} AND "destinationPostal"=${d.postal}`;
   if (carts.length !== 1) return null;
   const cart = carts[0], lines: SafeLine[] = [];
@@ -82,7 +83,7 @@ async function readQualifiedCartWithClient(db: Pick<typeof prisma, '$queryRaw'>,
     lines.push({ productId: line.snapshot.productId, variantId: line.snapshot.variantId, lineKey: line.lineKey, snapshotId: line.snapshotId, name: rows[0]?.name || 'Product needs review', variantLabel: rows[0]?.label || 'Option needs review', slug: rows[0]?.slug || '', image: rows[0]?.images[0] || '/images/placeholder.svg', qty: line.qty, price: current ? (line.snapshot.retailUnitCents / 100).toFixed(2) : '', status: current ? 'current' : 'review' });
   }
   const totalCents = cart.lines.reduce((n, l) => n + l.snapshot.retailUnitCents * l.qty, 0);
-  return { id: cart.id,createdAt:cart.createdAt, lines, reviewToken: createHash('sha256').update(JSON.stringify({binding:retailCartReviewToken(cart),display:lines})).digest('hex'), total: lines.every(l => l.status === 'current') && Number.isSafeInteger(totalCents) ? (totalCents / 100).toFixed(2) : null, country: d.country, postal: d.postal };
+  return { id: cart.id,createdAt:cart.createdAt, lines, reviewToken: createHash('sha256').update(JSON.stringify({binding:retailCartReviewToken(cart),display:lines,addressBinding:d.addressBinding})).digest('hex'), total: lines.every(l => l.status === 'current') && Number.isSafeInteger(totalCents) ? (totalCents / 100).toFixed(2) : null, country: d.country, postal: d.postal };
 }
 export async function removeQualifiedItem(userId: string, input: { cartId: string; lineKey: string; snapshotId: string }) {
   await requireEnabled(userId);
