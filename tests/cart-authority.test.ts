@@ -1,3 +1,4 @@
+import { RETAIL_IDENTITY_FIELDS } from '@/lib/retail-line-boundary';
 const findProduct=jest.fn(),findCart=jest.fn(),createCart=jest.fn(),updateCart=jest.fn();
 jest.mock('@/db/prisma',()=>({prisma:{$transaction:async(fn:(tx:unknown)=>Promise<unknown>)=>fn({$executeRaw:jest.fn(),product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}),product:{findFirst:(...x:unknown[])=>findProduct(...x)},cart:{findFirst:(...x:unknown[])=>findCart(...x),create:(...x:unknown[])=>createCart(...x),update:(...x:unknown[])=>updateCart(...x)}}}));
 jest.mock('next/headers',()=>({cookies:async()=>({get:()=>({value:'session-a'})})}));jest.mock('@/auth',()=>({auth:async()=>null}));jest.mock('next/cache',()=>({revalidatePath:jest.fn()}));jest.mock('@/lib/utils',()=>({...jest.requireActual('@/lib/utils'),isDatabaseAvailable:()=>true}));
@@ -13,3 +14,12 @@ it('variant fields cannot silently become a base product purchase',async()=>{exp
 it('variant catalog item cannot enter real checkout without retail option qualification',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'normal',images:['/x'],price:'20',stock:5,_count:{variants:2}});expect((await addItemToCart(item)).success).toBe(false);expect(createCart).not.toHaveBeenCalled()});
 
 it('existing cart honors requested quantity and combined stock',async()=>{findProduct.mockResolvedValueOnce({id:'p1',name:'x',slug:'x',images:['/x'],price:'20',stock:2});findCart.mockResolvedValueOnce({id:'c',items:[{...item,qty:1}],itemsPrice:'20',totalPrice:'20',shippingPrice:'0',taxPrice:'0'});expect((await addItemToCart({...item,qty:2})).success).toBe(false);expect(updateCart).not.toHaveBeenCalled()});
+
+it.each(RETAIL_IDENTITY_FIELDS)('option or quote identity %s refuses before a base-product write', async key => {
+  for (const value of [null, undefined, 'untrusted-option']) {
+    const result = await addItemToCart({ ...item, [key]: value } as never);
+    expect(result.success).toBe(false);
+  }
+  expect(createCart).not.toHaveBeenCalled();
+  expect(updateCart).not.toHaveBeenCalled();
+});

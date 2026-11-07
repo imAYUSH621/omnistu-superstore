@@ -1,5 +1,7 @@
 'use server';
 
+import { containsRetailIdentity } from '@/lib/retail-line-boundary';
+
 import { cookies } from 'next/headers';
 import { isTestFixtureSlug, TEST_FIXTURE_MESSAGE, isTestCatalogSlug, TEST_CATALOG_MESSAGE } from '@/lib/test-fixture';
 import { testCheckoutMode } from '@/lib/payment-capabilities';
@@ -42,6 +44,9 @@ async function addItemLocked(data: CartItem, db: CartTx) {
     // Get cart
     const cart = await readMyCart(db);
 
+    // Refuse option/quote identity before the product-only schema can strip it.
+    if (containsRetailIdentity(data)) throw new Error('Variant checkout is not available for this product yet.');
+
     // Parse and validate item
     let item = cartItemSchema.parse(data);
     if (!Number.isSafeInteger(item.qty) || item.qty <= 0) throw new Error('Invalid quantity');
@@ -52,8 +57,7 @@ async function addItemLocked(data: CartItem, db: CartTx) {
       include: { _count: { select: { variants: true } } },
     });
     if (!product) throw new Error('Product not found');
-    const supplied = data as CartItem & { variantId?: unknown; variantSku?: unknown; sku?: unknown };
-    if (supplied.variantId != null || supplied.variantSku != null || supplied.sku != null || ((product._count?.variants ?? 0) > 0 && !testCheckoutMode())) {
+    if ((product._count?.variants ?? 0) > 0 && !testCheckoutMode()) {
       throw new Error('Variant checkout is not available for this product yet.');
     }
     if (isTestFixtureSlug(product.slug)) throw new Error(TEST_FIXTURE_MESSAGE);
