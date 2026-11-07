@@ -358,7 +358,7 @@ const OrderDetailsTable = ({
                 </div>
               )}
               {!isPaid && paymentMethod === 'TestPayment' && <SimulatePaidButton />}
-              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && <SimulateDeliveredButton />}
+              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && !order.paymentNote?.startsWith('QUALIFIED TEST ONLY') && <SimulateDeliveredButton />}
             </CardContent>
           </Card>
         </div>

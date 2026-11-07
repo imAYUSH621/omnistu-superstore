@@ -1,3 +1,6 @@
+import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {listQualifiedOptions} from '@/lib/retail/store';
+import QualifiedBuyBox from '@/components/shared/retail/qualified-buy-box';
 import { getProductBySlug } from '@/lib/actions/product.actions';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
 import T from '@/components/shared/i18n-text';
@@ -114,7 +117,7 @@ const ProductDetailsPage = async (props: {
 
           {/* Authentic Buy Box Column (3 Cols) */}
           <div className='lg:col-span-3'>
-            <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />
+            {qualifiedRetailTestEnabled() ? <QualifiedBuyBox signedIn={!!userId} options={userId ? await listQualifiedOptions(userId,product.id).catch(()=>[]) : []}/> : <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />}
           </div>
         </div>
       </section>

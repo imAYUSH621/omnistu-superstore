@@ -133,3 +133,7 @@ describe('reset mail over a configured transport', () => {
     process.env = saved;
   });
 });
+
+it('TESTONLY refuses external SMTP even when credentials exist',()=>{
+  expect(resolveMailTransport(env({...SMTP,NODE_ENV:'production',TEST_CHECKOUT_MODE:'true'}))).toBeNull();
+});
