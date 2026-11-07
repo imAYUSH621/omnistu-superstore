@@ -18,7 +18,7 @@ import { prisma } from '@/db/prisma';
 import { formatError } from '../utils';
 import { ShippingAddress } from '@/types';
 import { z } from 'zod';
-import { PAGE_SIZE } from '../constants';
+import { PAGE_SIZE, USER_ROLES } from '../constants';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '../auth-guard';
 import { Prisma } from '@prisma/client';
@@ -267,12 +267,18 @@ export async function deleteUser(id: string) {
 export async function updateUser(user: z.infer<typeof updateUserSchema>) {
   await requireAdmin();
   try {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        name: user.name,
-        role: user.role,
-      },
+    const parsed = updateUserSchema.parse(user);
+    if (!USER_ROLES.includes(parsed.role)) return { success: false, message: 'Unsupported account role.' };
+    await prisma.$transaction(async tx => {
+      const rows = await tx.$queryRaw<{id:string;role:string}[]>`
+        SELECT id,role FROM "User" WHERE id=${parsed.id}::uuid FOR UPDATE`;
+      if (rows.length !== 1) throw new Error('User not found');
+      await tx.user.update({ where: { id: parsed.id }, data: { name: parsed.name, role: parsed.role } });
+      if (rows[0].role !== parsed.role) {
+        await tx.$executeRaw`
+          INSERT INTO "UserSessionVersion" ("userId","version") VALUES (${parsed.id}::uuid,1)
+          ON CONFLICT ("userId") DO UPDATE SET "version"="UserSessionVersion"."version"+1,"updatedAt"=now()`;
+      }
     });
 
     revalidatePath('/admin/users');
@@ -281,7 +287,7 @@ export async function updateUser(user: z.infer<typeof updateUserSchema>) {
       success: true,
       message: 'User updated successfully',
     };
-  } catch (error) {
-    return { success: false, message: formatError(error) };
+  } catch {
+    return { success: false, message: 'User update could not be confirmed. Reload to check before retrying.' };
   }
 }

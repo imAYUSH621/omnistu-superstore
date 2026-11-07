@@ -19,6 +19,7 @@ export async function requestReset(_prev: unknown, formData: FormData) {
   const parsed = emailSchema.safeParse(formData.get('email'));
   if (parsed.success) {
     const lim = await hitLimit('reset-req', parsed.data, LIMITS.resetRequest.max, LIMITS.resetRequest.windowSec);
+    if (!lim.available && process.env.NODE_ENV === 'production') return { success: false, message: UNAVAILABLE };
     if (lim.allowed) {
       // Runs after the response is sent, so reply timing cannot reveal whether the
       // account exists or how long delivery took. The outcome (sent | skipped |
@@ -56,8 +57,11 @@ export async function resetPassword(_prev: unknown, formData: FormData) {
   });
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   const lim = await hitLimit('reset-use', limitKey(parsed.data.token), LIMITS.resetUse.max, LIMITS.resetUse.windowSec);
+  if (!lim.available && process.env.NODE_ENV === 'production') return { success: false, message: UNAVAILABLE };
   if (!lim.allowed) return { success: false, message: 'Too many attempts. Try again later.' };
-  const r = await consumePasswordReset(parsed.data.token, parsed.data.password);
+  let r;
+  try { r = await consumePasswordReset(parsed.data.token, parsed.data.password); }
+  catch { return { success: false, message: 'Password reset could not be confirmed. Try signing in before retrying this link.' }; }
   if (r.ok) return { success: true, message: 'Password updated. You can sign in now.' };
   return {
     success: false,

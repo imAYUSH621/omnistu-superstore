@@ -39,7 +39,7 @@ describe('reset mail over a configured transport', () => {
     jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
     jest.doMock('@/db/prisma', () => ({
       prisma: {
-        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }) },
+        user: { findMany: jest.fn().mockResolvedValue([{ id: 'u1', email: 'user@x.test' }]) },
         verificationToken: { create, deleteMany: jest.fn().mockResolvedValue({}) },
       },
     }));
@@ -64,7 +64,7 @@ describe('reset mail over a configured transport', () => {
     jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
     jest.doMock('@/db/prisma', () => ({
       prisma: {
-        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }) },
+        user: { findMany: jest.fn().mockResolvedValue([{ id: 'u1', email: 'user@x.test' }]) },
         verificationToken: { create, deleteMany },
       },
     }));
@@ -105,7 +105,7 @@ describe('reset mail over a configured transport', () => {
     jest.resetModules();
     jest.doMock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
     jest.doMock('@/db/prisma', () => ({
-      prisma: { user: { findUnique: jest.fn().mockResolvedValue(null) }, verificationToken: { create: jest.fn(), deleteMany: jest.fn() } },
+      prisma: { user: { findMany: jest.fn().mockResolvedValue([]) }, verificationToken: { create: jest.fn(), deleteMany: jest.fn() } },
     }));
     const saved = { ...process.env };
     process.env = { ...process.env, ...SMTP };

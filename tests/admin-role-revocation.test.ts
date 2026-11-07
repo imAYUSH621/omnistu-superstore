@@ -1,0 +1,7 @@
+jest.mock('@/lib/auth-guard',()=>({requireAdmin:async()=>({user:{id:'actor',role:'admin'}})}));jest.mock('@/auth',()=>({auth:jest.fn(),signIn:jest.fn(),signOut:jest.fn()}));jest.mock('next/cache',()=>({revalidatePath:jest.fn()}));
+const update=jest.fn(),read=jest.fn(),bump=jest.fn();jest.mock('@/db/prisma',()=>({prisma:{user:{update:(...a:unknown[])=>update(...a)},$transaction:(fn:(tx:unknown)=>unknown)=>fn({user:{update:(...a:unknown[])=>update(...a)},$queryRaw:(...a:unknown[])=>read(...a),$executeRaw:(...a:unknown[])=>bump(...a)})}}));
+import{updateUser}from'@/lib/actions/user.actions';beforeEach(()=>{jest.clearAllMocks();read.mockResolvedValue([{id:'target',role:'admin'}]);update.mockResolvedValue({});bump.mockResolvedValue(1)});
+const input={id:'target',name:'Local sample',email:'local@example.invalid',role:'user'};
+test('role demotion requires a session-version bump in same transaction',async()=>{expect(await updateUser(input)).toMatchObject({success:true});expect(bump).toHaveBeenCalledTimes(1)});
+test('revocation storage failure does not report role update success',async()=>{bump.mockRejectedValue(Error('synthetic revocation failure'));expect(await updateUser(input)).toMatchObject({success:false})});
+test('unsupported role refuses before write',async()=>{expect(await updateUser({...input,role:'superuser'})).toMatchObject({success:false});expect(update).not.toHaveBeenCalled()});
