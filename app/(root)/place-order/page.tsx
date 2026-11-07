@@ -1,3 +1,6 @@
+import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {readQualifiedCart} from '@/lib/retail/store';
+import QualifiedCart from '@/components/shared/retail/qualified-cart';
 import { auth } from '@/auth';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getUserById } from '@/lib/actions/user.actions';
@@ -28,6 +31,7 @@ export const metadata: Metadata = {
 };
 
 const PlaceOrderPage = async () => {
+  if(qualifiedRetailTestEnabled()) {const viewer=await auth();if(!viewer?.user?.id)redirect('/sign-in');const user=await getUserById(viewer.user.id);if(!user.address)redirect('/shipping-address');if(user.paymentMethod!=='TestPayment')redirect('/payment-method');return <QualifiedCart checkout cart={await readQualifiedCart(viewer.user.id)}/>;}
   const cart = await getMyCart();
   const session = await auth();
   const userId = session?.user?.id;

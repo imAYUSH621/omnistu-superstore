@@ -212,10 +212,10 @@ const OrderDetailsTable = ({
               {isPaid ? (
                 <>
                   <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
-                    Paid at {formatDateTime(paidAt!).dateTime}
+                    {order.paymentNote?.startsWith('QUALIFIED TEST ONLY')?'Simulated payment at ':'Paid at '}{formatDateTime(paidAt!).dateTime}
                   </Badge>
                   <div className='mt-4'>
-                    <ReturnRequestButton orderId={id} />
+                    {order.paymentNote?.startsWith('QUALIFIED TEST ONLY')?<p className='text-sm text-muted-foreground'>Test record only. No shipment, return or refund is created.</p>:<ReturnRequestButton orderId={id} />}
                   </div>
                 </>
               ) : (
@@ -259,11 +259,11 @@ const OrderDetailsTable = ({
                 </TableHeader>
                 <TableBody>
                   {orderitems.map((item) => (
-                    <TableRow key={item.slug}>
+                    <TableRow key={`${item.slug}:${item.name}`}>
                       <TableCell>
                         <Link
                           href={`/product/${item.slug}`}
-                          className='flex items-center gap-3 hover:text-primary transition'
+                          className='flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3 hover:text-primary transition'
                         >
                           <div className='relative w-12 h-12 rounded overflow-hidden bg-neutral-100 flex-shrink-0'>
                             <Image
@@ -274,7 +274,7 @@ const OrderDetailsTable = ({
                               className='object-contain p-1'
                             />
                           </div>
-                          <span className='font-medium line-clamp-2'>{item.name}</span>
+                          <span className='font-medium whitespace-normal break-words'>{item.name}</span>
                         </Link>
                       </TableCell>
                       <TableCell>
@@ -358,7 +358,7 @@ const OrderDetailsTable = ({
                 </div>
               )}
               {!isPaid && paymentMethod === 'TestPayment' && <SimulatePaidButton />}
-              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && <SimulateDeliveredButton />}
+              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && !order.paymentNote?.startsWith('QUALIFIED TEST ONLY') && <SimulateDeliveredButton />}
             </CardContent>
           </Card>
         </div>

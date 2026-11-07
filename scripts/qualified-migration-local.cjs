@@ -1,0 +1,21 @@
+/* Disposable localhost migration acceptance. Never a hosted/post-order rollback tool. */
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{spawnSync}=require('node:child_process'),{Client}=require('pg');
+(async()=>{
+ const u=new URL(process.env.DATABASE_URL||'');if(u.hostname!=='127.0.0.1'||u.port!=='55444'||u.pathname!=='/postgres')throw Error('Explicit disposable localhost admin database required');
+ const name='omnistu_test_qualified_migration_probe',admin=new Client({connectionString:u.toString()});let db,created=false;
+ await admin.connect();try{
+  assert.equal((await admin.query('SELECT datname FROM pg_database WHERE datname=$1',[name])).rowCount,0,'Probe database already exists; do not overwrite it');await admin.query('CREATE DATABASE '+name);created=true;u.pathname='/'+name;db=new Client({connectionString:u.toString()});await db.connect();
+  const push=spawnSync(process.execPath,['node_modules/prisma/build/index.js','db','push','--skip-generate'],{cwd:path.join(__dirname,'..'),env:{...process.env,DATABASE_URL:u.toString()},encoding:'utf8'});assert.equal(push.status,0,'Baseline schema creation failed');
+  const fingerprint=async()=>{const results=[];for(const sql of [
+   `SELECT c.relname,c.relkind,c.relrowsecurity,a.attname,a.attnum,format_type(a.atttypid,a.atttypmod) type,a.attnotnull FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace LEFT JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE n.nspname='public' ORDER BY c.relname,a.attnum`,
+   `SELECT c.relname,k.conname,pg_get_constraintdef(k.oid) definition FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' ORDER BY c.relname,k.conname`,
+   `SELECT p.proname,pg_get_functiondef(p.oid) definition FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' ORDER BY p.proname,p.oid`,
+   `SELECT c.relname,t.tgname,pg_get_triggerdef(t.oid) definition FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND NOT t.tgisinternal ORDER BY c.relname,t.tgname`
+  ])results.push((await db.query(sql)).rows);return crypto.createHash('sha256').update(JSON.stringify(results)).digest('hex')};
+  const before=await fingerprint(),migration=fs.readFileSync(path.join(__dirname,'../prisma/migrations/20261107160000_qualified_retail_store/migration.sql'),'utf8');await db.query('BEGIN;'+migration+'ROLLBACK;');assert.equal(await fingerprint(),before);console.log('PASS aborted migration restores baseline relations/columns/constraints/functions/triggers');
+  await db.query(migration);const tables=['RetailQuote','RetailOffer','RetailCart','RetailCheckout','RetailOrderLine','RetailAllocation'];assert.equal((await db.query('SELECT count(*)::int n FROM pg_class WHERE relname=ANY($1) AND relrowsecurity',[tables])).rows[0].n,6);console.log('PASS committed migration creates six RLS-enabled tables');assert.equal((await db.query("SELECT count(*)::int n FROM pg_policies WHERE tablename LIKE 'Retail%' ")).rows[0].n,0);console.log('PASS no runtime policies activated');
+  const runtime=(await admin.query("SELECT rolname FROM pg_roles WHERE rolname='qualified_test_runtime'")).rows[0];assert.ok(runtime,'Run after disposable non-owner runtime setup');assert.equal((await db.query("SELECT count(*)::int n FROM pg_class WHERE relname=ANY($1) AND has_table_privilege('qualified_test_runtime',oid,'INSERT,UPDATE,DELETE')",[tables])).rows[0].n,0);console.log('PASS no write privileges granted to existing non-owner runtime');
+  await db.query('DROP TABLE "RetailAllocation","RetailOrderLine","RetailCheckout","RetailCart","RetailOffer","RetailQuote"; DROP FUNCTION retail_quote_immutable(); DROP INDEX retail_variant_product_identity;');assert.equal(await fingerprint(),before);console.log('PASS empty-feature rollback without CASCADE restores baseline catalog fingerprint');
+  console.log('Local empty-feature migration proof only. Not hosted policy qualification or permission to roll back retained orders.');
+ }finally{if(db)await db.end();if(created)await admin.query('DROP DATABASE '+name);await admin.end()}
+})().catch(e=>{console.error(e.message);process.exitCode=1});

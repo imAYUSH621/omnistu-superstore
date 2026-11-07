@@ -77,7 +77,7 @@ function devOutboxTransport(env: NodeJS.ProcessEnv): MailTransport {
  * SMTP wins when both exist; the dev outbox is the development fallback.
  */
 export function resolveMailTransport(env: NodeJS.ProcessEnv = process.env): MailTransport | null {
-  if (smtpConfigured(env)) return smtpTransport(env);
+  if (smtpConfigured(env) && env.TEST_CHECKOUT_MODE !== 'true') return smtpTransport(env);
   if (devOutboxEnabled(env)) return devOutboxTransport(env);
   return null;
 }

@@ -1,4 +1,6 @@
 'use server';
+import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedOrderItems,payQualifiedTestOrder} from '@/lib/retail/store';
 import { assertCheckoutSnapshot } from '@/lib/cart-checkout-snapshot';
 import { cartLinesMatchCatalog, cartTotalsConsistent } from '@/lib/cart-line-integrity';
 
@@ -24,6 +26,7 @@ import { needsPaymentReview, PAYMENT_REVIEW_MESSAGE } from '../payment-review';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
+  if(qualifiedRetailTestEnabled())return{success:false,message:'Review the qualified cart before placing this test order.',redirectTo:'/cart'};
   let authenticatedUserId: string | undefined;
   try {
     const session = await auth();
@@ -236,6 +239,7 @@ export async function getOrderById(orderId: string) {
   if (!data) return null;
   if (data.userId !== session.user.id && session.user.role !== 'admin') return null;
 
+  if(data.paymentNote?.startsWith('QUALIFIED TEST ONLY'))data.orderitems=await qualifiedOrderItems(data.id);
   return convertToPlainObject(data);
 }
 
@@ -678,7 +682,7 @@ export async function updateOrderToPaidTest(orderId: string) {
 
     const order = await prisma.order.findFirst({
       where: { id: orderId },
-      select: { paymentMethod: true, userId: true },
+      select: { paymentMethod: true, userId: true, paymentNote:true },
     });
     if (!order) throw new Error('Order not found');
     if (order.userId !== session.user.id && session.user.role !== 'admin') {
@@ -688,7 +692,8 @@ export async function updateOrderToPaidTest(orderId: string) {
       throw new Error('Only simulated test orders can be paid this way');
     }
 
-    await updateOrderToPaidSimulated(orderId);
+    if(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'))await payQualifiedTestOrder(order.userId,orderId);
+    else await updateOrderToPaidSimulated(orderId);
     revalidatePath(`/order/${orderId}`);
     return { success: true, message: 'Test order marked as paid (simulated - no real charge)' };
   } catch (error) {
@@ -706,12 +711,13 @@ export async function deliverOrderTest(orderId: string) {
 
     const order = await prisma.order.findFirst({
       where: { id: orderId },
-      select: { paymentMethod: true, userId: true, isPaid: true },
+      select: { paymentMethod: true, userId: true, isPaid: true,paymentNote:true },
     });
     if (!order) throw new Error('Order not found');
     if (order.userId !== session.user.id && session.user.role !== 'admin') {
       throw new Error('User is not authorized');
     }
+    if(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'))throw Error('No shipment exists for qualified test checkout');
     if (order.paymentMethod !== 'TestPayment') {
       throw new Error('Only simulated test orders can be delivered this way');
     }
