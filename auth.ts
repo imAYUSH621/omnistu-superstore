@@ -1,3 +1,4 @@
+import { parseCredentialInput } from '@/lib/auth-credential-input';
 import { transferGuestCart } from '@/lib/auth-cart-lifecycle';
 import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
@@ -29,8 +30,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials, request) {
         if (credentials == null) return null;
 
-        const emailInput = (credentials.email as string)?.trim().toLowerCase();
-        const passwordInput = (credentials.password as string)?.trim();
+        const parsedInput = parseCredentialInput(credentials);
+        if (!parsedInput) return null;
+        const { email: emailInput, password: passwordInput } = parsedInput;
 
         // Per-IP attempt ceiling. On Vercel, x-forwarded-for is overwritten by
         // the edge with the real client IP and external values are NOT
@@ -82,11 +84,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           // Case-insensitive so accounts created before sign-up lowercased
           // emails (e.g. "Asha@Example.com") can still sign in.
-          const user = await prisma.user.findFirst({
+          const users = await prisma.user.findMany({
             where: {
               email: { equals: emailInput, mode: 'insensitive' },
             },
+            take: 2,
+            select: { id: true, name: true, email: true, password: true, role: true },
           });
+          // Never choose an account by row order when legacy emails collide.
+          const user = users.length === 1 ? users[0] : null;
 
           if (user && user.password) {
             const check = await verifyPasswordGated(passwordInput, user.password);
@@ -137,7 +143,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // If there is an update, set the user name
       if (trigger === 'update') {
-        session.user.name = user.name;
+        session.user.name = user?.name ?? token.name;
       }
 
       return session;

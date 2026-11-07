@@ -48,8 +48,13 @@ export async function signInWithCredentials(
 
 // Sign user out
 export async function signOutUser() {
-  const session = await auth();
-  if (session?.user?.id) await deleteUserCartForSignout(session.user.id);
+  // Signing out must remain possible even when authentication storage fails.
+  try {
+    const session = await auth();
+    if (session?.user?.id) await deleteUserCartForSignout(session.user.id);
+  } catch {
+    // Cart cleanup is best-effort. Do not strand the authentication cookie.
+  }
   await signOut();
 }
 
@@ -65,16 +70,20 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
 
     const lim = await hitLimit('signup', user.email, LIMITS.signup.max, LIMITS.signup.windowSec);
     if (!lim.allowed) return { success: false, message: 'Too many attempts. Try again later.' };
+    if (!lim.available && process.env.NODE_ENV === 'production') return { success: false, message: 'Account registration is not available right now. Try again later.' };
     const plainPassword = user.password;
 
     user.password = await hashPassword(user.password);
 
-    await prisma.user.create({
-      data: {
-        name: user.name,
-        email: user.email,
-        password: user.password,
-      },
+    // Serialize normalized-email registration to avoid case-variant accounts.
+    await prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`signup:${user.email}`}))`;
+      const existing = await tx.user.findFirst({
+        where: { email: { equals: user.email, mode: 'insensitive' } },
+        select: { id: true },
+      });
+      if (existing) throw new Error('Unable to register this email. Try signing in or resetting your password.');
+      await tx.user.create({ data: { name: user.name, email: user.email, password: user.password } });
     });
 
     await signIn('credentials', {

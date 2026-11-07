@@ -1,0 +1,11 @@
+const mockAuth=jest.fn(),mockSignout=jest.fn(),mockDelete=jest.fn();
+jest.mock('@/db/prisma',()=>({prisma:{}}));
+jest.mock('@/auth',()=>({auth:()=>mockAuth(),signIn:jest.fn(),signOut:()=>mockSignout()}));
+jest.mock('@/lib/auth-cart-lifecycle',()=>({deleteUserCartForSignout:(...args:unknown[])=>mockDelete(...args)}));
+import{signOutUser}from'@/lib/actions/user.actions';
+beforeEach(()=>{mockAuth.mockReset().mockResolvedValue({user:{id:'self'}});mockDelete.mockReset().mockResolvedValue(undefined);mockSignout.mockReset().mockResolvedValue(undefined)});
+test('cart cleanup failure cannot strand an authenticated session',async()=>{mockDelete.mockRejectedValue(Error('storage unavailable'));await expect(signOutUser()).resolves.toBeUndefined();expect(mockSignout).toHaveBeenCalledTimes(1)});
+test('session read failure cannot prevent clearing the local sign-in cookie',async()=>{mockAuth.mockRejectedValue(Error('session lookup unavailable'));await expect(signOutUser()).resolves.toBeUndefined();expect(mockDelete).not.toHaveBeenCalled();expect(mockSignout).toHaveBeenCalledTimes(1)});
+test('ordinary successful cleanup still targets only current identity before signout',async()=>{await signOutUser();expect(mockDelete).toHaveBeenCalledWith('self');expect(mockDelete.mock.invocationCallOrder[0]).toBeLessThan(mockSignout.mock.invocationCallOrder[0])});
+test('missing identity skips cleanup but still signs out',async()=>{mockAuth.mockResolvedValue({user:{}});await signOutUser();expect(mockDelete).not.toHaveBeenCalled();expect(mockSignout).toHaveBeenCalledTimes(1)});
+test('signout redirect or error propagates, never retried',async()=>{const e=Error('NEXT_REDIRECT');mockSignout.mockRejectedValue(e);await expect(signOutUser()).rejects.toBe(e);expect(mockSignout).toHaveBeenCalledTimes(1)});
