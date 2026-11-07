@@ -1,8 +1,10 @@
+import { containsRetailIdentity } from '@/lib/retail-line-boundary';
 /** Current catalog binds the order lines. Old/forged/stale cart data cannot become a charge. */
 export function cartLinesMatchCatalog(lines: {productId:string;qty:number;price:string;slug:string}[], products: {id:string;price:string|number;slug:string}[]): boolean {
   const catalog = new Map(products.map(p => [p.id,p]));
   const ids = new Set<string>();
   return lines.every(line => {
+    if (containsRetailIdentity(line)) return false;
     const product = catalog.get(line.productId);
     if (!product || ids.has(line.productId) || !Number.isSafeInteger(line.qty) || line.qty <= 0) return false;
     ids.add(line.productId);
