@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ForgotForm from './forgot-form';
 import { resolveMailTransport } from '@/lib/mail/transport';
 
+// Transport is runtime configuration, not build-time cached availability.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: 'Forgot password' };
 
 export default function ForgotPasswordPage() {
