@@ -122,9 +122,10 @@ export async function getUserById(userId: string) {
 export async function updateUserAddress(data: ShippingAddress) {
   try {
     const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Authentication required' };
 
     const currentUser = await prisma.user.findFirst({
-      where: { id: session?.user?.id },
+      where: { id: session.user.id },
     });
 
     if (!currentUser) throw new Error('User not found');
@@ -151,8 +152,9 @@ export async function updateUserPaymentMethod(
 ) {
   try {
     const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Authentication required' };
     const currentUser = await prisma.user.findFirst({
-      where: { id: session?.user?.id },
+      where: { id: session.user.id },
     });
 
     if (!currentUser) throw new Error('User not found');
@@ -178,10 +180,11 @@ export async function updateUserPaymentMethod(
 export async function updateProfile(user: { name: string; email: string }) {
   try {
     const session = await auth();
+    if (!session?.user?.id) return { success: false, message: 'Authentication required' };
 
     const currentUser = await prisma.user.findFirst({
       where: {
-        id: session?.user?.id,
+        id: session.user.id,
       },
     });
 
