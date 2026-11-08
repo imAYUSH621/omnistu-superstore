@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {PROFILE_COPY} from './profile-language';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function profileMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;return{title:PROFILE_COPY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))].title}}
