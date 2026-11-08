@@ -3,14 +3,15 @@ import { auth } from '@/auth';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getUserById } from '@/lib/actions/user.actions';
 import { Metadata } from 'next';
+import{cookies}from 'next/headers';
+import{supportLanguage}from '@/lib/support-language';
+import{CHECKOUT_COPY}from '@/lib/checkout-language';
 import { redirect } from 'next/navigation';
 import { ShippingAddress } from '@/types';
 import ShippingAddressForm from './shipping-address-form';
 import CheckoutSteps from '@/components/shared/checkout-steps';
 
-export const metadata: Metadata = {
-  title: 'Shipping Address',
-};
+export async function generateMetadata():Promise<Metadata>{const l=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);return{title:CHECKOUT_COPY[l].addressTitle}}
 
 const ShippingAddressPage = async () => {
   const cart = await getMyCart();

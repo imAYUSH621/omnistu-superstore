@@ -1,0 +1,7 @@
+# Existing address and payment form language
+
+Reuses the six existing language preferences. The actual shipping form has localized labels, placeholders, field validation messages and pending feedback. Payment selection has localized method availability, no-method pause, simulated method and pending feedback. Server titles and the existing test-only banner are localized. Original address and payment method identifiers stay unchanged.
+
+The generic form library prioritizes its own error text over children. These forms therefore use a scoped CheckoutError component that reads the existing field error and existing form-message ID, translates only known validation errors, and hides unknown internal diagnostics behind a generic failure. It does not change the global form library or relax validation. Country codes and full names remain accepted under the existing schema. All server authentication, payment availability and test-only flags stay authoritative.
+
+Browser fixtures cover actual components with mocked action/router, invalid address refusing an action, exact valid action data, simulated-only method selection and disabled no-method form in six languages. They are not hosted save or payment proof. Hosted qualification is separate and must split signup/setup, form acceptance and exact cleanup into bounded stages. Real payment, supplier orders, dispatch and mail stay OFF. No order submission is needed to qualify these two forms.

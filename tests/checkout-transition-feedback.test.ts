@@ -24,13 +24,14 @@ describe('checkout transition pending feedback (D12)', () => {
   it('payment-method shows the note while saving and prefetches /place-order', () => {
     expect(pm).toContain("router.prefetch('/place-order')");
     expect(pm).toContain('show={isPending}');
-    expect(pm).toContain('No need to click again');
+    expect(pm).toContain('label={t.savingPayment}');
+    expect(readFileSync('lib/checkout-language.ts','utf8')).toContain('Please wait without clicking again.');
   });
 
   it('shipping-address shows the note while saving and prefetches /payment-method', () => {
     expect(ship).toContain("router.prefetch('/payment-method')");
     expect(ship).toContain('show={isPending}');
-    expect(ship).toContain('No need to click again');
+    expect(ship).toContain('label={t.savingAddress}');
   });
 
   it('place-order shows the note while placing and names the idempotent retry', () => {
