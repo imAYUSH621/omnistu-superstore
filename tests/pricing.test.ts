@@ -63,10 +63,26 @@ describe('Omnistu Kit Mathematical Margin Engine (priceFor)', () => {
     expect(Number.isFinite(res.profit)).toBe(true);
   });
 
-  test('handles negative or NaN input defensively', () => {
-    const res = priceFor(-10, NaN);
-    expect(res.retailPrice).toBeGreaterThanOrEqual(0.99);
-    expect(Number.isFinite(res.retailPrice)).toBe(true);
+  test('refuses unknown or negative inputs rather than treating cost as zero', () => {
+    expect(() => priceFor(-10, 0)).toThrow('known non-negative');
+    expect(() => priceFor(10, NaN)).toThrow('known non-negative');
+    expect(() => priceFor(Infinity, 0)).toThrow('known non-negative');
+  });
+
+  test('refuses overflow rather than returning an infinite price', () => {
+    expect(() => priceFor(Number.MAX_VALUE, Number.MAX_VALUE)).toThrow('safe monetary precision');
+  });
+
+  test('rounds an exact required dollar floor upward, never below it', () => {
+    const cfg = { feePct: 0, feeFixed: 0, minMarginPct: 50 };
+    const res = priceFor(5, 0, cfg);
+    expect(res.retailPrice).toBe(10.99);
+    expect(res.marginPct).toBeGreaterThanOrEqual(50);
+  });
+
+  test.each(['feePct', 'feeFixed', 'minMarginPct'] as const)('refuses invalid %s', (key) => {
+    expect(() => priceFor(5, 1, { feePct: 3, feeFixed: 0.3, minMarginPct: 30, [key]: -1 })).toThrow('known non-negative');
+    expect(() => priceFor(5, 1, { feePct: 3, feeFixed: 0.3, minMarginPct: 30, [key]: NaN })).toThrow('known non-negative');
   });
 
   test('throws error when feeRate + marginRate >= 100%', () => {

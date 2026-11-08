@@ -28,3 +28,24 @@ Status: design. Candidate, not production-qualified. Nothing here publishes a pr
 - Method: run a SELECT count first, then delete inside one transaction with the same predicate, compare counts, commit. No blanket delete, no TRUNCATE.
 - After cleanup the DB catalog is empty until real qualified SKUs exist, and the app shows its honest empty state.
 - A marker for demo identities should be a column or slug rule that code can test (`isTestFixtureSlug`), never a name match.
+
+## Cost evidence and margin scenarios
+
+`assessLandedCost` in `lib/landed-cost.ts` keeps unknown handling, seller-borne
+tax/duty, returns/loss reserve and merchant payment fees separate from verified
+product/freight costs. Unknown is `null`, never zero. A supplier quote with zero
+freight is accepted as a quoted amount, not evidence that other fees are zero.
+A costed scenario is not permission to publish or a promise of profit.
+
+For revenue margin m and payment percentage f, the price floor is
+`(known costs + fixed payment fee) / (1 - f - m)`. Markup on cost is not margin
+on revenue. `priceFor` refuses non-finite/negative costs and rounds x.99 upward
+without slipping below that floor. Its environment fee defaults are assumptions,
+not the merchant's verified commercial fee schedule. Use the explicit null-aware
+assessment for catalog qualification, not the convenience destination estimator.
+
+CJ's `SUPPLIER_SHIPPED_PRODUCT` remains supplier-shipped even when its inventory
+response has positive `cjInventory` / `verifiedWarehouse=1` fields. Do not convert
+those field names into a claim CJ itself dispatches the product. Factory stock,
+warehouse stock, reservation and dispatch SLA are distinct. Reference postal
+quotes do not establish all-country coverage or a real customer's final total.
