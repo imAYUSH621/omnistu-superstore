@@ -76,6 +76,13 @@ describe('deliverOrder authorization', () => {
     expect(mockFindFirst).not.toHaveBeenCalled();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
+  it('refuses admin delivery of a qualified non-shipping test order', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
+    mockFindFirst.mockResolvedValue({ isPaid: true, paymentMethod: 'TestPayment', paymentNote: 'QUALIFIED TEST ONLY - simulated checkout' });
+    const r = await deliverOrder('o1');
+    expect(r).toMatchObject({success:false,message:'No shipment exists for qualified test checkout'});
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
   it('lets an admin mark a paid order delivered', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
     mockFindFirst.mockResolvedValue({ isPaid: true });

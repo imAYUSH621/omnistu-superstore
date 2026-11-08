@@ -650,6 +650,7 @@ export async function deliverOrder(orderId: string) {
     });
 
     if (!order) throw new Error('Order not found');
+    if (order.paymentNote?.startsWith('QUALIFIED TEST ONLY')) throw new Error('No shipment exists for qualified test checkout');
     if (!order.isPaid) throw new Error('Order is not paid');
 
     await prisma.order.update({

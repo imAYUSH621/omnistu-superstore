@@ -349,7 +349,7 @@ const OrderDetailsTable = ({
               {isAdmin && !isPaid && paymentMethod === 'CashOnDelivery' && (
                 <MarkAsPaidButton />
               )}
-              {isAdmin && isPaid && !isDelivered && <MarkAsDeliveredButton />}
+              {isAdmin && isPaid && !isDelivered && !order.paymentNote?.startsWith('QUALIFIED TEST ONLY') && <MarkAsDeliveredButton />}
 
               {/* Simulated test checkout */}
               {paymentMethod === 'TestPayment' && (
