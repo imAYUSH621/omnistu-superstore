@@ -202,3 +202,23 @@ describe('reviewReturn concurrency and cumulative guards (G3 hardening)', () => 
     });
   });
 });
+
+
+describe('persisted simulated-order return boundary',()=>{
+  it.each([{paymentMethod:'TestPayment',paymentNote:null},{paymentMethod:'PayPal',paymentNote:'QUALIFIED TEST ONLY proof'},{paymentMethod:'TestPayment',paymentNote:'other'}])('rejects direct request without making an RMA (%j)',async classification=>{
+    mockOrderFindUnique.mockResolvedValueOnce({...paidOrder,...classification});
+    const r=await requestReturn('order-1','Test reason is long enough');
+    expect(r.success).toBe(false);expect(r.message).toContain('Test orders');
+    expect(mockReturnFindFirst).not.toHaveBeenCalled();expect(mockReturnCreate).not.toHaveBeenCalled();
+  });
+  it.each([{paymentMethod:'TestPayment',paymentNote:null},{paymentMethod:'PayPal',paymentNote:'QUALIFIED TEST ONLY proof'}])('blocks approval of a legacy test RMA before durable claim or provider (%j)',async classification=>{
+    mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});
+    mockReturnFindUnique.mockResolvedValueOnce({id:'legacy-test-rma',orderId:'order-1',status:'REQUESTED',order:{...paidOrder,...classification}});
+    const r=await reviewReturn('legacy-test-rma',true);expect(r.success).toBe(false);expect(r.message).toContain('Test orders');
+    expect(mockReturnUpdateMany).not.toHaveBeenCalled();expect(mockReturnUpdate).not.toHaveBeenCalled();expect(mockQueryRaw).not.toHaveBeenCalled();
+  });
+  it('still lets admin reject an existing test RMA without refund processing',async()=>{
+    mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});mockReturnFindUnique.mockResolvedValueOnce({id:'legacy-test-rma',orderId:'order-1',status:'REQUESTED',order:{...paidOrder,paymentMethod:'TestPayment'}});mockReturnUpdate.mockResolvedValueOnce({});
+    expect((await reviewReturn('legacy-test-rma',false)).success).toBe(true);expect(mockReturnUpdate).toHaveBeenCalledWith({where:{id:'legacy-test-rma'},data:{status:'REJECTED',resolutionNote:null}});expect(mockReturnUpdateMany).not.toHaveBeenCalled();expect(mockQueryRaw).not.toHaveBeenCalled();
+  });
+});
