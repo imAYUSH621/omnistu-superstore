@@ -14,23 +14,15 @@ export default async function AccountOverviewPage() {
   const session = await auth();
   if (!session?.user) redirect('/sign-in?callbackUrl=/user');
 
-  let orders: { id: string; createdAt: Date; totalPrice: unknown; isPaid: boolean }[] = [];
-  let cartCount = 0;
-  let returns: { id: string; status: string; createdAt: string }[] = [];
-  try {
-    const [myOrders, cart, myReturns] = await Promise.all([
-      getMyOrders({ limit: 3, page: 1 }),
-      getMyCart(),
-      getMyReturns(),
-    ]);
-    orders = myOrders.data as typeof orders;
-    cartCount = cart?.items?.reduce((sum: number, item: { qty: number }) => sum + item.qty, 0) ?? 0;
-    if (myReturns.success && Array.isArray(myReturns.data)) {
-      returns = (myReturns.data as { id: string; status: string; createdAt: string }[]).slice(0, 3);
-    }
-  } catch {
-    // Render whatever loaded; sections below handle their own empty states.
-  }
+  const [orderState,cartState,returnState]=await Promise.allSettled([
+    getMyOrders({limit:3,page:1}),getMyCart(),getMyReturns(),
+  ]);
+  const ordersFailed=orderState.status==='rejected';
+  const cartFailed=cartState.status==='rejected';
+  const returnsFailed=returnState.status==='rejected'||!returnState.value.success||!Array.isArray(returnState.value.data);
+  const orders=orderState.status==='fulfilled'?orderState.value.data:[];
+  const cartCount=cartState.status==='fulfilled'?(cartState.value?.items?.reduce((sum:number,item:{qty:number})=>sum+item.qty,0)??0):0;
+  const returns=!returnsFailed&&returnState.status==='fulfilled'?(returnState.value.data as {id:string;status:string;createdAt:string}[]).slice(0,3):[];
 
   const firstName = (session.user.name || '').split(' ')[0] || session.user.email;
 
@@ -51,7 +43,7 @@ export default async function AccountOverviewPage() {
               <T k='viewAllOrders' />
             </Link>
           </div>
-          {orders.length === 0 ? (
+          {ordersFailed?<p role='alert' className='text-sm text-destructive'><T k='accountOrdersUnavailable'/></p>:orders.length === 0 ? (
             <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
               <T k='noOrdersYet' />
             </p>
@@ -83,7 +75,7 @@ export default async function AccountOverviewPage() {
             <T k='pickUpYourCart' />
           </h2>
           <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
-            {cartCount > 0
+            {cartFailed?<span role='alert' className='text-destructive'><T k='accountCartUnavailable'/></span>:cartCount > 0
               ? <>{cartCount} {cartCount === 1 ? <T k='itemInCartSingular' /> : <T k='itemsInCartPlural' />}</>
               : <T k='cartEmpty' />}
           </p>
@@ -99,7 +91,7 @@ export default async function AccountOverviewPage() {
               <T k='requestReturn' />
             </Link>
           </div>
-          {returns.length === 0 ? (
+          {returnsFailed?<p role='alert' className='text-sm text-destructive'><T k='accountReturnsUnavailable'/></p>:returns.length === 0 ? (
             <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
               <T k='noReturnsYet' />
             </p>
