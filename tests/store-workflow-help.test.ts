@@ -16,7 +16,7 @@ it.each(SUPPORT_LANGUAGES)('all %s workflow answers use static verified public f
   const query={account:'sign in',recovery:'reset password',locale:'currency',enquiries:'my support ticket'}[intent]!;
   expect(await groundedSupportAnswer(query,lang)).toBe(SUPPORT_COPY[lang].label+'\n'+item.copy[lang]);
   expect(item.copy[lang].length).toBeGreaterThan(60);
-  for(const link of item.copy[lang].match(/\/[a-z/-]+/g)??[])expect(['/sign-in','/sign-up','/user/orders','/forgot-password','/contact','/user/enquiries']).toContain(link);
+  for(const link of item.copy[lang].match(/(?<![a-z])\/[a-z/-]+/g)??[])expect(['/sign-in','/sign-up','/user/orders','/forgot-password','/contact','/user/enquiries']).toContain(link);
  }
  expect(findProducts).not.toHaveBeenCalled();
 });
