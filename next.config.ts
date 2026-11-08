@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['pg-boss'],
   // Baseline security headers on every response. No CSP: checkout providers
   // (Stripe/PayPal) and upload tooling load third-party scripts, and a wrong
   // allowlist is worse than none while commerce is in test mode.

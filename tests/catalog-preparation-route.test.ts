@@ -1,0 +1,14 @@
+import {NextRequest} from 'next/server';
+const mockRun=jest.fn(),mockAvailable=jest.fn();
+jest.mock('@/lib/catalog-preparation-workflow',()=>({catalogPreparationAvailable:()=>mockAvailable(),runCatalogPreparation:(...a:unknown[])=>mockRun(...a)}));
+import {POST} from '@/app/api/catalog-preparation-test/route';
+const original={...process.env};
+beforeEach(()=>{process.env={...original,VERCEL_ENV:'preview',VERCEL_AUTOMATION_BYPASS_SECRET:'synthetic-test-caller'};mockAvailable.mockReturnValue(true);mockRun.mockResolvedValue({published:false});});
+afterEach(()=>{process.env={...original};jest.clearAllMocks()});
+const req=(body:unknown,key='synthetic-test-caller')=>new NextRequest('https://example.test/api/catalog-preparation-test',{method:'POST',headers:{'x-vercel-protection-bypass':key,'content-type':'application/json'},body:JSON.stringify(body)});
+it('production refuses even if someone sets a qualification flag',async()=>{process.env.VERCEL_ENV='production';expect((await POST(req({action:'drain'}))).status).toBe(409);expect(mockRun).not.toHaveBeenCalled()});
+it('disabled workflow never touches the queue',async()=>{mockAvailable.mockReturnValue(false);expect((await POST(req({action:'drain'}))).status).toBe(409);expect(mockRun).not.toHaveBeenCalled()});
+it.each(['','wrong','synthetic-test-callez'])('independent wrong caller %s cannot operate',async key=>{expect((await POST(req({action:'status'},key))).status).toBe(403);expect(mockRun).not.toHaveBeenCalled()});
+it.each([{action:'status'},{action:'drain'},{action:'enqueue',preparationId:'a'.repeat(64)}])('exact bounded command reaches shared workflow %p',async body=>{expect((await POST(req(body))).status).toBe(200);expect(mockRun).toHaveBeenCalledWith(body)});
+it.each([{action:'publish'},{action:'drain',limit:100},{action:'enqueue',preparationId:'wrong'},{action:'enqueue',preparationId:'a'.repeat(64),input:{}},{action:'status',schema:'public'},[],null])('rejects widened request %p',async body=>{expect((await POST(req(body))).status).toBe(400);expect(mockRun).not.toHaveBeenCalled()});
+it('does not expose database errors',async()=>{mockRun.mockRejectedValue(Error('private database secret'));const r=await POST(req({action:'status'}));expect(r.status).toBe(409);expect(await r.text()).not.toContain('private database secret')});

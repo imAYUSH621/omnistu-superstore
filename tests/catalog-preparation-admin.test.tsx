@@ -1,0 +1,17 @@
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+const mockGuard=jest.fn(),mockAvailable=jest.fn(),mockRun=jest.fn(),mockRevalidate=jest.fn();
+jest.mock('@/lib/auth-guard',()=>({requireAdmin:()=>mockGuard()}));
+jest.mock('@/lib/catalog-preparation-workflow',()=>({catalogPreparationAvailable:()=>mockAvailable(),runCatalogPreparation:(...a:unknown[])=>mockRun(...a)}));
+jest.mock('next/cache',()=>({revalidatePath:(...a:unknown[])=>mockRevalidate(...a)}));
+import Page from '@/app/admin/catalog-preparation/page';
+import {enqueuePreparation,processPreparation} from '@/lib/actions/catalog-preparation.actions';
+beforeEach(()=>{mockGuard.mockResolvedValue({user:{role:'admin'}});mockAvailable.mockReturnValue(false);mockRun.mockResolvedValue({action:'status',rows:[]})});
+afterEach(()=>jest.clearAllMocks());
+it('checks admin before rendering even the disabled state',async()=>{mockGuard.mockRejectedValue(Error('redirect'));await expect(Page()).rejects.toThrow('redirect');expect(mockAvailable).not.toHaveBeenCalled();expect(mockRun).not.toHaveBeenCalled()});
+it('production disabled page performs no database work and offers no execution',async()=>{const html=renderToStaticMarkup(await Page());expect(html).toContain('Not enabled');expect(html).not.toContain('<form');expect(mockRun).not.toHaveBeenCalled()});
+it('enabled page makes preparation and no-publication limits explicit',async()=>{mockAvailable.mockReturnValue(true);mockRun.mockResolvedValue({action:'status',rows:[{id:'a'.repeat(64),status:'NOT_PROCESSED',reasons:null},{id:'b'.repeat(64),status:'HOLD',reasons:['SNAPSHOT_INVALID_OR_STALE']}]});const html=renderToStaticMarkup(await Page());expect(html).toContain('PREPARED_ONLY is not publication approval');expect(html).toContain('Queue this retained record');expect(html).toContain('Process at most one queued record');expect(html).toContain('SNAPSHOT_INVALID_OR_STALE');});
+it.each([enqueuePreparation,processPreparation])('server action requires admin before availability or effects',async fn=>{mockGuard.mockRejectedValue(Error('redirect'));await expect(fn(new FormData())).rejects.toThrow('redirect');expect(mockRun).not.toHaveBeenCalled()});
+it('disabled actions refuse execution',async()=>{await expect(processPreparation()).rejects.toThrow('not enabled');expect(mockRun).not.toHaveBeenCalled()});
+it('enqueue takes only an existing record id and revalidates page',async()=>{mockAvailable.mockReturnValue(true);const f=new FormData();f.set('preparationId','a'.repeat(64));await enqueuePreparation(f);expect(mockRun).toHaveBeenCalledWith({action:'enqueue',preparationId:'a'.repeat(64)});expect(mockRevalidate).toHaveBeenCalledWith('/admin/catalog-preparation')});
+it('invalid ids never reach queue',async()=>{mockAvailable.mockReturnValue(true);const f=new FormData();f.set('preparationId','../../private');await expect(enqueuePreparation(f)).rejects.toThrow('Invalid preparation');expect(mockRun).not.toHaveBeenCalled()});
