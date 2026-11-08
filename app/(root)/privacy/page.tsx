@@ -1,95 +1,46 @@
-import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, Lock, Truck, RefreshCw } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
-import { contentReviewMode } from '@/lib/content-review';
 
 export const metadata: Metadata = {
-  title: `Privacy Notice | ${APP_NAME}`,
-  description: 'Learn how Omnistu Superstore collects, uses, and protects customer information in compliance with global e-commerce and carrier standards.',
+  title: `Privacy information in test mode | ${APP_NAME}`,
+  description: 'Information about account data and test-mode limits. No live purchase or supplier dispatch is active.',
 };
 
-export default function PrivacyPage() {
+export default function PolicyPage() {
   return (
-    <div className='w-full min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] py-8 px-4 sm:px-6 font-sans'>
-        <p className='mb-4 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>Draft policy - proposed terms, not yet in effect. This demo store is in test mode.</p>
-      <div className='max-w-[960px] mx-auto bg-white dark:bg-[#1a1e24] rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-10'>
-        {/* Header */}
-        <div className='border-b border-gray-200 dark:border-gray-800 pb-6 mb-8'>
-          <div className='flex items-center gap-3 text-amber-600 mb-2'>
-            <ShieldCheck className='w-7 h-7' />
-            <span className='text-xs font-bold uppercase tracking-wider'>Trust & Compliance</span>
-          </div>
-          <h1 className='text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white'>
-            {APP_NAME} Privacy Notice
-          </h1>
-          <p className='text-xs sm:text-sm text-gray-500 mt-2'>
-            Last Updated: October 31, 2026 • Effective Immediately Across All Global Regions
-          </p>
-        </div>
-
-        {/* Content Body */}
-        <div className='space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300'>
+    <div className='min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 sm:px-6'>
+      <article className='mx-auto max-w-3xl rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-10'>
+        <p className='mb-5 inline-block rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'>Test mode - no live purchases or dispatch</p>
+        <h1 className='text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl'>Privacy information in test mode</h1>
+        <p className='mt-3 text-slate-600 dark:text-slate-300'>This test store is not an anonymous sandbox. Avoid entering sensitive or unnecessary personal information.</p>
+        <div className='mt-8 space-y-7 text-sm leading-6 text-slate-700 dark:text-slate-300'>
           <section>
-            <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
-              <Lock className='w-4 h-4 text-amber-500' /> 1. Information We Collect
-            </h2>
-            <p className='mb-3'>
-              When you purchase or interact with {APP_NAME}, we collect necessary data to fulfill orders, prevent fraud, and deliver localized currency pricing:
-            </p>
-            <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Contact & Shipping Data:</strong> Full name, delivery address, postal/PIN code, email address, and phone number for carrier contact during delivery.</li>
-              <li><strong>Payment Information:</strong> No live payment provider is configured yet; checkout currently runs a simulated test payment only. When live payments are enabled they will be processed by tokenized third-party gateways, and we will <em>never</em> store raw card numbers, CVVs, or bank credentials on our servers.</li>
-              <li><strong>Technical & Session Data:</strong> IP address, browser language preferences, selected currency, and device telemetry to ensure responsive edge rendering and currency conversion.</li>
-            </ul>
+            <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Information entered in the store</h2>
+            <p>Account registration, profile and address forms can store the information you enter. Signing out ends your session; it does not erase your account or saved information. Use your account page to review or update the profile fields available there.</p>
           </section>
-
           <section>
-            <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
-              <Truck className='w-4 h-4 text-amber-500' /> 2. Fulfiller & Carrier Data Sharing
-            </h2>
-            {contentReviewMode && (<p className='mb-3'>
-              To honor our direct-to-consumer pricing and global dispatch, order details are transmitted strictly on a need-to-know basis to our vetted fulfillment and logistics partners:
-            </p>)}
-            <ul className='list-disc pl-5 space-y-1.5'>
-              {contentReviewMode && (<li><strong>Fulfillment Networks:</strong> CJ Dropshipping Inc., Printify Inc., and certified regional suppliers for product packing and dispatch.</li>)}
-              {contentReviewMode && (<li><strong>Carriers & Customs Authorities:</strong> USPS, YunExpress, DHL Express, India Post, and Blue Dart solely to generate shipping waybills, compute customs tariffs, and transmit SMS/email delivery tracking.</li>)}
-              <li>We <strong>do not sell, rent, or trade</strong> customer data to third-party ad brokers or data aggregators.</li>
-            </ul>
+            <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Sessions and preferences</h2>
+            <p>The store uses cookies for sign-in, cart sessions, language and currency preferences. Do not enter card numbers, bank credentials or identity documents in profile fields, contact messages or the automated assistant.</p>
           </section>
-
           <section>
-            <h2 className='text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
-              <RefreshCw className='w-4 h-4 text-amber-500' /> 3. Data Retention & Consumer Rights
-            </h2>
-            <p className='mb-3'>
-              You maintain full ownership of your personal data under GDPR, CCPA, and Indian Digital Personal Data Protection (DPDP) standards:
-            </p>
-            <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Right of Access & Correction:</strong> Review or update your profile and order history at any time from your account dashboard.</li>
-              <li><strong>Right to Erasure:</strong> Contact our automated AI Concierge or support desk to request irreversible anonymization of your profile once all active order fulfillment periods have closed.</li>
-              <li><strong>Data Security:</strong> All transit is encrypted via TLS 1.3 with Cloudflare edge caching protection and strict role-based data isolation.</li>
-            </ul>
+            <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>No live payment or supplier dispatch</h2>
+            <p>Live checkout, customer confirmation emails and supplier dispatch are not active. A test receipt is not evidence that payment details were sent to a live processor or that shipping details were sent for a real shipment.</p>
           </section>
-
-          <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-4 text-xs text-amber-900 dark:text-amber-200'>
-            <strong>Questions regarding privacy?</strong> Contact our team through the contact form at /contact, or open the automated assistant widget.
-          </div>
+          <section>
+            <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Privacy questions and deletion requests</h2>
+            <p>Automated store help cannot delete or anonymize an account, process a privacy request or confirm legal compliance. The contact page reports when message delivery is unavailable. This page does not claim an automated erasure process, a response deadline or certification under privacy laws. A complete notice and a working request-handling process still need to be confirmed before live operation.</p>
+          </section>
         </div>
-
-        {/* Back button */}
-        <div className='mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center text-xs'>
-          <Link href='/' className='text-amber-600 hover:underline font-bold'>
-            ← Return to Store
-          </Link>
-          <div className='flex gap-4 text-gray-500'>
-            <Link href='/terms' className='hover:underline'>Terms of Service</Link>
-            <Link href='/shipping-policy' className='hover:underline'>Shipping Policy</Link>
-            <Link href='/refund-policy' className='hover:underline'>Refund Policy</Link>
-          </div>
-        </div>
-      </div>
+        <nav aria-label='Store information' className='mt-9 flex flex-wrap gap-x-5 gap-y-3 border-t border-slate-200 dark:border-slate-800 pt-6 text-sm text-amber-700 dark:text-amber-300'>
+          <Link href='/'>Return to store</Link>
+          <Link href='/contact'>Contact</Link>
+          <Link href='/terms'>Test-mode terms</Link>
+          <Link href='/shipping-policy'>Shipping</Link>
+          <Link href='/refund-policy'>Returns and refunds</Link>
+          <Link href='/privacy'>Privacy</Link>
+        </nav>
+      </article>
     </div>
   );
 }
