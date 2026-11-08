@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { getAllCategories } from '@/lib/actions/product.actions';
+import HomeText from './home-text';
+import { getAllCategoriesState } from '@/lib/actions/product.actions';
 import { DEPARTMENTS } from '@/lib/constants/departments';
 import { ProductImage } from '@/components/shared/product/product-image';
 
 // Every department with its own art. Counts come from the catalog;
 // a department with no products says so instead of implying stock.
 export default async function AllDepartments() {
-  const cats = await getAllCategories();
+  const categoryState=await getAllCategoriesState();
+  const cats=categoryState.categories;
   const counts = new Map<string, number>();
   for (const c of cats) {
     const n = typeof c._count === 'number' ? c._count : (c._count as { category?: number })?.category ?? 0;
@@ -20,10 +22,10 @@ export default async function AllDepartments() {
     >
       <div className='flex flex-wrap items-baseline justify-between gap-2 mb-3'>
         <h2 id='all-departments-heading' className='text-[18px] md:text-[20px] font-bold text-[#0f172a] dark:text-white tracking-tight'>
-          More ways to browse
+          <HomeText name='more'/>
         </h2>
         <Link href='/search' className='text-[13px] text-[#4f46e5] dark:text-[#56b6c2] hover:underline font-medium'>
-          Browse all products
+          <HomeText name='allProducts'/>
         </Link>
       </div>
       <ul data-testid='all-departments' className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3'>
@@ -44,9 +46,9 @@ export default async function AllDepartments() {
                   />
                 </div>
                 <div className='p-2'>
-                  <div className='text-[13px] font-semibold leading-tight text-[#0f172a] dark:text-white'>{d.name}</div>
+                  <div className='text-[13px] font-semibold leading-tight text-[#0f172a] dark:text-white'><HomeText department={d.name}/></div>
                   <div className='text-[11px] text-[#565959] dark:text-neutral-400' data-testid='dept-count'>
-                    {n > 0 ? `${n} ${n === 1 ? 'item' : 'items'}` : 'No items yet'}
+                    {categoryState.status==='unavailable'?<HomeText name='unavailable'/>:<HomeText count={n}/>} 
                   </div>
                 </div>
               </Link>

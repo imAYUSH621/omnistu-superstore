@@ -1,0 +1,2 @@
+import{cookies,headers}from 'next/headers';import{supportLanguage}from './support-language';import{detectLanguage}from './locale-detect';import{HOME_COPY}from './home-language';
+export async function homeMetadata(){const v=(await cookies()).get('omnistu_lang')?.value,c=HOME_COPY[v?supportLanguage('',v):detectLanguage((await headers()).get('accept-language'))];return{title:c.title,description:c.description}}
