@@ -19,7 +19,7 @@ export default function UserLayout({
     <>
       <div className='flex flex-col'>
         <div className='border-b border-neutral-800 bg-[#0f172a]'>
-          <div className='flex items-center h-16 px-4 container mx-auto'>
+          <div className='flex flex-wrap items-center gap-y-2 px-4 py-3 md:py-0 md:h-16 container mx-auto'>
             <Link href='/' className='w-10 sm:w-22 shrink-0'>
               <Image
                 src='/images/logo.svg'
@@ -28,7 +28,7 @@ export default function UserLayout({
                 alt={APP_NAME}
               />
             </Link>
-            <MainNav className='mx-3 sm:mx-6 min-w-0 overflow-x-auto' />
+            <MainNav className='order-last md:order-none w-full md:w-auto md:mx-6 min-w-0 flex-wrap md:flex-nowrap gap-x-4 gap-y-2 md:overflow-x-auto' />
             <div className='ml-auto shrink-0 items-center flex space-x-4'>
               <Menu />
             </div>

@@ -1,0 +1,3 @@
+import {readFileSync} from 'fs';
+it('account mobile tabs use their own full-width wrapping row without shrinking behind menu',()=>{const s=readFileSync('app/user/layout.tsx','utf8');expect(s).toContain('order-last md:order-none w-full md:w-auto');expect(s).toContain('flex-wrap md:flex-nowrap');expect(s).not.toContain('mx-3 sm:mx-6 min-w-0 overflow-x-auto')});
+it('tabs use gap rather than margin space so wrapped items align',()=>{const s=readFileSync('app/user/main-nav.tsx','utf8');expect(s).toContain('gap-x-4');expect(s).not.toContain('space-x-4');expect(s).toContain('shrink-0 whitespace-nowrap');expect(s).toContain('scrollIntoView')});
