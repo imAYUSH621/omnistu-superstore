@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Metadata } from 'next';
+import {authMetadata} from '@/lib/auth-metadata';
 import Link from 'next/link';
 import Image from 'next/image';
 import { APP_NAME } from '@/lib/constants';
@@ -14,9 +14,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import SignUpForm from './sign-up-form';
 
-export const metadata: Metadata = {
-  title: 'Sign Up',
-};
+export async function generateMetadata(){return authMetadata('createAccount');}
 
 const SignUpPage = async (props: {
   searchParams: Promise<{

@@ -1,5 +1,5 @@
 import AuthText from '@/components/shared/auth-text';
-import { Metadata } from 'next';
+import {authMetadata} from '@/lib/auth-metadata';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ForgotForm from './forgot-form';
@@ -8,7 +8,7 @@ import { resolveMailTransport } from '@/lib/mail/transport';
 // Transport is runtime configuration, not build-time cached availability.
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: 'Forgot password' };
+export async function generateMetadata(){return authMetadata('forgotTitle');}
 
 export default function ForgotPasswordPage() {
   const available = resolveMailTransport() !== null;

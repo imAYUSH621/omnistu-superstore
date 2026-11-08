@@ -1,10 +1,10 @@
 import AuthText from '@/components/shared/auth-text';
-import { Metadata } from 'next';
+import {authMetadata} from '@/lib/auth-metadata';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ResetForm from './reset-form';
 
-export const metadata: Metadata = { title: 'Reset password' };
+export async function generateMetadata(){return authMetadata('resetTitle');}
 
 export default async function ResetPasswordPage(props: { searchParams: Promise<{ token?: string }> }) {
   const { token = '' } = await props.searchParams;
