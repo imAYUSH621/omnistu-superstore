@@ -21,7 +21,7 @@ export function ordersEnabled(env: Record<string, string | undefined> = process.
 }
 
 export function getPaymentMethodStatuses(env: Record<string, string | undefined> = process.env): PaymentMethodStatus[] {
-  const statuses = PAYMENT_METHODS.map((method) => {
+  const statuses = [...new Set(PAYMENT_METHODS)].filter((method) => method !== 'TestPayment').map((method) => {
     if (!ordersEnabled(env)) return { method, enabled: false, reason: 'Not available yet' };
     if (method === 'PayPal') {
       const ok = !!(env.PAYPAL_CLIENT_ID && env.PAYPAL_APP_SECRET && env.PAYPAL_API_URL);
