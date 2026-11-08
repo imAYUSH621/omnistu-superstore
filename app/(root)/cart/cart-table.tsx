@@ -259,11 +259,11 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
               {/* Items List */}
               <div className='divide-y divide-neutral-200 dark:divide-neutral-800'>
                 {cart.items.map((item) => (
-                  <div key={item.slug} className='py-4 flex flex-wrap sm:flex-nowrap gap-4 items-start'>
+                  <div key={item.slug} className='py-4 grid grid-cols-[5rem_minmax(0,1fr)] sm:flex gap-4 items-start'>
                     {/* Thumbnail */}
                     <Link
                       href={`/product/${item.slug}`}
-                      className='w-24 h-24 md:w-32 md:h-32 shrink-0 relative bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden'
+                      className='w-20 h-20 md:w-32 md:h-32 shrink-0 relative bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden'
                     >
                       <Image
                         src={item.image}
@@ -305,7 +305,7 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                     </div>
 
                     {/* Price */}
-                    <div className='text-right'>
+                    <div className='col-start-2 sm:ml-auto text-right'>
                       <div className='text-base md:text-lg font-bold text-[#0f172a] dark:text-white'>
                         {item.price} USD
                       </div>
