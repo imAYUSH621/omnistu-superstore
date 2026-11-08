@@ -2,6 +2,7 @@
 // real persisted order data - never invent carrier names, tracking numbers,
 // delivery estimates, or map links.
 export interface TrackingInput {
+  simulated?: boolean;
   isPaid: boolean;
   isDelivered: boolean;
   createdAt?: Date | string;
@@ -26,6 +27,19 @@ export interface TrackingView {
 }
 
 export function buildOrderTrackingView(input: TrackingInput): TrackingView {
+  if (input.simulated) return {
+    steps: [
+      { title: 'Test order saved', desc: 'Simulation only', completed: true },
+      { title: 'Test payment', desc: input.isPaid ? 'Payment simulated, no real charge' : 'Simulation pending', completed: input.isPaid },
+      { title: 'No real shipment', desc: 'No carrier dispatch is confirmed', completed: false },
+      { title: 'Test delivery', desc: input.isDelivered ? 'Delivery simulated, not a shipment' : 'Simulation pending', completed: input.isDelivered },
+    ],
+    progress: input.isPaid ? 'processing' : 'placed',
+    carrierStatus: 'Test order - no real shipment',
+    carrierDetail: 'Payment and delivery states are simulated. No real carrier tracking, delivery, return or refund is confirmed.',
+    hasTracking: false,
+  };
+
   const dispatched =
     input.isDelivered ||
     input.dispatchStatus === 'DISPATCHED' ||

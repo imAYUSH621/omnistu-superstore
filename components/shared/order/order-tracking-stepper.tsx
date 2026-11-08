@@ -1,8 +1,10 @@
 import { CheckCircle2, Clock, PackageCheck, Truck, Home } from 'lucide-react';
 import { buildOrderTrackingView } from '@/lib/tracking';
+import { displayedOrderId } from '@/lib/order-simulation';
 
 interface OrderTrackingProps {
   orderId: string;
+  simulated?: boolean;
   isPaid?: boolean;
   isDelivered?: boolean;
   createdAt?: Date | string;
@@ -14,12 +16,10 @@ interface OrderTrackingProps {
 
 export default function OrderTrackingStepper(props: OrderTrackingProps) {
   const { orderId, isPaid = true, isDelivered = false } = props;
-  // Format the order ID for display if it's a UUID
-  const formattedId = orderId.length > 15
-    ? `#114-${orderId.slice(0, 7)}-${orderId.slice(-7)}`
-    : `#114-${orderId}`;
+  const formattedId = displayedOrderId(orderId);
 
   const view = buildOrderTrackingView({
+    simulated: props.simulated,
     isPaid,
     isDelivered,
     createdAt: props.createdAt,
@@ -47,7 +47,7 @@ export default function OrderTrackingStepper(props: OrderTrackingProps) {
             Order Status
           </span>
           <h3 className='text-lg font-bold text-foreground'>
-            Order ID: <span className='text-emerald-600 font-mono'>{formattedId}</span>
+            Order ID: <span className='text-emerald-600 font-mono break-all'>{formattedId}</span>
           </h3>
         </div>
       </div>
