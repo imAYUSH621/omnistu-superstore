@@ -10,7 +10,7 @@ it('contact saves through the existing inbox, never the email API', () => {
 });
 it('handoff is explicit and never silently forwards chat', () => {
  const s=read('components/shared/ai-concierge.tsx');expect(s).toContain("href='/contact'");
- expect(s).toContain('No chat is forwarded automatically');expect(s).not.toContain("fetch('/api/enquiries'");
+ expect(s).toContain('{copy.privacy}');expect(read('lib/support-language.ts')).toContain('No chat is forwarded automatically');expect(s).not.toContain("fetch('/api/enquiries'");
 });
 it('same admin and own-account lists cover support without claiming notification',()=>{
  expect(read('app/admin/enquiries/page.tsx')).toContain('Support and service enquiries');

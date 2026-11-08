@@ -1,38 +1,36 @@
 import { findProducts } from './chat';
 import { getAllCategories } from './actions/product.actions';
 import { testCheckoutMode, ordersEnabled } from './payment-capabilities';
+import { SUPPORT_COPY, supportLanguage } from './support-language';
 
-export const SUPPORT_LABEL = 'Automated store help (no external AI)';
+export const SUPPORT_LABEL = SUPPORT_COPY.EN.label;
+export type SupportIntent = 'policy'|'order'|'contact'|'payment'|'shipping'|'categories'|'greeting'|'product';
+/** Restricted intent routing, never an instruction interpreter or a policy source. */
+export function supportIntent(text:string):SupportIntent {
+ const q=text.toLowerCase().normalize('NFC');
+ if (/refund|return|replace|polic|guarantee|warranty|cancel|discount|coupon|रिफंड|वापस|वापसी|रद्द|नीति|गारंटी|devolu|reembolso|cancelar|garantía|rembours|retour|annul|garantie|rückgab|erstattung|stornier|返品|返金|キャンセル|保証/u.test(q)) return 'policy';
+ if (/order|track|package|parcel|dispatch|ऑर्डर|आर्डर|ट्रैक|पार्सल|pedido|seguimiento|commande|suivi|bestellung|sendungsverfolg|注文|追跡/u.test(q)) return 'order';
+ if (/contact|support|human|agent|email|help|complaint|मदद|सहायता|संपर्क|इंसान|शिकायत|ayuda|humano|equipo|aide|équipe|humain|hilfe|mensch|kontakt|問い合わせ|サポート|担当者/u.test(q)) return 'contact';
+ if (/payment|pay|checkout|cash|paypal|stripe|card|भुगतान|पेमेंट|चेकआउट|पैसे|pago|pagar|paiement|payer|zahlung|bezahlen|支払|決済/u.test(q)) return 'payment';
+ if (/shipping|delivery|arriv|customs|duties|डिलीवरी|शिपिंग|कस्टम|डिलीवर|envío|entrega|aduana|livraison|douane|versand|lieferung|zoll|配送|送料|配達|関税/u.test(q)) return 'shipping';
+ if (/categor|what do you sell|browse|what can i buy|श्रेण|कैटेगरी|क्या बेच|catégor|kategor|カテゴリー|カテゴリ|商品一覧/u.test(q)) return 'categories';
+ if (q.length<60 && /\b(hi|hello|hey|namaste|hola|bonjour|salut|hallo|guten tag)\b|नमस्ते|नमस्कार|こんにちは|おはよう/u.test(q)) return 'greeting';
+ return 'product';
+}
 /** Public facts only. Never retrieves orders, calls a model, sends mail or changes an account. */
-export async function groundedSupportAnswer(text: string): Promise<string> {
-  const q = text.toLowerCase();
-  const label = SUPPORT_LABEL + '\n';
-  if (/\b(refund|return|replace|polic|guarantee|warranty|cancel|discount|coupon)/.test(q)) {
-    return label + 'I cannot confirm shipping timeframes, return windows or refund eligibility, or change an order. These terms are still being finalised for launch. Open /contact to reach the team. You can save an enquiry in the store support inbox there. No email is sent; I cannot promise a reply time.';
-  }
-  if (/\b(order|track|package|parcel|dispatch)/.test(q)) {
-    return label + 'I do not retrieve order details. Sign in and open /user/orders to see your own orders. Carrier and tracking details appear there when recorded. For anything missing, open /contact. No order status has been checked by this chat.';
-  }
-  if (/\b(contact|support|human|agent|email|help|complaint)/.test(q)) {
-    return label + 'Open /contact to reach the Omnistu team. You can save an enquiry in the store support inbox there. No email is sent. I have not sent a message or opened a support ticket, and cannot promise a reply time.';
-  }
-  if (/\b(payment|pay|checkout|cash|paypal|stripe|card)/.test(q)) {
-    if (testCheckoutMode()) return label + 'This deployment has a simulated test checkout. Test payment makes no real charge, shipment or supplier order. Check the payment page for the methods currently shown.';
-    if (!ordersEnabled()) return label + 'Real checkout is not available yet. You can browse the store, but this chat cannot take payments or place orders.';
-    return label + 'The payment page shows the methods currently available for your order. This chat cannot take payments, place orders or confirm that a payment succeeded. Your signed-in order page is the source of truth.';
-  }
-  if (/\b(shipping|delivery|arriv|customs|duties)/.test(q)) {
-    return label + 'I cannot confirm delivery dates, shipping charges or customs terms. Open /contact for the team to check a specific product or order. No shipping quote has been obtained here.';
-  }
-  if (/\b(categor|what do you sell|browse|what can i buy)/.test(q)) {
-    try {
-      const categories = await getAllCategories();
-      if (categories.length) return label + 'Current catalog categories: ' + categories.map(c => `${c.category} (${c._count})`).join(', ') + '. Open /search to browse. Product availability is shown on each product page.';
-    } catch { /* The empty message below never invents inventory. */ }
-    return label + 'No catalog categories with available listings can be confirmed right now. Open /search for the current catalog. The homepage may show planned categories that do not have products yet.';
-  }
-  if (/\b(hi|hello|hey|namaste)\b/.test(q) && q.length < 40) return label + 'Hello! I can find products in the current catalog and explain where to see orders or contact the team. I do not access your order data, take payments or send support messages.';
-  const products = await findProducts(text);
-  if (products) return label + 'Matching catalog listings:\n' + products + '\nOpen a product link to check its current details and availability. No purchase or delivery promise is made here.';
-  return label + 'I could not find a matching product in the current catalog. Try a product or category name, open /search, or open /contact for the team. I cannot answer general questions outside this store.';
+export async function groundedSupportAnswer(text: string, preferredLanguage?: string): Promise<string> {
+ const copy=SUPPORT_COPY[supportLanguage(text,preferredLanguage)],label=copy.label+'\n';
+ const intent=supportIntent(text);
+ if(intent==='policy')return label+copy.policy;
+ if(intent==='order')return label+copy.order;
+ if(intent==='contact')return label+copy.contact;
+ if(intent==='payment')return label+(testCheckoutMode()?copy.test:!ordersEnabled()?copy.closed:copy.payment);
+ if(intent==='shipping')return label+copy.shipping;
+ if(intent==='greeting')return label+copy.greeting;
+ if(intent==='categories'){
+  try { const categories=await getAllCategories();if(categories.length)return label+copy.categories+' '+categories.map(c=>`${c.category} (${c._count})`).join(', ')+'. '+copy.categoryEnd; } catch { /* Never invent categories on a failed read. */ }
+  return label+copy.noCategories;
+ }
+ const products=await findProducts(text);
+ return products?label+copy.matches+'\n'+products+'\n'+copy.productEnd:label+copy.noProduct;
 }
