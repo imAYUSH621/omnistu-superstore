@@ -35,7 +35,7 @@ const AdminOverviewPage = async () => {
             Seller Executive Center
           </h1>
           <p className='text-xs text-muted-foreground mt-1'>
-            Store totals from the database
+            Store totals from the database. Test payments are excluded from paid sales totals.
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -55,7 +55,7 @@ const AdminOverviewPage = async () => {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Paid orders total (before refunds)</CardTitle>
+            <CardTitle className='text-sm font-medium'>Real paid orders total (before refunds)</CardTitle>
             <BadgeDollarSign className='w-4 h-4 text-emerald-600' />
           </CardHeader>
           <CardContent>
@@ -69,7 +69,7 @@ const AdminOverviewPage = async () => {
 
         <Card className='shadow-sm'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Orders placed (paid and unpaid)</CardTitle>
+            <CardTitle className='text-sm font-medium'>All orders (including test records)</CardTitle>
             <CreditCard className='w-4 h-4 text-blue-600' />
           </CardHeader>
           <CardContent>
@@ -109,7 +109,7 @@ const AdminOverviewPage = async () => {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
         <Card className='col-span-4 shadow-sm'>
           <CardHeader>
-            <CardTitle className='text-sm font-bold'>Paid orders total by month</CardTitle>
+            <CardTitle className='text-sm font-bold'>Real paid orders total by month</CardTitle>
           </CardHeader>
           <CardContent>
             <Charts

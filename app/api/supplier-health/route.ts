@@ -1,3 +1,4 @@
+import { realPaidOrderWhere } from '@/lib/real-sales';
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/db/prisma';
@@ -21,7 +22,7 @@ export async function GET() {
   let sales: { totalRevenue: number; totalOrders: number } | null = null;
   try {
     const [revenue, orders] = await Promise.all([
-      prisma.order.aggregate({ _sum: { totalPrice: true }, where: { isPaid: true } }),
+      prisma.order.aggregate({ _sum: { totalPrice: true }, where: realPaidOrderWhere }),
       prisma.order.count(),
     ]);
     sales = {
