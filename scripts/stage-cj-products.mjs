@@ -7,6 +7,7 @@
 // shipping and payment-fee inputs are unverified; see docs/catalog-staging.md.
 import { writeFileSync } from 'node:fs';
 import { createCjReadClient } from './lib/cj-read-client.mjs';
+import { parseCjReferenceNumber } from './lib/cj-reference-number.mjs';
 const BASE = 'https://developers.cjdropshipping.com/api2.0/v1';
 const [out, ...specs] = process.argv.slice(2);
 const key = process.env.CJ_API_KEY;
@@ -18,7 +19,7 @@ const call = createCjReadClient();
 // to disk or source, and auth failure never triggers a refresh/retry loop.
 const tok = existingToken || (await call('/authentication/getAccessToken', null, { apiKey: key }))?.data?.accessToken;
 if (!tok) { console.error('auth failed'); process.exit(1); }
-const num = (v) => { const n = Number(String(v ?? '').split('--')[0]); return Number.isFinite(n) && String(v ?? '') !== '' ? n : null; };
+const num = parseCjReferenceNumber;
 const items = []; const seen = new Set(); const fetchedAt = new Date().toISOString();
 for (const spec of specs) {
   const [category, keyword] = spec.split('=');
