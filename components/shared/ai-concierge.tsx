@@ -52,6 +52,8 @@ export default function AiConcierge() {
   }, []);
   const endRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  // Scroll after React commits the latest streamed text, not before layout.
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages]);
 
   async function send(e: FormEvent) {
     e.preventDefault();
