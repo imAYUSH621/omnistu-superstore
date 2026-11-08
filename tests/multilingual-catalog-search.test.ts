@@ -1,0 +1,16 @@
+const mockFindMany=jest.fn();
+jest.mock('@/db/prisma',()=>({prisma:{product:{findMany:(...args:unknown[])=>mockFindMany(...args)}}}));
+jest.mock('@/lib/utils',()=>({isDatabaseAvailable:()=>true}));
+import {catalogSearchTerms} from '@/lib/catalog-search-terms';
+import {findProducts} from '@/lib/chat';
+import {supportIntent} from '@/lib/grounded-support';
+const shirt={name:'Cotton T-shirt',slug:'cotton-t-shirt',price:'19.00',category:'Apparel',description:'Soft cotton short sleeve',brand:null,stock:0};
+it.each(['मुझे टीशर्ट दिखाओ','busca una camiseta','je cherche un t-shirt','ich suche ein T-Shirt','Tシャツを探しています'])('matches actual English catalog facts for %s',async query=>{mockFindMany.mockResolvedValue([shirt]);const result=await findProducts(query);expect(result).toContain('Cotton T-shirt');expect(result).toContain('/product/cotton-t-shirt');expect(result).toContain('$19.00');expect(result).not.toContain('free');expect(JSON.stringify(mockFindMany.mock.calls.at(-1)[0].where)).toContain('t-shirt');});
+it.each([['हुडी','hoodie'],['パーカー','hoodie'],['reloj','watch'],['Kopfhörer','headphones'],['chaussures','shoes'],['keसर','keसर']])('query expansion %s retains %s', (query,term)=>{expect(catalogSearchTerms(query)).toContain(term)});
+it('does not let generic requests and greetings retrieve random descriptions',async()=>{expect(catalogSearchTerms('hello please show me the products')).toEqual([]);expect(await findProducts('hello please show me the products')).toBe('');expect(catalogSearchTerms('the')).not.toContain('tea');});
+it('uses Unicode search instead of dropping an unknown native product name',()=>{expect(catalogSearchTerms('कांजीवरम')).toContain('कांजीवरम');expect(catalogSearchTerms('桜アクセサリー')).toContain('桜アクセサリー');});
+it('bounds query expansion before generating DB filters',()=>{expect(catalogSearchTerms(Array.from({length:500},(_,i)=>'word'+i).join(' ')).length).toBeLessThanOrEqual(18);});
+it('name match outranks description noise, and quotes only stored names',async()=>{mockFindMany.mockResolvedValue([{...shirt,name:'Book',slug:'book',description:'a t-shirt design'},shirt]);expect((await findProducts('camiseta')).split('\n')[0]).toContain('Cotton T-shirt');});
+it('fails closed for untranslated aliases with no genuine database match',async()=>{mockFindMany.mockResolvedValue([]);expect(await findProducts('camiseta')).toBe('');mockFindMany.mockRejectedValue(new Error('database down'));expect(await findProducts('टीशर्ट')).toBe('');});
+it.each(['hello t-shirt','hola camiseta','नमस्ते टीशर्ट','こんにちは Tシャツ'])('greeting plus product stays product retrieval: %s',query=>{expect(supportIntent(query)).toBe('product')});
+it.each(['hello!','नमस्ते','こんにちは','guten tag'])('plain greeting remains greeting: %s',query=>{expect(supportIntent(query)).toBe('greeting')});

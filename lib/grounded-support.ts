@@ -14,7 +14,7 @@ export function supportIntent(text:string):SupportIntent {
  if (/payment|pay|checkout|cash|paypal|stripe|card|भुगतान|पेमेंट|चेकआउट|पैसे|pago|pagar|paiement|payer|zahlung|bezahlen|支払|決済/u.test(q)) return 'payment';
  if (/shipping|delivery|arriv|customs|duties|डिलीवरी|शिपिंग|कस्टम|डिलीवर|envío|entrega|aduana|livraison|douane|versand|lieferung|zoll|配送|送料|配達|関税/u.test(q)) return 'shipping';
  if (/categor|what do you sell|browse|what can i buy|श्रेण|कैटेगरी|क्या बेच|catégor|kategor|カテゴリー|カテゴリ|商品一覧/u.test(q)) return 'categories';
- if (q.length<60 && /\b(hi|hello|hey|namaste|hola|bonjour|salut|hallo|guten tag)\b|नमस्ते|नमस्कार|こんにちは|おはよう/u.test(q)) return 'greeting';
+ if (/^(hi|hello|hey|namaste|hola|bonjour|salut|hallo|guten tag|नमस्ते|नमस्कार|こんにちは|おはよう)[!?.।\s]*$/u.test(q.trim())) return 'greeting';
  return 'product';
 }
 /** Public facts only. Never retrieves orders, calls a model, sends mail or changes an account. */
