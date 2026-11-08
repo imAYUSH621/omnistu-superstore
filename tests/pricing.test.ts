@@ -69,6 +69,10 @@ describe('Omnistu Kit Mathematical Margin Engine (priceFor)', () => {
     expect(() => priceFor(Infinity, 0)).toThrow('known non-negative');
   });
 
+  test('refuses overflow rather than returning an infinite price', () => {
+    expect(() => priceFor(Number.MAX_VALUE, Number.MAX_VALUE)).toThrow('safe monetary precision');
+  });
+
   test('rounds an exact required dollar floor upward, never below it', () => {
     const cfg = { feePct: 0, feeFixed: 0, minMarginPct: 50 };
     const res = priceFor(5, 0, cfg);

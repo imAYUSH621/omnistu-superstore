@@ -46,6 +46,7 @@ export function priceFor(
   }
   const base = wholesaleCost + shippingCost + cfg.feeFixed;
   const raw = base / (1 - feeRate - marginRate);
+  if (!Number.isFinite(raw) || raw > Number.MAX_SAFE_INTEGER / 100) throw new Error('Price exceeds safe monetary precision');
   const retailPrice = Math.max(Math.ceil(raw + 0.01) - 0.01, 0.99);
   const profit = retailPrice - base - retailPrice * feeRate;
   return {
