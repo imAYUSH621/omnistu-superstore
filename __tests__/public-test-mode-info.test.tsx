@@ -1,7 +1,8 @@
 import React from 'react';
+import {REFUND_INFO_COPY} from '@/lib/refund-info-language';
 import { renderToStaticMarkup } from 'react-dom/server';
-import RefundPage, { metadata as refundMetadata } from '@/app/(root)/refund-policy/page';
-import ReturnsPage, { metadata as returnsMetadata } from '@/app/(root)/returns/page';
+import RefundPage, { generateMetadata as refundMetadata } from '@/app/(root)/refund-policy/page';
+import ReturnsPage, { generateMetadata as returnsMetadata } from '@/app/(root)/returns/page';
 import PrivacyPage, { metadata as privacyMetadata } from '@/app/(root)/privacy/page';
 
 function copy(Page: () => React.JSX.Element) {
@@ -20,7 +21,7 @@ describe('public test-mode information', () => {
     for (const Page of [ReturnsPage, RefundPage]) {
       expect(copy(Page)).not.toMatch(/30.day|money.back guarantee|immediate free replacement|3 to 5 business days/i);
     }
-    expect(JSON.stringify(returnsMetadata)).not.toMatch(/hassle.free|30.day/i);
+    expect(JSON.stringify(REFUND_INFO_COPY.EN)).not.toMatch(/hassle.free|30.day/i);
   });
 
   it('explains retained account data without claiming an anonymous sandbox', () => {

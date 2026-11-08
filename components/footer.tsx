@@ -24,7 +24,7 @@ export default function Footer() {
       </button>
 
       {/* 2. 4-Column Directory */}
-      <div className='max-w-[1000px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-3 gap-8'>
+      <div className='max-w-[1000px] mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-3 gap-8 [&>div]:min-w-0 [overflow-wrap:anywhere]'>
         {/* Column 1 */}
         <div>
           <h3 className='font-bold text-[15px] mb-3 text-white'><T k='getToKnowUs' /></h3>

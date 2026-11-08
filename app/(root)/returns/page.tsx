@@ -1,2 +1,2 @@
-// Keep both public return-information URLs on the same test-mode copy.
-export { metadata, default } from '../refund-policy/page';
+// Both public return-information URLs keep the same test-mode copy.
+export {generateMetadata,default} from '../refund-policy/page';

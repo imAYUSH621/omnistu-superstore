@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {REFUND_INFO_COPY} from './refund-info-language';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function refundInfoMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;const c=REFUND_INFO_COPY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))];return{description:c.description,title:c.title}}
