@@ -22,6 +22,7 @@ import { PAGE_SIZE, USER_ROLES } from '../constants';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '../auth-guard';
 import { Prisma } from '@prisma/client';
+import {profileName} from '@/lib/profile-policy';
 import { deleteUserCartForSignout } from '@/lib/auth-cart-lifecycle';
 
 // Sign in the user with credentials
@@ -182,6 +183,8 @@ export async function updateProfile(user: { name: string; email: string }) {
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: 'Authentication required' };
 
+    const name=profileName(user);
+    if(name===null)return{success:false,message:'Invalid profile name'};
     const currentUser = await prisma.user.findFirst({
       where: {
         id: session.user.id,
@@ -195,16 +198,17 @@ export async function updateProfile(user: { name: string; email: string }) {
         id: currentUser.id,
       },
       data: {
-        name: user.name,
+        name,
       },
     });
 
     return {
       success: true,
       message: 'User updated successfully',
+      name,
     };
-  } catch (error) {
-    return { success: false, message: formatError(error) };
+  } catch {
+    return { success: false, message: 'Profile update unavailable' };
   }
 }
 
