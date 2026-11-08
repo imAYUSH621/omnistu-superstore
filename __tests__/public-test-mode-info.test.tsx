@@ -1,9 +1,10 @@
 import React from 'react';
+import {PUBLIC_INFO_EN}from '@/lib/public-info-language';
 import {REFUND_INFO_COPY} from '@/lib/refund-info-language';
 import { renderToStaticMarkup } from 'react-dom/server';
 import RefundPage, { generateMetadata as refundMetadata } from '@/app/(root)/refund-policy/page';
 import ReturnsPage, { generateMetadata as returnsMetadata } from '@/app/(root)/returns/page';
-import PrivacyPage, { metadata as privacyMetadata } from '@/app/(root)/privacy/page';
+import PrivacyPage from '@/app/(root)/privacy/page';
 
 function copy(Page: () => React.JSX.Element) {
   return renderToStaticMarkup(React.createElement(Page));
@@ -33,7 +34,7 @@ describe('public test-mode information', () => {
   });
 
   it('does not claim global legal compliance, invented security or active simulated payment', () => {
-    const html = copy(PrivacyPage) + JSON.stringify(privacyMetadata);
+    const html = copy(PrivacyPage) + JSON.stringify(PUBLIC_INFO_EN.privacy);
     expect(html).not.toMatch(/effective immediately|GDPR|CCPA|DPDP|TLS 1.3|Cloudflare|strict role.based data isolation|currently runs a simulated/i);
     expect(html).toContain('cannot delete or anonymize an account');
     expect(html).toContain('contact page can save an enquiry in the store inbox');
