@@ -21,10 +21,8 @@ export default async function PersonalHero() {
             <T k='signInForOrders' />
           </p>
           <div>
-            <Link href='/sign-in'>
-              <button className='bg-[#4f46e5] hover:bg-[#4338ca] text-white text-[13px] font-bold py-1.5 px-24 sm:px-28 rounded-full shadow-xs transition-colors cursor-pointer'>
-                <T k='signIn' />
-              </button>
+            <Link href='/sign-in' className='inline-flex items-center justify-center w-full max-w-xs sm:w-auto sm:min-w-[16rem] bg-[#4f46e5] hover:bg-[#4338ca] text-white text-[13px] font-bold py-2 px-8 whitespace-nowrap rounded-full shadow-xs transition-colors cursor-pointer'>
+              <T k='signIn' />
             </Link>
           </div>
           <p className='text-[11px] text-[#0f172a] dark:text-neutral-400'>
