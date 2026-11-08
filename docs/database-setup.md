@@ -1,5 +1,7 @@
 # Store database setup (status and steps)
 
+> Current-state correction, 9 Nov 2026: the Store already has a healthy existing database. Read [current environments](current-environments.md) before following the historical setup or pending-migration notes below. Do not create a duplicate database or enable live effects from those older notes.
+
 Status as of 1 Nov 2026 (read-only checks, nothing changed):
 - Checked: the Vercel project `omnistu-superstore` has NO `DATABASE_URL` env var, no database integration and no team shared env. Without it `db/prisma.ts` falls back to `localhost:5432`, which cannot exist on Vercel. So the deployed app cannot reach a configured Prisma database. This does not prove that no database exists anywhere (for example under another account); it proves the deployment is not wired to one. The catalog on the live pages renders from files/cache.
 - The only Supabase project visible to the discovery token (ECOM) has none of this app's Prisma tables. Do not point `DATABASE_URL` at it.
