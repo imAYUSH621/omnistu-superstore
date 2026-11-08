@@ -1,5 +1,8 @@
 'use client';
 
+import {useStoreLanguage} from '@/hooks/use-store-language';
+import {AUTH_COPY,authMessage} from '@/lib/auth-language';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +14,7 @@ import { signUpUser } from '@/lib/actions/user.actions';
 import { useSearchParams } from 'next/navigation';
 
 const SignUpForm = () => {
+  const language=useStoreLanguage(),c=AUTH_COPY[language];
   const [data, action] = useActionState(signUpUser, {
     success: false,
     message: '',
@@ -24,17 +28,17 @@ const SignUpForm = () => {
 
     return (
       <Button disabled={pending} className='w-full' variant='default'>
-        {pending ? 'Submitting...' : 'Sign Up'}
+        {pending ? c.submitting : c.signUp}
       </Button>
     );
   };
 
   return (
-    <form action={action}>
+    <form lang={language.toLowerCase()} action={action}>
       <input type='hidden' name='callbackUrl' value={callbackUrl} />
       <div className='space-y-6'>
         <div>
-          <Label htmlFor='email'>Name</Label>
+          <Label htmlFor='name'>{c.name}</Label>
           <Input
             id='name'
             name='name'
@@ -44,7 +48,7 @@ const SignUpForm = () => {
           />
         </div>
         <div>
-          <Label htmlFor='email'>Email</Label>
+          <Label htmlFor='email'>{c.email}</Label>
           <Input
             id='email'
             name='email'
@@ -54,24 +58,24 @@ const SignUpForm = () => {
           />
         </div>
         <div>
-          <Label htmlFor='password'>Password</Label>
+          <Label htmlFor='password'>{c.password}</Label>
           <Input
             id='password'
             name='password'
             type='password'
             required
-            autoComplete='password'
+            autoComplete='new-password'
             defaultValue={signUpDefaultValues.password}
           />
         </div>
         <div>
-          <Label htmlFor='confirmPassword'>Confirm Password</Label>
+          <Label htmlFor='confirmPassword'>{c.confirmPassword}</Label>
           <Input
             id='confirmPassword'
             name='confirmPassword'
             type='password'
             required
-            autoComplete='confirmPassword'
+            autoComplete='new-password'
             defaultValue={signUpDefaultValues.confirmPassword}
           />
         </div>
@@ -80,13 +84,13 @@ const SignUpForm = () => {
         </div>
 
         {data && !data.success && (
-          <div className='text-center text-destructive'>{data.message}</div>
+          <div role='alert' className='text-center text-destructive'>{authMessage(data.message,language)}</div>
         )}
 
         <div className='text-sm text-center text-muted-foreground'>
-          Already have an account?{' '}
+          {c.hasAccount}{' '}
           <Link href={`/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`} target='_self' className='link'>
-            Sign In
+            {c.signIn}
           </Link>
         </div>
       </div>

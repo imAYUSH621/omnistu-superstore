@@ -1,3 +1,4 @@
+import AuthText from '@/components/shared/auth-text';
 import {
   Card,
   CardContent,
@@ -5,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Metadata } from 'next';
+import {authMetadata} from '@/lib/auth-metadata';
 import Link from 'next/link';
 import Image from 'next/image';
 import { APP_NAME } from '@/lib/constants';
@@ -13,9 +14,7 @@ import CredentialsSignInForm from './credentials-signin-form';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Sign In',
-};
+export async function generateMetadata(){return authMetadata('signIn');}
 
 const SignInPage = async (props: {
   searchParams: Promise<{
@@ -43,9 +42,9 @@ const SignInPage = async (props: {
               priority={true}
             />
           </Link>
-          <CardTitle className='text-center'>Sign In</CardTitle>
+          <CardTitle className='text-center'><AuthText name="signIn" pageTitle /></CardTitle>
           <CardDescription className='text-center'>
-            Sign in to your account
+            <AuthText name="signInIntro" />
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>

@@ -1,5 +1,8 @@
 'use client';
 
+import {useStoreLanguage} from '@/hooks/use-store-language';
+import {AUTH_COPY,authMessage} from '@/lib/auth-language';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +14,7 @@ import { signInWithCredentials } from '@/lib/actions/user.actions';
 import { useSearchParams } from 'next/navigation';
 
 const CredentialsSignInForm = () => {
+  const language=useStoreLanguage(),c=AUTH_COPY[language];
   const [data, action] = useActionState(signInWithCredentials, {
     success: false,
     message: '',
@@ -24,17 +28,17 @@ const CredentialsSignInForm = () => {
 
     return (
       <Button disabled={pending} className='w-full' variant='default'>
-        {pending ? 'Signing In...' : 'Sign In'}
+        {pending ? c.signingIn : c.signIn}
       </Button>
     );
   };
 
   return (
-    <form action={action}>
+    <form lang={language.toLowerCase()} action={action}>
       <input type='hidden' name='callbackUrl' value={callbackUrl} />
       <div className='space-y-6'>
         <div>
-          <Label htmlFor='email'>Email or Username</Label>
+          <Label htmlFor='email'>{c.identity}</Label>
           <Input
             id='email'
             name='email'
@@ -45,7 +49,7 @@ const CredentialsSignInForm = () => {
           />
         </div>
         <div>
-          <Label htmlFor='password'>Password</Label>
+          <Label htmlFor='password'>{c.password}</Label>
           <Input
             id='password'
             name='password'
@@ -60,17 +64,17 @@ const CredentialsSignInForm = () => {
         </div>
 
         {data && !data.success && (
-          <div className='text-center text-destructive'>{data.message}</div>
+          <div role='alert' className='text-center text-destructive'>{authMessage(data.message,language)}</div>
         )}
 
         <div className='text-sm text-center'>
-          <Link href='/forgot-password' className='link'>Forgot password?</Link>
+          <Link href='/forgot-password' className='link'>{c.forgotLink}</Link>
         </div>
 
         <div className='text-sm text-center text-muted-foreground'>
-          Don&apos;t have an account?{' '}
+          {c.noAccount}{' '}
           <Link href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`} target='_self' className='link'>
-            Sign Up
+            {c.signUp}
           </Link>
         </div>
       </div>
