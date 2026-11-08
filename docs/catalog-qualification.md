@@ -58,3 +58,10 @@ Candidate ingestion strips supplier retail prices and ignores global shipping
 allowances. The staging checklist requires independent exact-variant, stock,
 method, destination, full cost and retail approval checks. This does not alter
 an existing published offer or infer unavailable stock from missing evidence.
+
+Trendsi, Blanka and BrandsGateway reference normalization follows the same
+unknown-cost/stock boundary. Missing or malformed scalar costs stay null;
+supplier suggested retail and assumed freight do not set a store price.
+These listing responses do not establish packaging, authenticity, warehouse
+stock or delivery times. No provider credentials or live calls are needed
+to validate this deterministic boundary.

@@ -105,8 +105,8 @@ describe('Blanka Private-Label Skincare & Soap Adapter Normalization', () => {
     expect(normalized.sku).toBe('BLANKA-TURMERIC-BAR');
     expect(normalized.wholesaleCost).toBe(6.5);
     expect(normalized.wholesaleCost).not.toBeNull();
-    expect(normalized.retailPrice).toBeGreaterThan(normalized.wholesaleCost!);
-    expect(normalized.shippingNote).toContain('Omnistu Botanics');
+    expect(normalized.retailPrice).toBeNull();
+    expect(normalized.shippingNote).toContain('require independent qualification');
   });
 
   test('BlankaAdapter returns empty array on search when API key is missing', async () => {
@@ -117,7 +117,7 @@ describe('Blanka Private-Label Skincare & Soap Adapter Normalization', () => {
 });
 
 describe('Trendsi US-Warehoused Fashion Adapter Normalization', () => {
-  test('TrendsiAdapter normalizes US apparel and calculates retail pricing', () => {
+  test('TrendsiAdapter normalizes reference apparel without inventing a retail price', () => {
     const adapter = new TrendsiAdapter('mock-trendsi-key');
     const normalized = adapter.normalize({
       id: 'trendsi-jacket-55',
@@ -133,13 +133,13 @@ describe('Trendsi US-Warehoused Fashion Adapter Normalization', () => {
     expect(normalized.supplier).toBe('TRENDSI');
     expect(normalized.sku).toBe('TR-JACKET-55');
     expect(normalized.wholesaleCost).toBe(28.0);
-    expect(normalized.retailPrice).toBeGreaterThan(28.0);
-    expect(normalized.shippingNote).toContain('US-warehoused');
+    expect(normalized.retailPrice).toBeNull();
+    expect(normalized.shippingNote).toContain('require independent qualification');
   });
 });
 
 describe('BrandsGateway Luxury Designer Adapter Normalization', () => {
-  test('BrandsGatewayAdapter preserves designer retail price and brand prefix', () => {
+  test('BrandsGatewayAdapter preserves source brand prefix without approving supplier retail', () => {
     const adapter = new BrandsGatewayAdapter('mock-bg-token');
     const normalized = adapter.normalize({
       id: 'bg-watch-77',
@@ -156,8 +156,9 @@ describe('BrandsGateway Luxury Designer Adapter Normalization', () => {
     expect(normalized.supplier).toBe('BRANDSGATEWAY');
     expect(normalized.title).toBe('VERSACE - Chronograph Titanium Timepiece');
     expect(normalized.wholesaleCost).toBe(350.0);
-    expect(normalized.retailPrice).toBe(795.0);
-    expect(normalized.shippingNote).toContain('certificate of authenticity');
+    expect(normalized.retailPrice).toBeNull();
+    expect(normalized.compareAtPrice).toBeNull();
+    expect(normalized.shippingNote).toContain('require independent qualification');
   });
 });
 

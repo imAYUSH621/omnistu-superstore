@@ -1,4 +1,4 @@
-import { priceFor } from '../pricing';
+import { parseReferenceCost } from './reference-cost';
 import {
   SupplierError,
   type NormalizedProduct,
@@ -11,7 +11,7 @@ import {
 const BASE = 'https://api.trendsi.com/api/v1';
 
 const SHIPPING_NOTE =
-  "US-warehoused fashion & accessories. Ships directly from US facilities with custom branded packing slip. 3-5 business days.";
+  'Reference listing only. Exact variant stock, fulfillment source, packaging, destination freight and processing time require independent qualification.';
 
 interface TrendsiProduct {
   id: string | number;
@@ -37,8 +37,9 @@ export class TrendsiAdapter implements SupplierAdapter {
 
   constructor(
     private readonly apiKey: string | undefined = process.env.TRENDSI_API_KEY,
-    private readonly shippingEstimateUsd = 4.5,
-  ) {}
+    // Kept as an ignored compatibility argument; never evidence of freight.
+    shippingEstimateUsd?: number,
+  ) { void shippingEstimateUsd; }
 
   private get headers(): Record<string, string> {
     return {
@@ -49,9 +50,7 @@ export class TrendsiAdapter implements SupplierAdapter {
   }
 
   public normalize(product: TrendsiProduct): NormalizedProduct {
-    const rawCost = product.wholesale_price ?? product.price ?? 0;
-    const cost = typeof rawCost === 'number' ? rawCost : parseFloat(String(rawCost).replace(/[^0-9.]/g, '')) || 0;
-    const { retailPrice } = priceFor(cost, this.shippingEstimateUsd);
+    const cost = parseReferenceCost(product.wholesale_price ?? product.price);
     const id = String(product.id);
 
     const images: string[] = [];
@@ -72,10 +71,10 @@ export class TrendsiAdapter implements SupplierAdapter {
       specs: [],
       category: product.category || "Women's Fashion",
       wholesaleCost: cost,
-      retailPrice,
+      retailPrice: null,
       compareAtPrice: null,
       images: images.filter(Boolean),
-      inStock: true,
+      inStock: null,
       stockQuantity: null,
       shippingNote: SHIPPING_NOTE,
     };
