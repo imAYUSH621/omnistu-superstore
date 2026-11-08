@@ -59,7 +59,8 @@ describe('test checkout mode', () => {
     expect(payPage).toContain("data-testid='test-checkout-banner'");
     const table = fs.readFileSync('app/(root)/order/[id]/order-details-table.tsx', 'utf8');
     expect(table).toContain("data-testid='test-order-banner'");
-    expect(table).toContain('Simulate payment (TEST - no real charge)');
+    expect(table).toContain('copy.simulatePaid');
+    expect(require('@/lib/order-detail-language').ORDER_DETAIL_COPY.EN.simulatePaid).toBe('Simulate payment (TEST - no real charge)');
   });
 });
 
@@ -117,8 +118,10 @@ it('place-order failure is never silent: the form toasts the server message', ()
 
 it('simulated tax and shipping are labeled as TEST estimates, never real rates', () => {
   const table = fs.readFileSync('app/(root)/order/[id]/order-details-table.tsx', 'utf8');
-  expect(table).toContain('Simulated tax (TEST estimate - not a real tax rate)');
-  expect(table).toContain('Simulated shipping (TEST estimate - not a real rate)');
+  expect(table).toContain('copy.testTax');
+  expect(require('@/lib/order-detail-language').ORDER_DETAIL_COPY.EN.testTax).toBe('Simulated tax (TEST estimate - not a real tax rate)');
+  expect(table).toContain('copy.testShippingRate');
+  expect(require('@/lib/order-detail-language').ORDER_DETAIL_COPY.EN.testShippingRate).toBe('Simulated shipping (TEST estimate - not a real rate)');
   const page = fs.readFileSync('app/(root)/place-order/page.tsx', 'utf8');
   expect(page).toContain("data-testid='test-estimates-note'");
   expect(page).toContain('not real tax or shipping rates');

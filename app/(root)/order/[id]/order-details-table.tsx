@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, formatDateTime, } from '@/lib/utils';
+import { formatCurrency, } from '@/lib/utils';
 import { Order } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -35,6 +35,9 @@ import StripePayment from './stripe-payment';
 import OrderTrackingStepper from '@/components/shared/order/order-tracking-stepper';
 import T from '@/components/shared/i18n-text';
 import { isSimulatedOrder } from '@/lib/order-simulation';
+import { useStoreLanguage } from '@/hooks/use-store-language';
+import { ORDER_DETAIL_COPY } from '@/lib/order-detail-language';
+import { orderHistoryDate } from '@/lib/order-history-language';
 
 const OrderDetailsTable = ({
   order,
@@ -66,6 +69,9 @@ const OrderDetailsTable = ({
     dispatchedAt,
   } = order;
 
+  const language=useStoreLanguage();
+  const copy=ORDER_DETAIL_COPY[language];
+  const date=(value:Date|string)=>orderHistoryDate(value,language)+' UTC';
   const simulated = isSimulatedOrder(order);
   const qualifiedTest = Boolean(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'));
   const { toast } = useToast();
@@ -75,9 +81,9 @@ const OrderDetailsTable = ({
     let status = '';
 
     if (isPending) {
-      status = 'Loading PayPal...';
+      status = copy.paypalLoading;
     } else if (isRejected) {
-      status = 'Error Loading PayPal';
+      status = copy.paypalError;
     }
     return status;
   };
@@ -123,7 +129,7 @@ const OrderDetailsTable = ({
           })
         }
       >
-        {isPending ? 'processing...' : 'Mark As Paid'}
+        {isPending ? copy.processing : copy.markPaid}
       </Button>
     );
   };
@@ -145,7 +151,7 @@ const OrderDetailsTable = ({
           })
         }
       >
-        {isPending ? 'processing...' : 'Simulate payment (TEST - no real charge)'}
+        {isPending ? copy.processing : copy.simulatePaid}
       </Button>
     );
   };
@@ -164,7 +170,7 @@ const OrderDetailsTable = ({
           })
         }
       >
-        {isPending ? 'processing...' : 'Simulate delivery (TEST - no real shipment)'}
+        {isPending ? copy.processing : copy.simulateDelivered}
       </Button>
     );
   };
@@ -188,7 +194,7 @@ const OrderDetailsTable = ({
           })
         }
       >
-        {isPending ? 'processing...' : 'Mark As Delivered'}
+        {isPending ? copy.processing : copy.markDelivered}
       </Button>
     );
   };
@@ -211,41 +217,41 @@ const OrderDetailsTable = ({
         <div className='col-span-2 space-y-4 overflow-x-auto'>
           <Card>
             <CardContent className='p-4 gap-4'>
-              <h2 className='text-xl pb-4 font-bold'>Payment Method</h2>
+              <h2 className='text-xl pb-4 font-bold'><T k='paymentMethod' /></h2>
               <p className='mb-2 font-medium'>{paymentMethod}</p>
               {isPaid ? (
                 <>
                   <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
-                    {simulated?'Simulated payment at ':'Paid at '}{formatDateTime(paidAt!).dateTime}
+                    {simulated?copy.testPaid:copy.paidAt} {date(paidAt!)}
                   </Badge>
                   <div className='mt-4'>
-                    {simulated?<p className='text-sm text-muted-foreground'>Test record only. No shipment, return or refund is created.</p>:<ReturnRequestButton orderId={id} />}
+                    {simulated?<p className='text-sm text-muted-foreground'>{copy.testNote}</p>:<ReturnRequestButton orderId={id} />}
                   </div>
                 </>
               ) : (
-                <Badge variant='destructive'>{simulated ? 'Payment not simulated' : 'Not paid'}</Badge>
+                <Badge variant='destructive'>{simulated ? copy.testUnpaid : <T k='notPaid' />}</Badge>
               )}
             </CardContent>
           </Card>
           <Card>
             <CardContent className='p-4 gap-4'>
-              <h2 className='text-xl pb-4 font-bold'>Shipping Address</h2>
+              <h2 className='text-xl pb-4 font-bold'><T k='shippingAddress' /></h2>
               <p className='font-semibold'>{shippingAddress.fullName}</p>
               <p className='mb-2 text-muted-foreground'>
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
                 {shippingAddress.postalCode}, {shippingAddress.country}
               </p>
-              {simulated ? (<Badge variant='outline'>{isDelivered ? 'Simulated delivery - no real shipment' : 'Test order - no real shipment'}</Badge>) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
+              {simulated ? (<Badge variant='outline'>{isDelivered ? copy.testDelivered : copy.testShipping}</Badge>) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
                 <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
-                  Delivered at {formatDateTime(deliveredAt!).dateTime}
+                  {copy.deliveredAt} {date(deliveredAt!)}
                 </Badge>
               ) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'in_transit' ? (
                 <Badge variant='outline' className='text-amber-600 border-amber-400'>
-                  In Transit{trackingCarrier ? ` via ${trackingCarrier}` : ''}
+                  {copy.transit}{trackingCarrier ? ` ${copy.via} ${trackingCarrier}` : ''}
                 </Badge>
               ) : (
                 <Badge variant='outline' className='text-muted-foreground'>
-                  Not yet dispatched
+                  {copy.notDispatched}
                 </Badge>
               )}
             </CardContent>
@@ -256,9 +262,9 @@ const OrderDetailsTable = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead className='text-right'>Price</TableHead>
+                    <TableHead><T k='itemLabel' /></TableHead>
+                    <TableHead><T k='quantityLabel' /></TableHead>
+                    <TableHead className='text-right'><T k='priceLabel' /></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -297,31 +303,31 @@ const OrderDetailsTable = ({
         <div>
           <Card>
             <CardContent className='p-5 space-y-4'>
-              <h2 className='text-lg font-bold pb-2 border-b'>Order Summary</h2>
+              <h2 className='text-lg font-bold pb-2 border-b'>{copy.summary}</h2>
               <div className='flex justify-between text-sm'>
-                <span className='text-muted-foreground'>Items</span>
+                <span className='text-muted-foreground'><T k='itemsLabel' /></span>
                 <span>{formatCurrency(itemsPrice)}</span>
               </div>
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
                   {simulated
-                    ? 'Simulated tax (TEST estimate - not a real tax rate)'
-                    : 'Estimated Tax'}
+                    ? copy.testTax
+                    : copy.tax}
                 </span>
                 <span>{formatCurrency(taxPrice)}</span>
               </div>
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
                   {simulated
-                    ? 'Simulated shipping (TEST estimate - not a real rate)'
-                    : 'Shipping (Express)'}
+                    ? copy.testShippingRate
+                    : <T k='shippingLabel' />}
                 </span>
                 <span className='text-emerald-600 font-semibold'>
-                  {Number(shippingPrice) === 0 ? 'FREE' : formatCurrency(shippingPrice)}
+                  {Number(shippingPrice) === 0 ? copy.free : formatCurrency(shippingPrice)}
                 </span>
               </div>
               <div className='flex justify-between text-base font-extrabold pt-2 border-t'>
-                <span>Order Total</span>
+                <span><T k='totalLabel' /> (USD)</span>
                 <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>
 
@@ -358,7 +364,7 @@ const OrderDetailsTable = ({
               {/* Simulated test checkout */}
               {simulated && (
                 <div className='rounded-md border border-sky-300 bg-sky-50 px-3 py-2.5 text-xs text-sky-900 mb-2' data-testid='test-order-banner'>
-                  TEST ORDER - simulated checkout: no real payment was charged and no real shipment will happen.
+                  {copy.testBanner}
                 </div>
               )}
               {!isPaid && paymentMethod === 'TestPayment' && <SimulatePaidButton />}

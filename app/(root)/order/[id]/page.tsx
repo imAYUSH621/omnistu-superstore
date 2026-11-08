@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import {orderDetailMetadata} from '@/lib/order-detail-metadata';
 import { getOrderById } from '@/lib/actions/order.actions';
 import { notFound, redirect } from 'next/navigation';
 import OrderDetailsTable from './order-details-table';
@@ -6,9 +6,7 @@ import { ShippingAddress } from '@/types';
 import { auth } from '@/auth';
 import { stripeClientSecretForOrder } from '@/lib/stripe-intent';
 
-export const metadata: Metadata = {
-  title: 'Order Details',
-};
+export const generateMetadata = orderDetailMetadata;
 
 const OrderDetailsPage = async (props: {
   params: Promise<{
