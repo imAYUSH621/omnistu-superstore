@@ -1,0 +1,7 @@
+import {resolveCurrentCustomer} from '@/lib/foundation/current-customer';
+const row={id:'existing',name:'Customer',email:'customer@example.test',createdAt:new Date('2026-01-01T00:00:00Z')};
+it('guest never queries by supplied email or other identity',async()=>{const read=jest.fn();expect(await resolveCurrentCustomer(null,read)).toEqual({status:'guest',customer:null});expect(read).not.toHaveBeenCalled()});
+it('uses existing UUID as stable customer identity and selects no membership/billing',async()=>{const read=jest.fn().mockResolvedValue(row),r=await resolveCurrentCustomer({user:{id:row.id}},read);expect(read).toHaveBeenCalledWith(row.id);expect(r).toEqual({status:'authenticated',customer:{customerId:row.id,name:row.name,email:row.email,joinedAt:'2026-01-01T00:00:00.000Z',identitySource:'existing-user'}})});
+it.each([null,{...row,id:'other'}])('missing or mismatched account refuses identity',async value=>expect(await resolveCurrentCustomer({user:{id:row.id}},async()=>value)).toEqual({status:'not-found',customer:null}));
+it('database failure is not an empty account or guest',async()=>expect(await resolveCurrentCustomer({user:{id:row.id}},async()=>{throw Error('offline')})).toEqual({status:'unavailable',customer:null}));
+it('invalid dates failclosed',async()=>expect((await resolveCurrentCustomer({user:{id:row.id}},async()=>({...row,createdAt:new Date('bad')}))).status).toBe('unavailable'));

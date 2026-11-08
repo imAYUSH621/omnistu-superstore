@@ -1,0 +1,7 @@
+const mockCurrent=jest.fn(),mockCreate=jest.fn();jest.mock('@/lib/foundation/current-customer-server',()=>({currentCustomer:()=>mockCurrent()}));jest.mock('@/db/prisma',()=>({databaseConfigured:true,prisma:{serviceEnquiry:{create:(...a:unknown[])=>mockCreate(...a)}}}));jest.mock('@/lib/enquiries',()=>({rateLimited:()=>false,validateEnquiry:()=>({ok:true,value:{name:'Customer',email:'other@example.test',message:'Test enquiry message',serviceSlug:null}})}));
+import {POST} from '@/app/api/enquiries/route';
+const request=()=>new Request('https://omnistu.com/api/enquiries',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:'other',customerId:'other'})});
+afterEach(()=>jest.clearAllMocks());
+it('uses common self identity not claimed body user or contact email',async()=>{mockCurrent.mockResolvedValue({status:'authenticated',customer:{customerId:'self'}});expect((await POST(request())).status).toBe(200);expect(mockCreate.mock.calls[0][0].data.userId).toBe('self')});
+it('guest remains unlinked',async()=>{mockCurrent.mockResolvedValue({status:'guest',customer:null});expect((await POST(request())).status).toBe(200);expect(mockCreate.mock.calls[0][0].data.userId).toBeNull()});
+it.each(['not-found','unavailable'])('identity failure does not silently save as guest %s',async status=>{mockCurrent.mockResolvedValue({status,customer:null});expect((await POST(request())).status).toBe(503);expect(mockCreate).not.toHaveBeenCalled()});
