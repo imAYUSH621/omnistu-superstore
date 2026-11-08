@@ -1,0 +1,26 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+jest.mock('@/hooks/use-toast',()=>({useToast:()=>({toast:jest.fn()})}));
+jest.mock('@/lib/actions/order.actions',()=>({}));
+jest.mock('@/components/shared/order/return-request-button',()=>({__esModule:true,default:()=><button>Request real return</button>}));
+jest.mock('@/app/(root)/order/[id]/stripe-payment',()=>({__esModule:true,default:()=>null}));
+jest.mock('@/components/shared/i18n-text',()=>({__esModule:true,default:()=> <span>Order items</span>}));
+jest.mock('next/image',()=>({__esModule:true,default:()=>null}));
+jest.mock('next/link',()=>({__esModule:true,default:({children,href}:{children:React.ReactNode;href:string})=><a href={href}>{children}</a>}));
+import Detail from '@/app/(root)/order/[id]/order-details-table';
+import {isSimulatedOrder,displayedOrderId} from '@/lib/order-simulation';
+import {buildOrderTrackingView} from '@/lib/tracking';
+const base={id:'aaaaaaaa-1111-4111-8111-111111111111',userId:'self',shippingAddress:{fullName:'Synthetic test customer',streetAddress:'Test street',city:'Test city',postalCode:'00000',country:'Test'},orderitems:[],itemsPrice:'10.00',shippingPrice:'1.00',taxPrice:'1.34',totalPrice:'12.34',paymentMethod:'TestPayment',isPaid:true,isDelivered:true,paidAt:new Date('2026-11-09T00:00:00Z'),deliveredAt:new Date('2026-11-09T00:01:00Z'),paymentNote:null};
+const markup=(data:Record<string,unknown>={},isAdmin=false)=>renderToStaticMarkup(<Detail order={{...base,...data} as never} isAdmin={isAdmin} stripeClientSecret={null} paypalClientId='unused'/>);
+it.each(['TestPayment','CashOnDelivery','Stripe'])('detects qualified test independent of method %s',paymentMethod=>expect(isSimulatedOrder({paymentMethod,paymentNote:'QUALIFIED TEST ONLY: persisted test'})).toBe(true));
+it('recognizes ordinary test order without special note',()=>expect(isSimulatedOrder({paymentMethod:'TestPayment'})).toBe(true));
+it('does not misclassify normal real order',()=>expect(isSimulatedOrder({paymentMethod:'CashOnDelivery',paymentNote:null})).toBe(false));
+it('shows exact persisted ID without invented marketplace prefix',()=>{expect(displayedOrderId(base.id)).toBe(base.id);const s=markup();expect(s).toContain(base.id);expect(s).not.toContain('#114-')});
+it.each([false,true])('test paid/delivered records never offer real return/admin fulfillment (%s)',isAdmin=>{const s=markup({},isAdmin);expect(s).toContain('Simulated payment at');expect(s).toContain('Simulated delivery - no real shipment');expect(s).toContain('no real payment was charged');expect(s).not.toContain('Request real return');expect(s).not.toContain('Mark As Delivered');expect(s).not.toContain('Delivered at');expect(s).toContain('12.34');expect(s).toContain('USD')});
+it('unpaid test labels do not imply outstanding real payment',()=>{const s=markup({isPaid:false,isDelivered:false});expect(s).toContain('Payment not simulated');expect(s).toContain('Simulate payment (TEST');expect(s).not.toContain('Request real return')});
+it('ordinary test paid retains simulation action without real admin dispatch',()=>{const s=markup({isDelivered:false},true);expect(s).toContain('Simulate delivery (TEST');expect(s).not.toContain('Mark As Delivered')});
+it('qualified test suppresses simulation delivery as before',()=>{const s=markup({isDelivered:false,paymentNote:'QUALIFIED TEST ONLY'},true);expect(s).not.toContain('Simulate delivery (TEST');expect(s).not.toContain('Mark As Delivered')});
+it('real paid record keeps real return and admin dispatch controls',()=>{const s=markup({paymentMethod:'CashOnDelivery',isDelivered:false},true);expect(s).toContain('Request real return');expect(s).toContain('Mark As Delivered');expect(s).not.toContain('TEST ORDER')});
+it.each([false,true])('test tracking never exposes carrier evidence or claims real dispatch (%s)',isDelivered=>{const v=buildOrderTrackingView({simulated:true,isPaid:true,isDelivered,dispatchStatus:'DISPATCHED',trackingNumber:'FAKE-TEST',trackingCarrier:'Fixture carrier'});expect(v.hasTracking).toBe(false);expect(v.steps[2].completed).toBe(false);expect(v.carrierStatus).toContain('no real shipment');expect(JSON.stringify(v)).not.toContain('FAKE-TEST');expect(JSON.stringify(v)).not.toContain('Fixture carrier');expect(v.progress).toBe('processing')});
+
+it('qualified test with a legacy real method cannot show real payment control',()=>{const s=markup({paymentMethod:'CashOnDelivery',isPaid:false,isDelivered:false,paymentNote:'QUALIFIED TEST ONLY'},true);expect(s).not.toContain('Mark As Paid');expect(s).toContain('TEST ORDER')});

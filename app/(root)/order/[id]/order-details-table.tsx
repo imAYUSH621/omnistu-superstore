@@ -34,6 +34,7 @@ import {
 import StripePayment from './stripe-payment';
 import OrderTrackingStepper from '@/components/shared/order/order-tracking-stepper';
 import T from '@/components/shared/i18n-text';
+import { isSimulatedOrder } from '@/lib/order-simulation';
 
 const OrderDetailsTable = ({
   order,
@@ -65,6 +66,8 @@ const OrderDetailsTable = ({
     dispatchedAt,
   } = order;
 
+  const simulated = isSimulatedOrder(order);
+  const qualifiedTest = Boolean(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'));
   const { toast } = useToast();
 
   const PrintLoadingState = () => {
@@ -195,6 +198,7 @@ const OrderDetailsTable = ({
       {/* 4-Step Amazon Carrier Tracking Stepper */}
       <OrderTrackingStepper
         orderId={id}
+        simulated={simulated}
         isPaid={isPaid}
         isDelivered={isDelivered}
         dispatchStatus={dispatchStatus}
@@ -212,14 +216,14 @@ const OrderDetailsTable = ({
               {isPaid ? (
                 <>
                   <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
-                    {order.paymentNote?.startsWith('QUALIFIED TEST ONLY')?'Simulated payment at ':'Paid at '}{formatDateTime(paidAt!).dateTime}
+                    {simulated?'Simulated payment at ':'Paid at '}{formatDateTime(paidAt!).dateTime}
                   </Badge>
                   <div className='mt-4'>
-                    {order.paymentNote?.startsWith('QUALIFIED TEST ONLY')?<p className='text-sm text-muted-foreground'>Test record only. No shipment, return or refund is created.</p>:<ReturnRequestButton orderId={id} />}
+                    {simulated?<p className='text-sm text-muted-foreground'>Test record only. No shipment, return or refund is created.</p>:<ReturnRequestButton orderId={id} />}
                   </div>
                 </>
               ) : (
-                <Badge variant='destructive'>Not paid</Badge>
+                <Badge variant='destructive'>{simulated ? 'Payment not simulated' : 'Not paid'}</Badge>
               )}
             </CardContent>
           </Card>
@@ -231,7 +235,7 @@ const OrderDetailsTable = ({
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
                 {shippingAddress.postalCode}, {shippingAddress.country}
               </p>
-              {shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
+              {simulated ? (<Badge variant='outline'>{isDelivered ? 'Simulated delivery - no real shipment' : 'Test order - no real shipment'}</Badge>) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
                 <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
                   Delivered at {formatDateTime(deliveredAt!).dateTime}
                 </Badge>
@@ -300,7 +304,7 @@ const OrderDetailsTable = ({
               </div>
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
-                  {paymentMethod === 'TestPayment'
+                  {simulated
                     ? 'Simulated tax (TEST estimate - not a real tax rate)'
                     : 'Estimated Tax'}
                 </span>
@@ -308,7 +312,7 @@ const OrderDetailsTable = ({
               </div>
               <div className='flex justify-between text-sm'>
                 <span className='text-muted-foreground'>
-                  {paymentMethod === 'TestPayment'
+                  {simulated
                     ? 'Simulated shipping (TEST estimate - not a real rate)'
                     : 'Shipping (Express)'}
                 </span>
@@ -318,11 +322,11 @@ const OrderDetailsTable = ({
               </div>
               <div className='flex justify-between text-base font-extrabold pt-2 border-t'>
                 <span>Order Total</span>
-                <span className='text-emerald-600'>{formatCurrency(totalPrice)}</span>
+                <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>
 
               {/* PayPal Payment */}
-              {!isPaid && paymentMethod === 'PayPal' && (
+              {!simulated && !isPaid && paymentMethod === 'PayPal' && (
                 <div className='pt-2'>
                   <PayPalScriptProvider options={{ clientId: paypalClientId }}>
                     <PrintLoadingState />
@@ -335,7 +339,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Stripe Payment */}
-              {!isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
+              {!simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
                 <div className='pt-2'>
                   <StripePayment
                     priceInCents={Number(order.totalPrice) * 100}
@@ -346,19 +350,19 @@ const OrderDetailsTable = ({
               )}
 
               {/* Cash On Delivery */}
-              {isAdmin && !isPaid && paymentMethod === 'CashOnDelivery' && (
+              {isAdmin && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
                 <MarkAsPaidButton />
               )}
-              {isAdmin && isPaid && !isDelivered && !order.paymentNote?.startsWith('QUALIFIED TEST ONLY') && <MarkAsDeliveredButton />}
+              {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}
 
               {/* Simulated test checkout */}
-              {paymentMethod === 'TestPayment' && (
+              {simulated && (
                 <div className='rounded-md border border-sky-300 bg-sky-50 px-3 py-2.5 text-xs text-sky-900 mb-2' data-testid='test-order-banner'>
                   TEST ORDER - simulated checkout: no real payment was charged and no real shipment will happen.
                 </div>
               )}
               {!isPaid && paymentMethod === 'TestPayment' && <SimulatePaidButton />}
-              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && !order.paymentNote?.startsWith('QUALIFIED TEST ONLY') && <SimulateDeliveredButton />}
+              {isPaid && !isDelivered && paymentMethod === 'TestPayment' && !qualifiedTest && <SimulateDeliveredButton />}
             </CardContent>
           </Card>
         </div>

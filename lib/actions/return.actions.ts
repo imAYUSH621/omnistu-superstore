@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { isSimulatedOrder } from '@/lib/order-simulation';
 import { executeRefund } from '@/lib/refunds';
 import { reportEvent } from '@/lib/monitoring';
 import { prisma } from '@/db/prisma';
@@ -30,6 +31,9 @@ export async function requestReturn(orderId: string, reason: string): Promise<Ac
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.userId !== userId) {
     return { success: false, message: 'Order not found.' };
+  }
+  if (isSimulatedOrder(order)) {
+    return { success: false, message: 'Test orders cannot create a real return or refund request.' };
   }
   if (!order.isPaid) {
     return { success: false, message: 'Only paid orders can be returned.' };
@@ -72,6 +76,10 @@ export async function reviewReturn(
       data: { status: 'REJECTED', resolutionNote: note?.trim() || null },
     });
     return { success: true, message: 'Return rejected.' };
+  }
+
+  if (approve && isSimulatedOrder(rr.order)) {
+    return { success: false, message: 'Test orders cannot be approved for a real return or refund.' };
   }
 
   if (approve) {
