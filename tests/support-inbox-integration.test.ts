@@ -16,3 +16,5 @@ it('same admin and own-account lists cover support without claiming notification
  expect(read('app/admin/enquiries/page.tsx')).toContain('Support and service enquiries');
  expect(read('app/user/enquiries/page.tsx')).toContain('Support and service enquiries');
 });
+
+it('privacy explains stored support data without promising processing',()=>{const s=read('app/(root)/privacy/page.tsx');expect(s).toContain('Support and service enquiry forms save');expect(s).toContain('Chat history is not forwarded automatically');expect(s).toContain('not proof that the team has read');});

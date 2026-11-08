@@ -17,7 +17,7 @@ export default function PolicyPage() {
         <div className='mt-8 space-y-7 text-sm leading-6 text-slate-700 dark:text-slate-300'>
           <section>
             <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Information entered in the store</h2>
-            <p>Account registration, profile and address forms can store the information you enter. Signing out ends your session; it does not erase your account or saved information. Use your account page to review or update the profile fields available there.</p>
+            <p>Account registration, profile and address forms can store the information you enter. Support and service enquiry forms save the name, email and message you submit in the store inbox for the team to review. Signed-in enquiries are linked to that account; guest enquiries are not linked by matching email. Chat history is not forwarded automatically. Signing out ends your session; it does not erase your account or saved information. Use your account page to review or update the profile fields available there.</p>
           </section>
           <section>
             <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Sessions and preferences</h2>
@@ -29,7 +29,7 @@ export default function PolicyPage() {
           </section>
           <section>
             <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-2'>Privacy questions and deletion requests</h2>
-            <p>Automated store help cannot delete or anonymize an account, process a privacy request or confirm legal compliance. The contact page reports when message delivery is unavailable. This page does not claim an automated erasure process, a response deadline or certification under privacy laws. A complete notice and a working request-handling process still need to be confirmed before live operation.</p>
+            <p>Automated store help cannot delete or anonymize an account, process a privacy request or confirm legal compliance. The contact page can save an enquiry in the store inbox; saving is not proof that the team has read, answered or processed the request. This page does not claim an automated erasure process, a response deadline or certification under privacy laws. A complete notice and a working request-handling process still need to be confirmed before live operation.</p>
           </section>
         </div>
         <nav aria-label='Store information' className='mt-9 flex flex-wrap gap-x-5 gap-y-3 border-t border-slate-200 dark:border-slate-800 pt-6 text-sm text-amber-700 dark:text-amber-300'>
