@@ -1,0 +1,5 @@
+const mockActivity=jest.fn();jest.mock('@/lib/foundation/account-activity-server',()=>({currentAccountActivity:()=>mockActivity()}));
+import {GET} from '@/app/api/account/activity/route';
+afterEach(()=>jest.clearAllMocks());
+it.each([['guest',401],['unavailable',503]])('route %s fails closed with no cache',async(status,code)=>{mockActivity.mockResolvedValue({status,customerId:null});const r=await GET();expect(r.status).toBe(code);expect(r.headers.get('cache-control')).toBe('private, no-store');expect(r.headers.get('vary')).toBe('Cookie')});
+it('self-only envelope preserves independent source failure without fake empty and no request selectors',async()=>{const activity={status:'available',customerId:'self',store:{status:'unavailable',items:[]},support:{status:'available',items:[{id:'own-enquiry'}]}};mockActivity.mockResolvedValue(activity);const r=await GET();expect(r.status).toBe(200);expect(await r.json()).toEqual({activity});expect(mockActivity).toHaveBeenCalledWith();expect(r.headers.get('cache-control')).toBe('private, no-store')});

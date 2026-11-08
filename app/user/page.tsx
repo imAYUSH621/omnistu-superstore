@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { getMyOrders } from '@/lib/actions/order.actions';
+import {currentAccountActivity} from '@/lib/foundation/account-activity-server';
+import AccountSupportText from '@/components/shared/account-support-text';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getMyReturns } from '@/lib/actions/return.actions';
 import T from '@/components/shared/i18n-text';
 import OrderHistoryText from '@/components/shared/order-history-text';
-import {isSimulatedOrder} from '@/lib/order-simulation';
 import {accountOverviewMetadata} from '@/lib/account-overview-metadata';
 
 export const generateMetadata = accountOverviewMetadata;
@@ -17,13 +17,16 @@ export default async function AccountOverviewPage() {
   const session = await auth();
   if (!session?.user) redirect('/sign-in?callbackUrl=/user');
 
-  const [orderState,cartState,returnState]=await Promise.allSettled([
-    getMyOrders({limit:3,page:1}),getMyCart(),getMyReturns(),
+  const [activityState,cartState,returnState]=await Promise.allSettled([
+    currentAccountActivity(),getMyCart(),getMyReturns(),
   ]);
-  const ordersFailed=orderState.status==='rejected';
+  const activity=activityState.status==='fulfilled'&&activityState.value.status==='available'?activityState.value:null;
+  const ordersFailed=!activity||activity.store.status==='unavailable';
+  const supportFailed=!activity||activity.support.status==='unavailable';
+  const enquiries=activity?.support.items??[];
   const cartFailed=cartState.status==='rejected';
   const returnsFailed=returnState.status==='rejected'||!returnState.value.success||!Array.isArray(returnState.value.data);
-  const orders=orderState.status==='fulfilled'?orderState.value.data:[];
+  const orders=activity?.store.items??[];
   const cartCount=cartState.status==='fulfilled'?(cartState.value?.items?.reduce((sum:number,item:{qty:number})=>sum+item.qty,0)??0):0;
   const returns=!returnsFailed&&returnState.status==='fulfilled'?(returnState.value.data as {id:string;status:string;createdAt:string}[]).slice(0,3):[];
 
@@ -60,7 +63,7 @@ export default async function AccountOverviewPage() {
                   >
                     <span className='truncate'>#{o.id.slice(0, 8)} &middot; <OrderHistoryText date={new Date(o.createdAt).toISOString()}/> UTC</span>
                     <span className='shrink-0 ml-2 font-medium'>
-                      ${Number(o.totalPrice).toFixed(2)} USD &middot; {isSimulatedOrder(o) ? <OrderHistoryText name={o.isPaid?'testPaid':'test'}/> : o.isPaid ? <T k='paid' /> : <T k='notPaid' />}
+                      ${Number(o.totalPrice).toFixed(2)} USD &middot; {o.simulated ? <OrderHistoryText name={o.isPaid?'testPaid':'test'}/> : o.isPaid ? <T k='paid' /> : <T k='notPaid' />}
                     </span>
                   </Link>
                 </li>
@@ -113,6 +116,14 @@ export default async function AccountOverviewPage() {
           )}
         </div>
       </div>
+      <section className='rounded border border-neutral-200 dark:border-neutral-800 p-4 space-y-3 bg-white dark:bg-[#1a202c]'>
+        <h2 className='text-[14px] font-bold'><Link href='/user/enquiries' className='hover:underline'><AccountSupportText name='enquiries'/></Link></h2>
+        <p className='text-xs text-muted-foreground'><AccountSupportText name='privacy'/></p>
+        {supportFailed?<p role='alert' className='text-sm text-destructive'><AccountSupportText name='unavailable'/></p>:enquiries.length===0?<p className='text-sm'><AccountSupportText name='empty'/></p>:<ul className='space-y-3'>{enquiries.map(r=><li key={r.id} className='rounded border p-3 text-sm space-y-1'>
+          <p className='text-xs text-muted-foreground break-words'>{r.serviceSlug??<AccountSupportText name='general'/>} - <AccountSupportText status={r.status}/> - <OrderHistoryText date={r.createdAt}/> UTC</p>
+          <p className='whitespace-pre-wrap break-words'>{r.message}</p>
+        </li>)}</ul>}
+      </section>
     </div>
   );
 }

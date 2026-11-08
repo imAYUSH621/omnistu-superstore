@@ -19,7 +19,8 @@ describe('account overview personalization', () => {
   });
 
   it('derives everything from the user\'s own orders, cart and returns', () => {
-    expect(page).toContain('getMyOrders');
+    expect(page).toContain('currentAccountActivity');
+    expect(page).toContain('enquiries.map');
     expect(page).toContain('getMyCart');
     expect(page).toContain('getMyReturns');
     expect(page).not.toMatch(/recommended for you|personalized recommendations|recently viewed/i);
