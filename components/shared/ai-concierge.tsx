@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { SUPPORT_COPY, supportLanguage, type SupportLanguage } from '@/lib/support-language';
 import SupportMessage from '@/components/shared/support-message';
 import T from '@/components/shared/i18n-text';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
@@ -10,10 +11,24 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 
 const GREETING: Msg = {
   role: 'assistant',
-  content: 'Hello! I am the Omnistu Shopping Assistant. Ask me about any product in our catalog, or where to see your order status.',
+  content: SUPPORT_COPY.EN.uiGreeting,
 };
 
 export default function AiConcierge() {
+  const [language, setLanguage] = useState<SupportLanguage>('EN');
+  const copy = SUPPORT_COPY[language];
+  useEffect(() => {
+    const apply = (preferred?: string | null) => {
+      const lang = supportLanguage('', preferred);
+      setLanguage(lang);
+      setMessages(old => old.map((m, i) => i === 0 ? { role: 'assistant', content: SUPPORT_COPY[lang].uiGreeting } : m));
+    };
+    const raw = document.cookie.match(/(?:^|;\s*)omnistu_lang=([^;]*)/)?.[1];
+    try { apply(raw ? decodeURIComponent(raw) : null); } catch { apply(null); }
+    const change = (event: Event) => apply((event as CustomEvent<{lang?: string}>).detail?.lang);
+    window.addEventListener('omnistu:lang-change', change);
+    return () => window.removeEventListener('omnistu:lang-change', change);
+  }, []);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState('');
@@ -51,7 +66,7 @@ export default function AiConcierge() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next.filter((m) => m !== GREETING) }),
+        body: JSON.stringify({ messages: next.slice(1) }),
       });
 
       if (!res.ok || !res.body) throw new Error(await res.text());
@@ -71,7 +86,7 @@ export default function AiConcierge() {
         ...next,
         {
           role: 'assistant',
-          content: 'Sorry, I am temporarily unable to answer. Please use our contact form at /contact for direct assistance.',
+          content: copy.unavailable,
         },
       ]);
     } finally {
@@ -147,8 +162,8 @@ export default function AiConcierge() {
           </div>
 
           <div className='border-t px-3 py-2 text-xs'>
-            <Link href='/contact' className='underline underline-offset-2'>Leave an enquiry for the team</Link>
-            <span className='block text-muted-foreground'>Only what you enter in the form is saved. No chat is forwarded automatically.</span>
+            <Link href='/contact' className='underline underline-offset-2'>{copy.handoff}</Link>
+            <span className='block text-muted-foreground'>{copy.privacy}</span>
           </div>
 
           {/* Input Form */}
@@ -156,7 +171,7 @@ export default function AiConcierge() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about our products..."
+              placeholder={copy.placeholder}
               maxLength={500}
               disabled={busy}
               className="flex-1 px-3 py-2 text-[13px] bg-[#f8f9fa] dark:bg-[#1f2937] border border-[#d0d5dd] dark:border-[#475569] rounded-lg focus:outline-none focus:border-[#4f46e5] dark:text-white"

@@ -1,3 +1,4 @@
+import { requestSupportLanguage } from '@/lib/support-language';
 import { groundedSupportAnswer } from '@/lib/grounded-support';
 import {
   MAX_MESSAGES,
@@ -16,8 +17,9 @@ export async function POST(req: Request): Promise<Response> {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (limited(ip)) return new Response('Too many requests. Please wait a minute.', { status: 429 });
 
-  const providerName = (process.env.LLM_PROVIDER === 'nvidia' ? 'nvidia' : 'groq') as keyof typeof PROVIDERS;
-  const provider = PROVIDERS[providerName];
+  // The owner selected NVIDIA and rejected Groq. Never implicitly select Groq,
+  // even if an unrelated legacy GROQ_API_KEY exists in the environment.
+  const provider = PROVIDERS.nvidia;
   const apiKey = provider.key();
 
   let body: { messages?: ChatMessage[] };
@@ -46,7 +48,7 @@ export async function POST(req: Request): Promise<Response> {
     const messages = Array.isArray(body.messages) ? body.messages : [];
     const lastUser = [...messages].reverse().find(m => m?.role === 'user' && typeof m.content === 'string');
     if (!lastUser) return new Response('No message', { status: 400 });
-    const answer = await groundedSupportAnswer(lastUser.content.slice(0, MAX_CHARS));
+    const answer = await groundedSupportAnswer(lastUser.content.slice(0, MAX_CHARS), requestSupportLanguage(req));
     return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
   }
 
