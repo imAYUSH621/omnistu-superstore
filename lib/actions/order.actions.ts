@@ -1,4 +1,5 @@
 'use server';
+import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
 import {qualifiedOrderItems,payQualifiedTestOrder} from '@/lib/retail/store';
 import { assertCheckoutSnapshot } from '@/lib/cart-checkout-snapshot';
@@ -500,9 +501,9 @@ export async function getOrderSummary() {
     const productsCount = await prisma.product.count();
     const usersCount = await prisma.user.count();
 
-    // Only orders marked paid count as revenue (before any refunds).
+    // Real paid orders only, before refunds. Simulated receipts are not revenue.
     const totalSales = await prisma.order.aggregate({
-      where: { isPaid: true },
+      where: realPaidOrderWhere,
       _sum: { totalPrice: true },
     });
 
@@ -511,7 +512,7 @@ export async function getOrderSummary() {
     try {
       const salesDataRaw = await prisma.$queryRaw<
         Array<{ month: string; totalSales: Prisma.Decimal }>
-      >`SELECT to_char("createdAt", 'MM/YY') as "month", sum("totalPrice") as "totalSales" FROM "Order" WHERE "isPaid" = true GROUP BY to_char("createdAt", 'MM/YY')`;
+      >`SELECT to_char("createdAt", 'MM/YY') as "month", sum("totalPrice") as "totalSales" FROM "Order" WHERE ${realPaidOrderSql} GROUP BY to_char("createdAt", 'MM/YY')`;
 
       salesData = salesDataRaw.map((entry) => ({
         month: entry.month,
