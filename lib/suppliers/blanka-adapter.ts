@@ -1,4 +1,4 @@
-import { priceFor } from '../pricing';
+import { parseReferenceCost } from './reference-cost';
 import {
   SupplierError,
   type NormalizedProduct,
@@ -11,7 +11,7 @@ import {
 const BASE = 'https://app.blanka.io/api/v1';
 
 const SHIPPING_NOTE =
-  'White-label private-label skincare. Ships in Omnistu Botanics branded packaging from US warehouse. 5-7 business days.';
+  'Reference listing only. Exact variant stock, fulfillment source, packaging, destination freight and processing time require independent qualification.';
 
 interface BlankaImage {
   src: string;
@@ -26,7 +26,7 @@ interface BlankaProduct {
   id: string | number;
   title?: string;
   description?: string;
-  wholesale_price?: number;
+  wholesale_price?: number | string;
   images?: BlankaImage[];
   product_type?: string;
   variants?: BlankaVariant[];
@@ -43,8 +43,9 @@ export class BlankaAdapter implements SupplierAdapter {
 
   constructor(
     private readonly apiKey: string | undefined = process.env.BLANKA_API_KEY,
-    private readonly shippingEstimateUsd = 6,
-  ) {}
+    // Kept as an ignored compatibility argument; never evidence of freight.
+    shippingEstimateUsd?: number,
+  ) { void shippingEstimateUsd; }
 
   private get headers(): Record<string, string> {
     return {
@@ -65,8 +66,7 @@ export class BlankaAdapter implements SupplierAdapter {
   }
 
   public normalize(product: BlankaProduct): NormalizedProduct {
-    const cost = Number(product.wholesale_price) || 0;
-    const { retailPrice } = priceFor(cost, this.shippingEstimateUsd);
+    const cost = parseReferenceCost(product.wholesale_price);
     const id = String(product.id);
     const firstVariantSku = product.variants?.[0]?.sku ?? `BLANKA-${id}`;
     return {
@@ -79,10 +79,10 @@ export class BlankaAdapter implements SupplierAdapter {
       specs: [],
       category: product.product_type ?? 'Skincare & Wellness',
       wholesaleCost: cost,
-      retailPrice,
+      retailPrice: null,
       compareAtPrice: null,
       images: (product.images ?? []).map((img) => img.src).filter(Boolean),
-      inStock: true,
+      inStock: null,
       stockQuantity: null,
       shippingNote: SHIPPING_NOTE,
     };

@@ -1,4 +1,4 @@
-import { priceFor } from '../pricing';
+import { parseReferenceCost } from './reference-cost';
 import {
   SupplierError,
   type NormalizedProduct,
@@ -11,7 +11,7 @@ import {
 const BASE = 'https://api.brandsgateway.com/v2';
 
 const SHIPPING_NOTE =
-  'Authentic luxury designer piece. Ships express with certificate of authenticity from certified EU/US bonded facilities. 3-5 business days via DHL Express.';
+  'Reference listing only. Exact variant stock, fulfillment source, packaging, destination freight and processing time require independent qualification.';
 
 interface BrandsGatewayProduct {
   id: string | number;
@@ -36,8 +36,9 @@ export class BrandsGatewayAdapter implements SupplierAdapter {
 
   constructor(
     private readonly apiKey: string | undefined = process.env.BRANDSGATEWAY_API_KEY,
-    private readonly shippingEstimateUsd = 9.0,
-  ) {}
+    // Kept as an ignored compatibility argument; never evidence of freight.
+    shippingEstimateUsd?: number,
+  ) { void shippingEstimateUsd; }
 
   private get headers(): Record<string, string> {
     return {
@@ -48,14 +49,8 @@ export class BrandsGatewayAdapter implements SupplierAdapter {
   }
 
   public normalize(product: BrandsGatewayProduct): NormalizedProduct {
-    const rawCost = product.wholesale_price ?? 0;
-    const cost = typeof rawCost === 'number' ? rawCost : parseFloat(String(rawCost).replace(/[^0-9.]/g, '')) || 0;
-    
-    // Luxury brands provide recommended retail_price; fallback to pricing algorithm
-    const rawRetail = product.retail_price;
-    const directRetail = typeof rawRetail === 'number' ? rawRetail : rawRetail ? parseFloat(String(rawRetail).replace(/[^0-9.]/g, '')) : 0;
-    const retailPrice = directRetail > cost ? directRetail : priceFor(cost, this.shippingEstimateUsd).retailPrice;
-
+    const cost = parseReferenceCost(product.wholesale_price);
+    // A supplier recommended price is not a qualified store retail price.
     const id = String(product.id);
     const brandPrefix = product.brand ? `${product.brand.toUpperCase()} - ` : '';
 
@@ -69,10 +64,10 @@ export class BrandsGatewayAdapter implements SupplierAdapter {
       specs: product.brand ? [`Brand: ${product.brand}`] : [],
       category: product.category || 'Luxury & Fine Jewelry',
       wholesaleCost: cost,
-      retailPrice,
-      compareAtPrice: directRetail ? parseFloat((directRetail * 1.25).toFixed(2)) : null,
+      retailPrice: null,
+      compareAtPrice: null,
       images: (product.images || []).filter(Boolean),
-      inStock: true,
+      inStock: null,
       stockQuantity: null,
       shippingNote: SHIPPING_NOTE,
     };
