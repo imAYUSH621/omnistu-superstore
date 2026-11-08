@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
+import{HOME_COPY}from '@/lib/home-language';
 import { DEPARTMENTS } from '@/lib/constants/departments';
 
 const ORIGINAL_SIX = [
@@ -19,7 +20,7 @@ describe('home departments', () => {
   it('makes no parity or stock claim and shows empty departments honestly', () => {
     const src = readFileSync('components/shared/home/all-departments.tsx', 'utf8');
     const data = readFileSync('lib/constants/departments.ts', 'utf8');
-    expect(src).toContain('No items yet');
+    expect(src).toContain('<HomeText count={n}/>');expect(HOME_COPY.EN.empty).toBe('No items yet');
     expect(src + data).not.toMatch(/amazon.*(match|parity|same)/i);
     expect(src).not.toMatch(/in stock|bestseller|rated/i);
   });
@@ -39,9 +40,9 @@ it('leads discovery with clearly illustrative apparel artwork before the account
 
 it('mosaic uses only existing category routes and keeps a full directory', () => {
  const src = readFileSync('components/shared/home/department-mosaic.tsx', 'utf8');
- expect(src).toContain('Category images are illustrations, not items for sale.');
- expect(src).toContain('Browse all categories');
- expect(src).toContain('Browse clothing');
+ expect(src).toContain("<HomeText name='illustration'/>");expect(HOME_COPY.EN.illustration).toContain('Category images are illustrations, not items for sale.');
+ expect(src).toContain("<HomeText name='browseCategories'/>");expect(HOME_COPY.EN.browseCategories).toBe('Browse all categories');
+ expect(src).toContain("<HomeText name='clothing'/>");expect(HOME_COPY.EN.clothing).toBe('Browse clothing');
  expect(src).not.toContain('Explore the department');
  expect(DEPARTMENTS[0].image).toBe('/images/categories/custom-apparel.jpg');
  expect(src).not.toMatch(/bestseller|free shipping|under \$|in stock|women.s clothing|men.s clothing/i);

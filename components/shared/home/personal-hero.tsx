@@ -4,6 +4,8 @@ import { getMyOrders } from '@/lib/actions/order.actions';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { isDatabaseAvailable } from '@/lib/utils';
 import T from '@/components/shared/i18n-text';
+import OrderHistoryText from '@/components/shared/order-history-text';
+import{isSimulatedOrder}from '@/lib/order-simulation';
 
 // Signed-in: welcome back + real recent orders + real cart reminder.
 // Signed-out: honest sign-in CTA (no invented recommendation promises).
@@ -36,18 +38,10 @@ export default async function PersonalHero() {
     );
   }
 
-  let orders: { id: string; createdAt: Date; totalPrice: unknown; isPaid: boolean }[] = [];
-  let cartCount = 0;
-  try {
-    const [myOrders, cart] = await Promise.all([
-      getMyOrders({ limit: 3, page: 1 }),
-      getMyCart(),
-    ]);
-    orders = myOrders.data as typeof orders;
-    cartCount = cart?.items?.reduce((sum: number, item: { qty: number }) => sum + item.qty, 0) ?? 0;
-  } catch {
-    // Orders/cart unavailable - render the welcome without them.
-  }
+  const [orderState,cartState]=await Promise.allSettled([getMyOrders({limit:3,page:1}),getMyCart()]);
+  const ordersFailed=orderState.status==='rejected',cartFailed=cartState.status==='rejected';
+  const orders=orderState.status==='fulfilled'?orderState.value.data:[];
+  const cartCount=cartState.status==='fulfilled'?(cartState.value?.items?.reduce((sum:number,item:{qty:number})=>sum+item.qty,0)??0):0;
 
   const firstName = (session.user.name || '').split(' ')[0] || session.user.email;
 
@@ -66,7 +60,7 @@ export default async function PersonalHero() {
               <T k='viewAllOrders' />
             </Link>
           </div>
-          {orders.length === 0 ? (
+          {ordersFailed?<p role='alert' className='text-sm text-destructive'><T k='accountOrdersUnavailable'/></p>:orders.length === 0 ? (
             <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
               <T k='noOrdersYet' />
             </p>
@@ -76,11 +70,11 @@ export default async function PersonalHero() {
                 <li key={o.id}>
                   <Link
                     href={`/order/${o.id}`}
-                    className='flex items-center justify-between text-[12px] text-[#0f172a] dark:text-neutral-200 hover:text-[#4f46e5] group'
+                    className='flex flex-wrap gap-y-1 items-center justify-between text-[12px] text-[#0f172a] dark:text-neutral-200 hover:text-[#4f46e5] group'
                   >
-                    <span className='truncate'>#{o.id.slice(0, 8)} &middot; {new Date(o.createdAt).toLocaleDateString()}</span>
+                    <span className='truncate'>#{o.id.slice(0, 8)} &middot; <OrderHistoryText date={new Date(o.createdAt).toISOString()}/> UTC</span>
                     <span className='shrink-0 ml-2 font-medium'>
-                      ${Number(o.totalPrice).toFixed(2)} &middot; {o.isPaid ? <T k='paid' /> : <T k='notPaid' />}
+                      ${Number(o.totalPrice).toFixed(2)} USD &middot; {isSimulatedOrder(o)?<OrderHistoryText name={o.isPaid?'testPaid':'test'}/>:o.isPaid?<T k='paid'/>:<T k='notPaid'/>}
                     </span>
                   </Link>
                 </li>
@@ -96,7 +90,7 @@ export default async function PersonalHero() {
             <T k='pickUpYourCart' />
           </h3>
           <p className='text-[12px] text-[#565959] dark:text-neutral-400'>
-            {cartCount > 0
+            {cartFailed?<span role='alert' className='text-destructive'><T k='accountCartUnavailable'/></span>:cartCount > 0
               ? <>{cartCount} {cartCount === 1 ? <T k='itemInCartSingular' /> : <T k='itemsInCartPlural' />}</>
               : <T k='cartEmpty' />}
           </p>

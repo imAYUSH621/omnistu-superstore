@@ -23,3 +23,15 @@ The Vercel team name is not its billing plan. At this check the existing team is
 Policy sources checked on 9 November 2026:
 - https://vercel.com/docs/limits/fair-use-guidelines.md
 - https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf
+
+## Required production connection release gate
+
+On 9 November at 04:00 IST, Supavisor logs confirmed the existing application role had reached the session-mode client cap. A static page rendering correctly was not evidence of database readiness. The unchanged public build was recovered using the same database, role and public schema on the shared transaction pool. No privilege, capacity, account or project-wide setting was changed.
+
+Every later production deployment must preserve that per-deployment runtime override: existing pooler host, port `6543`, `pgbouncer=true`, `connection_limit=1` and `pool_timeout=10`. Do not inherit the project-level session-mode URL merely because a previous deployment was healthy. Do not print the connection value in build output or a handoff. Migrations, backups and session-dependent queue workers need their own reviewed connection mode; this runtime requirement does not authorize changing them.
+
+Before promotion, check the exact source and final deployment, then require healthy `/api/health` and connection-dependent search/category reads plus the auth/guest boundaries. Recheck after promotion and retain the preceding deployment. Do not promote a candidate whose database check fails just because static pages pass. A short healthy run is not proof of indefinite stability.
+
+Verified guidance:
+- https://supabase.com/docs/guides/database/prisma
+- https://supabase.com/docs/guides/database/connecting-to-postgres

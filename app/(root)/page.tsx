@@ -4,13 +4,8 @@ import CategoryQuads from '@/components/shared/home/category-quads';
 import LatestArrivals from '@/components/shared/home/latest-arrivals';
 import PersonalHero from '@/components/shared/home/personal-hero';
 import TrustRibbon from '@/components/shared/home/trust-ribbon';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Omnistu Super Store - Gourmet, tech, apparel and more',
-  description:
-    'Omnistu Superstore demo storefront - category-first shopping across gourmet food, tech gadgets, jewelry, watches, apparel and more.',
-};
+import{homeMetadata}from '@/lib/home-metadata';
+export const generateMetadata=homeMetadata;
 
 export default function Homepage() {
   return (

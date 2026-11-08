@@ -301,7 +301,7 @@ export async function updateProduct(data: z.infer<typeof updateProductSchema>) {
 // React cache is scoped to one server-render request. Multiple header/home/search consumers share
 // this metadata read, without a cross-request TTL or invalidation dependency. Never use it for
 // product price/stock or checkout reads.
-const getAllCategoriesForRequest = cache(async () => {
+const getAllCategoryStateForRequest = cache(async () => {
   if (isDatabaseAvailable()) {
     try {
       const data = await prisma.product.groupBy({
@@ -313,29 +313,29 @@ const getAllCategoriesForRequest = cache(async () => {
       // computed-field getters, which crash when serialized to client
       // components (no price/rating on aggregate rows).
       if (data && data.length > 0) {
-        return data.map((d) => ({ category: d.category, _count: d._count }));
+        return {status:'available' as const,categories:data.map((d) => ({ category: d.category, _count: d._count }))};
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn('Prisma getAllCategories fallback:', msg);
+      return {status:'available' as const,categories:[]};
+    } catch {
+      console.warn('Prisma getAllCategories unavailable');
+      return {status:'unavailable' as const,categories:[]};
     }
   }
 
-  if (!sampleCatalogAllowed()) return [];
+  if (!sampleCatalogAllowed()) return {status:'unavailable' as const,categories:[]};
   const categoryCounts = new Map<string, number>();
   sampleData.products.forEach((p) => {
     categoryCounts.set(p.category, (categoryCounts.get(p.category) || 0) + 1);
   });
 
-  return Array.from(categoryCounts.entries()).map(([category, count]) => ({
-    category,
-    _count: count,
-  }));
+  return {status:'available' as const,categories:Array.from(categoryCounts.entries()).map(([category,count])=>({category,_count:count}))};
 });
 
 export async function getAllCategories() {
-  return getAllCategoriesForRequest();
+  return (await getAllCategoryStateForRequest()).categories;
 }
+
+export async function getAllCategoriesState(){return getAllCategoryStateForRequest()}
 
 // Get featured products
 export async function getFeaturedProducts(): Promise<Product[]> {
