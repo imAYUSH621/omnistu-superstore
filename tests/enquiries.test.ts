@@ -1,8 +1,9 @@
 // jest globals are used so jest.mock hoists above the imports
 
 const create = jest.fn();
+const mockFindUser=jest.fn();
 jest.mock('@/db/prisma', () => ({
-  prisma: { serviceEnquiry: { create: (a: unknown) => create(a) } },
+  prisma: {user:{findUnique:(a:unknown)=>mockFindUser(a)}, serviceEnquiry: { create: (a: unknown) => create(a) } },
   databaseConfigured: true,
 }));
 const mockAuth = jest.fn();
@@ -22,6 +23,8 @@ const req = (body: unknown, ip?: string) =>
   });
 
 beforeEach(() => {
+  mockFindUser.mockReset();
+  mockFindUser.mockImplementation(async ({where}:{where:{id:string}})=>({id:where.id,name:'Customer',email:'customer@example.test',createdAt:new Date('2026-01-01')}));
   create.mockReset();
   create.mockResolvedValue({});
   mockAuth.mockReset();
@@ -101,11 +104,11 @@ describe('account link (same-origin session only)', () => {
     await POST(req({ ...good, userId: 'someone-else' }));
     expect((create.mock.calls[0][0] as { data: { userId: unknown } }).data.userId).toBeNull();
   });
-  test('session lookup failure degrades to a guest enquiry, still saved', async () => {
+  test('session lookup failure is explicit and does not silently save unlinked history', async () => {
     mockAuth.mockRejectedValue(new Error('auth down'));
     const res = await POST(req(good));
-    expect(res.status).toBe(200);
-    expect((create.mock.calls[0][0] as { data: { userId: unknown } }).data.userId).toBeNull();
+    expect(res.status).toBe(503);
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

@@ -1,8 +1,8 @@
 /**
  * Omnistu base-layer contracts (PROVISIONAL DRAFT).
  * Provider-neutral shared types for a future company-wide account/customer
- * layer. Nothing here is wired into the store runtime, auth, or billing.
- * Adoption is gated; see the foundation plan File (1 Nov 2026).
+ * layer. current-customer.ts now bridges the existing same-app User UUID.
+ * Memberships, mappings and company billing below are still provisional.
  */
 
 /** One person across all Omnistu products. Issued only by the identity layer. */

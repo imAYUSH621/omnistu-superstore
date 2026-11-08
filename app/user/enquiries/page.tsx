@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
+import {currentCustomer} from '@/lib/foundation/current-customer-server';
 import { prisma } from '@/db/prisma';
 import { listEnquiriesForUser } from '@/lib/enquiries';
 
@@ -9,12 +9,13 @@ export const dynamic = 'force-dynamic';
 type Row = { id: string; serviceSlug: string | null; message: string; status: string; createdAt: Date };
 
 export default async function MyEnquiriesPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/user/enquiries');
+  const identity=await currentCustomer();
+  if(identity.status==='guest'||identity.status==='not-found')redirect('/sign-in?callbackUrl=/user/enquiries');
+  if(identity.status!=='authenticated')return <p role='alert'>Your account could not be verified. Please try again later.</p>;
   let rows: Row[] = [];
   let failed = false;
   try {
-    rows = (await listEnquiriesForUser((a) => prisma.serviceEnquiry.findMany(a as never) as never, session.user.id)) as Row[];
+    rows = (await listEnquiriesForUser((a) => prisma.serviceEnquiry.findMany(a as never) as never, identity.customer.customerId)) as Row[];
   } catch {
     failed = true;
   }
