@@ -1,3 +1,4 @@
+import {catalogSearchTerms,catalogText} from '@/lib/catalog-search-terms';
 
 // ---- Config -------------------------------------------------------------
 export const MAX_MESSAGES = 12;
@@ -39,7 +40,7 @@ export function limited(ip: string): boolean {
 export async function findProducts(query: string): Promise<string> {
   type Row = { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number };
   try {
-    const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
+    const words = catalogSearchTerms(query);
     if (!words.length) return '';
 
     let list: Row[] = [];
@@ -85,8 +86,9 @@ export async function findProducts(query: string): Promise<string> {
 
     const scored = list
       .map((p) => {
-        const text = `${p.name} ${p.category ?? ''} ${p.brand ?? ''} ${p.description ?? ''}`.toLowerCase();
-        return { p, score: words.filter((w) => text.includes(w)).length };
+        const name=catalogText(p.name),category=catalogText(p.category??''),brand=catalogText(p.brand??''),description=catalogText(p.description??'');
+        const score=words.reduce((n,word)=>{const w=catalogText(word);return n+(name.includes(w)?4:category.includes(w)?3:brand.includes(w)?2:description.includes(w)?1:0)},0);
+        return {p,score};
       })
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
