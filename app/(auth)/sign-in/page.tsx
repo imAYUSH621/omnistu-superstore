@@ -1,3 +1,6 @@
+import {googleAuthConfigured} from '@/lib/google-auth-policy';
+import OAuthStatus from '@/components/shared/oauth-status';
+import GoogleSignIn from '@/components/shared/google-signin';
 import AuthText from '@/components/shared/auth-text';
 import {
   Card,
@@ -48,7 +51,9 @@ const SignInPage = async (props: {
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
+          <OAuthStatus />
           <CredentialsSignInForm />
+          {googleAuthConfigured()?<GoogleSignIn callbackUrl={callbackUrl||'/'}/>:null}
         </CardContent>
       </Card>
     </div>

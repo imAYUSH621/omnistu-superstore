@@ -10,6 +10,8 @@ import { hitLimit, clearLimit, limiterBlocksSignin, signinClientIp, LIMITS } fro
 import { getSessionVersion } from './lib/session-version';
 import { checkDevBypassCredentials } from './lib/dev-admin-bypass';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import {optionalGoogleProvider} from '@/lib/google-auth-provider';
+import {allowGoogleSignIn} from '@/lib/google-auth-signin';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
@@ -22,6 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   adapter: PrismaAdapter(prisma),
   providers: [
+    ...optionalGoogleProvider(),
     CredentialsProvider({
       credentials: {
         email: { type: 'email' },
@@ -135,6 +138,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
+    async signIn({account,profile}) {
+      if(account?.provider!=='google')return true;
+      return allowGoogleSignIn(profile,prisma);
+    },
     async session({ session, user, trigger, token }) {
       // Set the user ID from the token
       session.user.id = token.sub;

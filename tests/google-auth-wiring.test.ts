@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const mockSignIn=jest.fn(),mockOrigin=jest.fn(()=> 'https://omnistu.com');
+jest.mock('@/auth',()=>({signIn:(...a:unknown[])=>mockSignIn(...a)}));
+jest.mock('@/lib/auth-origin',()=>({authOrigin:()=>mockOrigin()}));
+import {signInWithGoogle} from '@/lib/actions/google-signin.actions';
+const saved={...process.env};afterEach(()=>{process.env={...saved};jest.clearAllMocks()});
+it('network-callable action refuses while dormant, even with a forged form',async()=>{delete process.env.GOOGLE_SIGNIN_ENABLED;const form=new FormData();await expect(signInWithGoogle(form)).rejects.toThrow('not enabled');expect(mockSignIn).not.toHaveBeenCalled()});
+it('enabled action restricts redirect to existing same-origin policy',async()=>{process.env.GOOGLE_SIGNIN_ENABLED='true';process.env.AUTH_GOOGLE_ID='fake';process.env.AUTH_GOOGLE_SECRET='fake';const f=new FormData();f.set('callbackUrl','https://outside.invalid/steal');await signInWithGoogle(f);expect(mockSignIn).toHaveBeenCalledWith('google',{redirectTo:'/'});f.set('callbackUrl','/user/profile');await signInWithGoogle(f);expect(mockSignIn).toHaveBeenLastCalledWith('google',{redirectTo:'/user/profile'})});
+it('actual Auth.js callback and sign-in page use the same optional provider gate',()=>{const auth=fs.readFileSync('auth.ts','utf8'),page=fs.readFileSync('app/(auth)/sign-in/page.tsx','utf8');expect(auth).toContain('...optionalGoogleProvider()');expect(auth).toContain('return allowGoogleSignIn(profile,prisma)');expect(page).toContain('googleAuthConfigured()?<GoogleSignIn');expect(page).toContain('<OAuthStatus />')});
+it('provider never links by email, escalates role, requests extra scopes or retains API tokens',()=>{const source=fs.readFileSync('lib/google-auth-provider.ts','utf8');expect(source).toContain('allowDangerousEmailAccountLinking:false');expect(source).toContain("scope:'openid email profile'");expect(source).toContain('account(){return{}}');expect(source).toContain("role:'user'");expect(source).not.toContain('offline');expect(source).not.toContain("checks:[]")});

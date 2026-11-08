@@ -1,0 +1,15 @@
+import {googleAuthConfigured,verifiedGoogleIdentity,googleIdentityMaySignIn} from '@/lib/google-auth-policy';
+import {allowGoogleSignIn} from '@/lib/google-auth-signin';
+const configured={GOOGLE_SIGNIN_ENABLED:'true',AUTH_GOOGLE_ID:'client',AUTH_GOOGLE_SECRET:'secret'},profile={sub:'subject',email:'Example@Example.test',email_verified:true},identity={subject:'subject',email:'example@example.test'};
+it.each([{}, {...configured,GOOGLE_SIGNIN_ENABLED:'false'},{...configured,AUTH_GOOGLE_ID:''},{...configured,AUTH_GOOGLE_SECRET:' '}])('provider stays dormant without exact switch and both credentials',env=>expect(googleAuthConfigured(env)).toBe(false));
+it('exact complete config only enables wiring',()=>expect(googleAuthConfigured(configured)).toBe(true));
+it('normalizes verified profile email',()=>expect(verifiedGoogleIdentity(profile)).toEqual(identity));
+it.each([null,{}, {...profile,email_verified:'true'},{...profile,email_verified:false},{...profile,sub:''},{...profile,email:'invalid'}])('invalid identity fails closed',p=>expect(verifiedGoogleIdentity(p)).toBeNull());
+it('new identity can use existing user defaults',()=>expect(googleIdentityMaySignIn(identity,[],null)).toBe(true));
+it('same email never silently links an existing password identity',()=>expect(googleIdentityMaySignIn(identity,[{id:'existing'}],null)).toBe(false));
+it('legacy case collisions fail even for linked identities',()=>expect(googleIdentityMaySignIn(identity,[{id:'a'},{id:'b'}],{userId:'a'})).toBe(false));
+it('verified existing subject can sign into its exact linked user',()=>expect(googleIdentityMaySignIn(identity,[{id:'a'}],{userId:'a'})).toBe(true));
+it('subject cannot take another existing user email',()=>expect(googleIdentityMaySignIn(identity,[{id:'a'}],{userId:'b'})).toBe(false));
+it('disabled and unverified paths make no database calls',async()=>{const db={user:{findMany:jest.fn()},account:{findUnique:jest.fn()}};expect(await allowGoogleSignIn(profile,db,{})).toBe(false);expect(await allowGoogleSignIn({...profile,email_verified:false},db,configured)).toBe(false);expect(db.user.findMany).not.toHaveBeenCalled()});
+it('actual collision query uses insensitive comparison and exact Google subject',async()=>{const db={user:{findMany:jest.fn().mockResolvedValue([{id:'old'}])},account:{findUnique:jest.fn().mockResolvedValue(null)}};expect(await allowGoogleSignIn(profile,db,configured)).toBe(false);expect(db.user.findMany.mock.calls[0][0].where.email).toEqual({equals:identity.email,mode:'insensitive'});expect(db.account.findUnique.mock.calls[0][0].where.provider_providerAccountId).toEqual({provider:'google',providerAccountId:'subject'})});
+it('database failure refuses instead of treating account as new',async()=>{const db={user:{findMany:jest.fn().mockRejectedValue(Error('offline'))},account:{findUnique:jest.fn()}};expect(await allowGoogleSignIn(profile,db,configured)).toBe(false)});
