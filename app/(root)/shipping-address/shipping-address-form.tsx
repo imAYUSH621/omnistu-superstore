@@ -14,7 +14,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,9 +21,13 @@ import { ArrowRight, Loader } from 'lucide-react';
 import { updateUserAddress } from '@/lib/actions/user.actions';
 import { shippingAddressDefaultValues } from '@/lib/constants';
 import T from '@/components/shared/i18n-text';
+import{CheckoutError}from '@/components/shared/checkout-text';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{CHECKOUT_COPY,checkoutError}from '@/lib/checkout-language';
 import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
 const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
+  const language=useStoreLanguage();const t=CHECKOUT_COPY[language];
   const router = useRouter();
   const { toast } = useToast();
 
@@ -50,7 +53,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
       if (!res.success) {
         toast({
           variant: 'destructive',
-          description: res.message,
+          description: checkoutError(res.message,language),
         });
         return;
       }
@@ -61,8 +64,8 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
 
   return (
     <>
-      <div className='max-w-md mx-auto space-y-4'>
-        <h1 className='h2-bold mt-4'><T k='shippingAddressLabel' /></h1>
+      <div className='w-full max-w-md mx-auto space-y-4 px-4 break-words'>
+        <h1 className='h2-bold mt-4'>{t.addressTitle}</h1>
         <p className='text-sm text-muted-foreground'>
           <T k='shippingAddressSubtitle' />
         </p>
@@ -85,11 +88,11 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel><T k='fullName' /></FormLabel>
+                    <FormLabel>{t.name}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter full name' {...field} />
+                      <Input placeholder={t.namePlaceholder} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
@@ -107,11 +110,11 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel><T k='addressLabel' /></FormLabel>
+                    <FormLabel>{t.street}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter address' {...field} />
+                      <Input placeholder={t.streetPlaceholder} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
@@ -129,11 +132,11 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel><T k='city' /></FormLabel>
+                    <FormLabel>{t.city}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter city' {...field} />
+                      <Input placeholder={t.cityPlaceholder} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
@@ -151,11 +154,11 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel><T k='postalCode' /></FormLabel>
+                    <FormLabel>{t.postal}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter postal code' {...field} />
+                      <Input placeholder={t.postalPlaceholder} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
@@ -173,27 +176,27 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   >;
                 }) => (
                   <FormItem className='w-full'>
-                    <FormLabel><T k='country' /></FormLabel>
+                    <FormLabel>{t.country}</FormLabel>
                     <FormControl>
-                      <Input placeholder='Country (e.g. US or United States)' {...field} />
+                      <Input placeholder={t.countryPlaceholder} {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
             </div>
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               <Button type='submit' disabled={isPending}>
                 {isPending ? (
                   <Loader className='w-4 h-4 animate-spin' />
                 ) : (
                   <ArrowRight className='w-4 h-4' />
                 )}{' '}
-                <T k='continueLabel' />
+                {t.continue}
               </Button>
               <CheckoutPendingNote
                 show={isPending}
-                label='Saving your address and loading payment options - this can take up to a minute on first load. No need to click again.'
+                label={t.savingAddress}
               />
             </div>
           </form>

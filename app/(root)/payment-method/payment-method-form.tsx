@@ -14,13 +14,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { updateUserPaymentMethod } from '@/lib/actions/user.actions';
-import T from '@/components/shared/i18n-text';
+import{CheckoutError}from '@/components/shared/checkout-text';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{CHECKOUT_COPY,checkoutError}from '@/lib/checkout-language';
 import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
 const PaymentMethodForm = ({
@@ -30,6 +31,7 @@ const PaymentMethodForm = ({
   preferredPaymentMethod: string | null;
   methods: PaymentMethodStatus[];
 }) => {
+  const language=useStoreLanguage();const t=CHECKOUT_COPY[language];
   const router = useRouter();
   const { toast } = useToast();
 
@@ -59,7 +61,7 @@ const PaymentMethodForm = ({
       if (!res.success) {
         toast({
           variant: 'destructive',
-          description: res.message,
+          description: checkoutError(res.message,language),
         });
         return;
       }
@@ -70,10 +72,10 @@ const PaymentMethodForm = ({
 
   return (
     <>
-      <div className='max-w-md mx-auto space-y-4'>
-        <h1 className='h2-bold mt-4'><T k='paymentMethod' /></h1>
+      <div className='w-full max-w-md mx-auto space-y-4 px-4 break-words'>
+        <h1 className='h2-bold mt-4'>{t.paymentTitle}</h1>
         <p className='text-sm text-muted-foreground'>
-          Please select a payment method
+          {t.selectPayment}
         </p>
         <Form {...form}>
           <form
@@ -89,13 +91,14 @@ const PaymentMethodForm = ({
                   <FormItem className='space-y-3'>
                     <FormControl>
                       <RadioGroup
+                        value={field.value}
                         onValueChange={field.onChange}
                         className='flex flex-col space-y-2'
                       >
                         {methods.map((m) => { const paymentMethod = m.method; return (
                           <FormItem
                             key={paymentMethod}
-                            className='flex items-center space-x-3 space-y-0'
+                            className='min-w-0 flex items-start space-x-3 space-y-0'
                           >
                             <FormControl>
                               <RadioGroupItem
@@ -105,10 +108,10 @@ const PaymentMethodForm = ({
                               />
                             </FormControl>
                             <FormLabel className='font-normal'>
-                              {paymentMethod === 'TestPayment' ? 'Test payment (SIMULATED - no real charge)' : paymentMethod}
+                              {paymentMethod === 'TestPayment' ? t.testMethod : paymentMethod}
                               {!m.enabled && (
                                 <span className='ml-2 text-xs text-muted-foreground' data-testid='method-unavailable'>
-                                  ({m.reason ?? 'Not available yet'})
+                                  ({t.unavailableMethod})
                                 </span>
                               )}
                             </FormLabel>
@@ -116,7 +119,7 @@ const PaymentMethodForm = ({
                         ); })}
                       </RadioGroup>
                     </FormControl>
-                    <FormMessage />
+                    <CheckoutError/>
                   </FormItem>
                 )}
               />
@@ -124,21 +127,21 @@ const PaymentMethodForm = ({
 
             {!methods.some((m) => m.enabled) && (
               <p className='text-sm text-destructive' data-testid='no-payment-methods'>
-                No payment method is available yet, so checkout is paused.
+                {t.paused}
               </p>
             )}
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap gap-2'>
               <Button type='submit' disabled={isPending || !methods.some((m) => m.enabled)}>
                 {isPending ? (
                   <Loader className='w-4 h-4 animate-spin' />
                 ) : (
                   <ArrowRight className='w-4 h-4' />
                 )}{' '}
-                <T k='continueLabel' />
+                {t.continue}
               </Button>
               <CheckoutPendingNote
                 show={isPending}
-                label='Saving your payment method and loading the review step - this can take up to a minute on first load. No need to click again.'
+                label={t.savingPayment}
               />
             </div>
           </form>

@@ -26,12 +26,12 @@ describe('checkout chrome i18n (G4)', () => {
 
   it('place-order and continue buttons are keyed', () => {
     expect(placeOrderForm).toContain("<T k='placeOrder' />");
-    expect(shippingForm).toContain("<T k='continueLabel' />");
-    expect(paymentForm).toContain("<T k='continueLabel' />");
+    expect(shippingForm).toContain('{t.continue}');
+    expect(paymentForm).toContain('{t.continue}');
   });
 
   it('shipping heading and subtitle are keyed (typo fixed)', () => {
-    expect(shippingForm).toContain("<T k='shippingAddressLabel' />");
+    expect(shippingForm).toContain('{t.addressTitle}');
     expect(shippingForm).toContain("<T k='shippingAddressSubtitle' />");
     expect(shippingForm).not.toContain('Please enter and address');
   });
