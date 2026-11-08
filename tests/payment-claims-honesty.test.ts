@@ -16,9 +16,10 @@ describe('payment and security claims stay honest (source check, not a rendered 
 
   it('cart labels payment, shipping and fulfillment as simulated in test mode', () => {
     const s = read('app/(root)/cart/cart-table.tsx');
-    expect(s).toMatch(/simulated payment only - no card is charged/);
-    expect(s).toMatch(/Simulated TEST shipping rates/);
-    expect(s).toMatch(/Simulated fulfillment only/);
+    expect(s).toContain("<CT name='testPayment'/>");
+    expect(read('lib/cart-language.ts')).toContain('Test checkout: simulated payment only. No card is charged.');
+    expect(s).toContain("<CT name='testShipping'/>");
+    expect(s).toContain("<CT name='testDelivery'/>");
     // the simulated wording is gated on the test-mode flag, not always shown
     expect(s).toMatch(/testMode/);
   });
