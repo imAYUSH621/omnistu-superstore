@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useStoreLanguage } from '@/hooks/use-store-language';
+import { CONTACT_COPY } from '@/lib/support-language';
 import { Inbox, MessageCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function ContactPage() {
+  const language = useStoreLanguage();
+  const copy = CONTACT_COPY[language];
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorText, setErrorText] = useState('');
 
@@ -29,11 +33,11 @@ export default function ContactPage() {
       if (res.ok && data.success) {
         setStatus('sent');
       } else {
-        setErrorText(data.error || 'Something went wrong. Please try again.');
+        setErrorText(res.status === 429 ? copy.rate : res.status === 503 ? copy.unavailable : res.status === 400 ? copy.invalid : copy.error);
         setStatus('error');
       }
     } catch {
-      setErrorText('Network error. Please try again.');
+      setErrorText(copy.network);
       setStatus('error');
     }
   }
@@ -41,19 +45,18 @@ export default function ContactPage() {
   return (
     <div className='max-w-3xl mx-auto px-4 py-10 space-y-8'>
       <div>
-        <h1 className='text-2xl font-bold text-foreground'>Contact &amp; Support</h1>
+        <h1 className='text-2xl font-bold text-foreground'>{copy.title}</h1>
         <p className='text-sm text-muted-foreground mt-1'>
-          Automated store help can guide you to products and your order page. To contact the team,
-          use the form below to save an enquiry in the store support inbox. No email is sent.
+          {copy.intro}
         </p>
       </div>
 
       <div className='grid sm:grid-cols-2 gap-4'>
         <div className='rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-1.5'>
           <MessageCircle className='w-5 h-5 text-amber-500' />
-          <h2 className='font-semibold text-sm'>Automated store help</h2>
+          <h2 className='font-semibold text-sm'>{copy.helpTitle}</h2>
           <p className='text-xs text-muted-foreground'>
-            Basic product and order-page guidance. It cannot send messages, inspect your orders or confirm policy terms.
+            {copy.help}
           </p>
         </div>
         <Link
@@ -61,26 +64,26 @@ export default function ContactPage() {
           className='rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition'
         >
           <Package className='w-5 h-5 text-amber-500' />
-          <h2 className='font-semibold text-sm'>Track an order</h2>
-          <p className='text-xs text-muted-foreground'>See where to find your order status.</p>
+          <h2 className='font-semibold text-sm'>{copy.trackTitle}</h2>
+          <p className='text-xs text-muted-foreground'>{copy.track}</p>
         </Link>
       </div>
 
       <form onSubmit={handleSubmit} className='rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4'>
         <div className='flex items-center gap-2'>
           <Inbox className='w-5 h-5 text-amber-500' />
-          <h2 className='font-semibold text-sm'>Send an enquiry</h2>
+          <h2 className='font-semibold text-sm'>{copy.formTitle}</h2>
         </div>
         {status === 'sent' ? (
-          <p className='text-sm text-emerald-600 dark:text-emerald-400 font-medium'>
-            Your enquiry was saved in the store support inbox. No email was sent and no reply time is promised.
+          <p role='status' className='text-sm text-emerald-600 dark:text-emerald-400 font-medium'>
+            {copy.receipt}
           </p>
         ) : (
           <>
             <input name='website' type='text' tabIndex={-1} autoComplete='off' aria-hidden='true' className='hidden' />
             <div className='grid sm:grid-cols-2 gap-4'>
               <label className='space-y-1 text-xs font-medium text-foreground'>
-                Name
+                {copy.name}
                 <input
                   name='name'
                   required
@@ -90,7 +93,7 @@ export default function ContactPage() {
                 />
               </label>
               <label className='space-y-1 text-xs font-medium text-foreground'>
-                Your email
+                {copy.email}
                 <input
                   name='email'
                   type='email'
@@ -101,7 +104,7 @@ export default function ContactPage() {
               </label>
             </div>
             <label className='block space-y-1 text-xs font-medium text-foreground'>
-              Message
+              {copy.message}
               <textarea
                 name='message'
                 required
@@ -112,20 +115,18 @@ export default function ContactPage() {
               />
             </label>
             {status === 'error' && (
-              <p className='text-sm text-destructive'>{errorText}</p>
+              <p role='alert' className='text-sm text-destructive'>{errorText}</p>
             )}
             <Button
               type='submit'
               disabled={status === 'sending'}
               className='bg-amber-400 hover:bg-amber-500 text-neutral-900 font-bold rounded-full px-6'
             >
-              {status === 'sending' ? 'Saving...' : 'Save enquiry'}
+              {status === 'sending' ? copy.saving : copy.save}
             </Button>
             <p className='text-[11px] text-muted-foreground'>
-              Only what you enter here is saved, not your chat history. Do not include passwords,
-              payment details or other sensitive information. Signed-in enquiries appear in{' '}
-              <Link href='/user/enquiries' className='underline'>My enquiries</Link>. Guest enquiries
-              are not linked to an account by email.
+              {copy.privacy} {copy.account}{' '}
+              <Link href='/user/enquiries' className='underline'>{copy.history}</Link>.
             </p>
           </>
         )}

@@ -1,5 +1,7 @@
 # OMNISTU Superstore - Operations Runbook
 
+> Current-state correction, 9 Nov 2026: the Store already has a healthy existing database. Read [current environments](current-environments.md) before following the historical setup or pending-migration notes below. Do not create a duplicate database or enable live effects from those older notes.
+
 Last updated: 2026-11-01. Covers development, CI, deployment, rollback,
 database migrations and backups for `imAYUSH621/omnistu-superstore`.
 

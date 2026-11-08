@@ -4,8 +4,8 @@ const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
 it('contact saves through the existing inbox, never the email API', () => {
  const s=read('app/(root)/contact/page.tsx');
  expect(s).toContain("fetch('/api/enquiries'");expect(s).not.toContain("fetch('/api/contact'");
- expect(s).toContain('No email was sent');expect(s).toContain("href='/user/enquiries'");
- expect(s).toContain('Guest enquiries');expect(s).toContain("name='website'");
+ expect(s).toContain('{copy.receipt}');expect(read('lib/support-language.ts')).toContain('No email was sent');expect(s).toContain("href='/user/enquiries'");
+ expect(read('lib/support-language.ts')).toContain('Guest enquiries');expect(s).toContain("name='website'");
  expect(s).not.toContain('Email us');expect(s).not.toContain('accepted by the email service');
 });
 it('handoff is explicit and never silently forwards chat', () => {
