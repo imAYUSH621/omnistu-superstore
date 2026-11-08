@@ -1,3 +1,4 @@
+import AuthText from '@/components/shared/auth-text';
 import {
   Card,
   CardContent,
@@ -43,9 +44,9 @@ const SignUpPage = async (props: {
               priority={true}
             />
           </Link>
-          <CardTitle className='text-center'>Create Account</CardTitle>
+          <CardTitle className='text-center'><AuthText name="createAccount" pageTitle /></CardTitle>
           <CardDescription className='text-center'>
-            Enter your information below to sign up
+            <AuthText name="signUpIntro" />
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
