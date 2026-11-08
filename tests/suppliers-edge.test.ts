@@ -129,8 +129,9 @@ describe('parseCost adversarial inputs', () => {
     expect(parseCost('')).toBeNull();
     expect(parseCost('no numbers here')).toBeNull();
     expect(parseCost('1.20 -- 3.40')).toBe(3.4);
+    expect(parseCost('9.55-10.07')).toBe(10.07);
     expect(parseCost(0)).toBe(0);
-    for (const bad of [-1, NaN, Infinity, Number.MAX_VALUE, '-2', 'USD4plus10', '1-2', '1 -- -2', '1e309']) expect(parseCost(bad)).toBeNull();
+    for (const bad of [-1, NaN, Infinity, Number.MAX_VALUE, '-2', 'USD4plus10', '1---2', '1 -- -2', '1e309']) expect(parseCost(bad)).toBeNull();
   });
 });
 

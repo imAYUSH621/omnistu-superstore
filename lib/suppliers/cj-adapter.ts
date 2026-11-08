@@ -48,8 +48,8 @@ function stripHtml(html: string): string {
 export function parseCost(v: string | number | undefined): number | null {
   const valid = (n: number) => Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER / 100;
   if (typeof v === 'number') return valid(v) ? v : null;
-  if (typeof v !== 'string' || !/^\s*\d+(?:\.\d+)?(?:\s*--\s*\d+(?:\.\d+)?)?\s*$/.test(v)) return null;
-  const nums = v.trim().split(/\s*--\s*/).map(Number);
+  if (typeof v !== 'string' || !/^\s*\d+(?:\.\d+)?(?:\s*-{1,2}\s*\d+(?:\.\d+)?)?\s*$/.test(v)) return null;
+  const nums = v.trim().split(/\s*-{1,2}\s*/).map(Number);
   return nums.every(valid) ? Math.max(...nums) : null;
 }
 
