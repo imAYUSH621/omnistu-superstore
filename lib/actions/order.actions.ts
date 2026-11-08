@@ -576,21 +576,23 @@ export async function getAllOrders({
         }
       : {};
 
+  const safePage=Number.isSafeInteger(page)&&page>=1&&page<=10000?page:1;
+  const safeLimit=Number.isSafeInteger(limit)&&limit>=1&&limit<=100?limit:PAGE_SIZE;
   const data = await prisma.order.findMany({
     where: {
       ...queryFilter,
     },
     orderBy: { createdAt: 'desc' },
-    take: limit,
-    skip: (page - 1) * limit,
+    take: safeLimit,
+    skip: (safePage - 1) * safeLimit,
     include: { user: { select: { name: true } } },
   });
 
-  const dataCount = await prisma.order.count();
+  const dataCount = await prisma.order.count({where:queryFilter});
 
   return {
     data,
-    totalPages: Math.ceil(dataCount / limit),
+    totalPages: Math.ceil(dataCount / safeLimit),
   };
 }
 
