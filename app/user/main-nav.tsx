@@ -1,5 +1,7 @@
 'use client';
 import Link from 'next/link';
+import AccountSupportText from '@/components/shared/account-support-text';
+import type {AccountSupportKey} from '@/lib/account-support-language';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import React, { useEffect, useRef } from 'react';
@@ -56,7 +58,7 @@ const MainNav = ({
               active ? 'text-white' : 'text-neutral-400'
             )}
           >
-            {item.title}
+            <AccountSupportText name={item.title.toLowerCase() as AccountSupportKey}/>
           </Link>
         );
       })}
