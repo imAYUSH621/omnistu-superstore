@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {ORDER_DETAIL_COPY} from './order-detail-language';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function orderDetailMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;return{title:ORDER_DETAIL_COPY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))].title}}

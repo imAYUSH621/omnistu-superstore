@@ -1,8 +1,12 @@
+import {ORDER_DETAIL_COPY} from './order-detail-language';
+import type {SupportLanguage} from './support-language';
+import {orderHistoryDate} from './order-history-language';
 // Order tracking view model. Everything shown to the customer must come from
 // real persisted order data - never invent carrier names, tracking numbers,
 // delivery estimates, or map links.
 export interface TrackingInput {
   simulated?: boolean;
+  language?: SupportLanguage;
   isPaid: boolean;
   isDelivered: boolean;
   createdAt?: Date | string;
@@ -27,16 +31,17 @@ export interface TrackingView {
 }
 
 export function buildOrderTrackingView(input: TrackingInput): TrackingView {
+  const copy=ORDER_DETAIL_COPY[input.language??'EN'];
   if (input.simulated) return {
     steps: [
-      { title: 'Test order saved', desc: 'Simulation only', completed: true },
-      { title: 'Test payment', desc: input.isPaid ? 'Payment simulated, no real charge' : 'Simulation pending', completed: input.isPaid },
-      { title: 'No real shipment', desc: 'No carrier dispatch is confirmed', completed: false },
-      { title: 'Test delivery', desc: input.isDelivered ? 'Delivery simulated, not a shipment' : 'Simulation pending', completed: input.isDelivered },
+      { title: copy.testSaved, desc: copy.simulationOnly, completed: true },
+      { title: copy.testPayment, desc: input.isPaid ? copy.noCharge : copy.simulationPending, completed: input.isPaid },
+      { title: copy.noShipment, desc: copy.noDispatch, completed: false },
+      { title: copy.testDelivery, desc: input.isDelivered ? copy.deliverySimulated : copy.simulationPending, completed: input.isDelivered },
     ],
     progress: input.isPaid ? 'processing' : 'placed',
-    carrierStatus: 'Test order - no real shipment',
-    carrierDetail: 'Payment and delivery states are simulated. No real carrier tracking, delivery, return or refund is confirmed.',
+    carrierStatus: copy.testShipping,
+    carrierDetail: copy.simulationDetail,
     hasTracking: false,
   };
 
@@ -47,46 +52,46 @@ export function buildOrderTrackingView(input: TrackingInput): TrackingView {
 
   const steps: TrackingStep[] = [
     {
-      title: 'Order Placed',
+      title: copy.orderPlaced,
       desc: input.createdAt
-        ? `Placed ${new Date(input.createdAt).toLocaleDateString()}`
+        ? `${copy.placed} ${orderHistoryDate(input.createdAt,input.language??'EN')} UTC`
         : input.isPaid
-          ? 'Payment confirmed'
-          : 'Payment pending',
+          ? copy.confirmed
+          : copy.pending,
       completed: true,
     },
     {
-      title: 'Processing',
-      desc: input.isPaid ? 'Payment confirmed - fulfillment pending' : 'Awaiting payment',
+      title: input.language && input.language!=='EN' ? copy.processing.replace(/\.\.\.$/,'') : 'Processing',
+      desc: input.isPaid ? copy.fulfillmentPending : copy.awaiting,
       completed: input.isPaid,
     },
     {
-      title: 'Shipped',
+      title: copy.shipped,
       desc: dispatched
         ? input.trackingCarrier
-          ? `Dispatched via ${input.trackingCarrier}`
-          : 'Dispatched'
-        : 'Not yet dispatched',
+          ? `${copy.dispatched} ${copy.via} ${input.trackingCarrier}`
+          : copy.dispatched
+        : copy.notDispatched,
       completed: dispatched,
     },
     {
-      title: 'Delivered',
-      desc: input.isDelivered ? 'Package delivered' : 'Not yet delivered',
+      title: copy.delivered,
+      desc: input.isDelivered ? copy.packageDelivered : copy.notDelivered,
       completed: input.isDelivered,
     },
   ];
 
   const hasTracking = Boolean(input.trackingNumber);
   const carrierStatus = input.isDelivered
-    ? 'Delivered'
+    ? copy.delivered
     : dispatched
-      ? 'Dispatched'
-      : 'Not yet dispatched';
+      ? copy.dispatched
+      : copy.notDispatched;
   const carrierDetail = hasTracking
-    ? `Dispatched via ${input.trackingCarrier || 'carrier'} (Tracking #${input.trackingNumber})`
+    ? `${copy.dispatched} ${copy.via} ${input.trackingCarrier || copy.carrierFallback} (${copy.tracking} #${input.trackingNumber})`
     : dispatched
-      ? 'Dispatched - tracking number not yet provided by the supplier.'
-      : 'No carrier or tracking number assigned yet. This updates when the order actually ships.';
+      ? copy.missingTracking
+      : copy.noTracking;
 
   return {
     steps,

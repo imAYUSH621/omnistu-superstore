@@ -1,6 +1,9 @@
+'use client';
 import { CheckCircle2, Clock, PackageCheck, Truck, Home } from 'lucide-react';
 import { buildOrderTrackingView } from '@/lib/tracking';
 import { displayedOrderId } from '@/lib/order-simulation';
+import {useStoreLanguage} from '@/hooks/use-store-language';
+import {ORDER_DETAIL_COPY} from '@/lib/order-detail-language';
 
 interface OrderTrackingProps {
   orderId: string;
@@ -15,10 +18,12 @@ interface OrderTrackingProps {
 }
 
 export default function OrderTrackingStepper(props: OrderTrackingProps) {
+  const language=useStoreLanguage(),copy=ORDER_DETAIL_COPY[language];
   const { orderId, isPaid = true, isDelivered = false } = props;
   const formattedId = displayedOrderId(orderId);
 
   const view = buildOrderTrackingView({
+    language,
     simulated: props.simulated,
     isPaid,
     isDelivered,
@@ -44,10 +49,10 @@ export default function OrderTrackingStepper(props: OrderTrackingProps) {
       <div className='flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800'>
         <div>
           <span className='text-xs uppercase tracking-wider text-muted-foreground font-semibold'>
-            Order Status
+            {copy.status}
           </span>
           <h3 className='text-lg font-bold text-foreground'>
-            Order ID: <span className='text-emerald-600 font-mono break-all'>{formattedId}</span>
+            {copy.id}: <span className='text-emerald-600 font-mono break-all'>{formattedId}</span>
           </h3>
         </div>
       </div>
@@ -87,7 +92,7 @@ export default function OrderTrackingStepper(props: OrderTrackingProps) {
         <div className='space-y-0.5'>
           <p className='font-semibold text-foreground flex items-center gap-1.5'>
             <Clock className='w-3.5 h-3.5 text-amber-500' />
-            Carrier Status: {view.carrierStatus}
+            {copy.carrier}: {view.carrierStatus}
           </p>
           <p className='text-muted-foreground'>{view.carrierDetail}</p>
         </div>
