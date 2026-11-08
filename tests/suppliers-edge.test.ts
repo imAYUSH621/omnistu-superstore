@@ -80,7 +80,9 @@ describe('CJ adapter HTTP edge cases (mocked)', () => {
     const [p] = await a.searchProducts('x', { page: 1, limit: 5 });
     expect(p.id).toBe('CJ-P4');
     expect(p.title).toBe('');
-    expect(p.wholesaleCost).toBe(0);
+    expect(p.wholesaleCost).toBeNull();
+    expect(p.retailPrice).toBeNull();
+    expect(p.inStock).toBeNull();
   });
 
   it('getProduct returns null on 404, rethrows other errors', async () => {
@@ -123,11 +125,13 @@ describe('CJ adapter HTTP edge cases (mocked)', () => {
 
 describe('parseCost adversarial inputs', () => {
   it('handles junk, negatives, and empty strings safely', () => {
-    expect(parseCost(undefined)).toBe(0);
-    expect(parseCost('')).toBe(0);
-    expect(parseCost('no numbers here')).toBe(0);
+    expect(parseCost(undefined)).toBeNull();
+    expect(parseCost('')).toBeNull();
+    expect(parseCost('no numbers here')).toBeNull();
     expect(parseCost('1.20 -- 3.40')).toBe(3.4);
+    expect(parseCost('9.55-10.07')).toBe(10.07);
     expect(parseCost(0)).toBe(0);
+    for (const bad of [-1, NaN, Infinity, Number.MAX_VALUE, '-2', 'USD4plus10', '1---2', '1 -- -2', '1e309']) expect(parseCost(bad)).toBeNull();
   });
 });
 

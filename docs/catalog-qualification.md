@@ -49,3 +49,12 @@ response has positive `cjInventory` / `verifiedWarehouse=1` fields. Do not conve
 those field names into a claim CJ itself dispatches the product. Factory stock,
 warehouse stock, reservation and dispatch SLA are distinct. Reference postal
 quotes do not establish all-country coverage or a real customer's final total.
+
+CJ search/detail normalization now leaves `inStock`, `stockQuantity` and
+`retailPrice` unknown unless their own evidence exists. `sellPrice` is a
+reference cost (upper endpoint for a range), never an exact selected variant.
+Malformed, negative or missing cost stays null rather than becoming zero.
+Candidate ingestion strips supplier retail prices and ignores global shipping
+allowances. The staging checklist requires independent exact-variant, stock,
+method, destination, full cost and retail approval checks. This does not alter
+an existing published offer or infer unavailable stock from missing evidence.

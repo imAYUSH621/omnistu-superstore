@@ -1,4 +1,3 @@
-import { priceFor } from '../pricing';
 import {
   SupplierError,
   type NormalizedProduct,
@@ -44,11 +43,14 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-// CJ may return a range like "1.20 -- 3.40". Use the highest value so cost is never understated.
-export function parseCost(v: string | number | undefined): number {
-  if (typeof v === 'number') return v;
-  const nums = (v ?? '').match(/\d+(\.\d+)?/g)?.map(Number) ?? [];
-  return nums.length ? Math.max(...nums) : 0;
+// CJ list prices can be ranges. The upper endpoint is a reference cost, not
+// an exact variant quote. Missing or malformed evidence must never become zero.
+export function parseCost(v: string | number | undefined): number | null {
+  const valid = (n: number) => Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER / 100;
+  if (typeof v === 'number') return valid(v) ? v : null;
+  if (typeof v !== 'string' || !/^\s*\d+(?:\.\d+)?(?:\s*-{1,2}\s*\d+(?:\.\d+)?)?\s*$/.test(v)) return null;
+  const nums = v.trim().split(/\s*-{1,2}\s*/).map(Number);
+  return nums.every(valid) ? Math.max(...nums) : null;
 }
 
 export class CjAdapter implements SupplierAdapter {
@@ -57,7 +59,6 @@ export class CjAdapter implements SupplierAdapter {
 
   constructor(
     private apiKey: string | undefined = process.env.CJ_API_KEY || process.env.FULFILLMENT_API_KEY,
-    private shippingEstimateUsd = 4,
   ) {}
 
   private async getToken(force = false): Promise<string> {
@@ -94,7 +95,6 @@ export class CjAdapter implements SupplierAdapter {
 
   public normalize(item: CjDetail): NormalizedProduct {
     const cost = parseCost(item.sellPrice);
-    const { retailPrice } = priceFor(cost, this.shippingEstimateUsd);
     const images: string[] = [];
     if (item.productImage) images.push(item.productImage);
     if (Array.isArray(item.productImageSet)) images.push(...item.productImageSet);
@@ -108,13 +108,13 @@ export class CjAdapter implements SupplierAdapter {
       specs: [],
       category: item.categoryName ?? 'Uncategorized',
       wholesaleCost: cost,
-      retailPrice,
+      retailPrice: null, // no exact destination freight, merchant costs or retail approval
       compareAtPrice: null,
       images: [...new Set(images)],
-      inStock: true,
+      inStock: null, // listing/detail responses do not prove stock or dispatch readiness
       stockQuantity: null,
       shippingNote:
-        'Ships from the supplier. Delivery time depends on destination; confirm with CJ before quoting a date.',
+        'Reference listing only. Exact variant stock, fulfillment source, destination freight and processing time require independent qualification.',
     };
   }
 
