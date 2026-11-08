@@ -35,6 +35,7 @@ describe('public test-mode information', () => {
     const html = copy(PrivacyPage) + JSON.stringify(privacyMetadata);
     expect(html).not.toMatch(/effective immediately|GDPR|CCPA|DPDP|TLS 1.3|Cloudflare|strict role.based data isolation|currently runs a simulated/i);
     expect(html).toContain('cannot delete or anonymize an account');
-    expect(html).toContain('when message delivery is unavailable');
+    expect(html).toContain('contact page can save an enquiry in the store inbox');
+    expect(html).toContain('saving is not proof that the team has read, answered or processed');
   });
 });

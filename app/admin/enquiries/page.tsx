@@ -1,7 +1,7 @@
 import { prisma } from '@/db/prisma';
 import { requireAdmin } from '@/lib/auth-guard';
 
-export const metadata = { title: 'Service enquiries' };
+export const metadata = { title: 'Support and service enquiries' };
 export const dynamic = 'force-dynamic';
 
 export default async function EnquiriesPage() {
@@ -15,8 +15,8 @@ export default async function EnquiriesPage() {
   }
   return (
     <div className='space-y-4'>
-      <h1 className='h2-bold'>Service enquiries</h1>
-      <p className='text-sm text-muted-foreground'>Read-only list of the latest 100 enquiries saved from the Services pages.</p>
+      <h1 className='h2-bold'>Support and service enquiries</h1>
+      <p className='text-sm text-muted-foreground'>Read-only store inbox: the latest 100 saved support and service enquiries. Saving an enquiry does not send email or confirm a team reply.</p>
       {failed ? (
         <p role='alert' className='rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800'>
           Enquiries could not be loaded. The database may not be configured or migrated.

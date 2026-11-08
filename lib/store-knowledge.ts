@@ -28,8 +28,8 @@ export const STORE_KNOWLEDGE: KnowledgeChunk[] = [
     ],
     text:
       'Customers reach the Omnistu team through the contact form at /contact (name, email and message). ' +
-      'The form itself states clearly if email delivery is not configured yet. ' +
-      'Suggest including the order number when the question is about an order. Never promise a reply time.',
+      'The form saves an enquiry in the store support inbox; it does not send email or automatically forward chat history. ' +
+      'Signed-in enquiries are listed in /user/enquiries; guest enquiries are not linked by email. Suggest including the order number when the question is about an order. Never promise a reply time.',
     link: '/contact',
   },
   {

@@ -8,13 +8,13 @@ export async function groundedSupportAnswer(text: string): Promise<string> {
   const q = text.toLowerCase();
   const label = SUPPORT_LABEL + '\n';
   if (/\b(refund|return|replace|polic|guarantee|warranty|cancel|discount|coupon)/.test(q)) {
-    return label + 'I cannot confirm shipping timeframes, return windows or refund eligibility, or change an order. These terms are still being finalised for launch. Open /contact to reach the team. The form will state if email delivery is unavailable; I cannot promise a reply time.';
+    return label + 'I cannot confirm shipping timeframes, return windows or refund eligibility, or change an order. These terms are still being finalised for launch. Open /contact to reach the team. You can save an enquiry in the store support inbox there. No email is sent; I cannot promise a reply time.';
   }
   if (/\b(order|track|package|parcel|dispatch)/.test(q)) {
     return label + 'I do not retrieve order details. Sign in and open /user/orders to see your own orders. Carrier and tracking details appear there when recorded. For anything missing, open /contact. No order status has been checked by this chat.';
   }
   if (/\b(contact|support|human|agent|email|help|complaint)/.test(q)) {
-    return label + 'Open /contact to reach the Omnistu team. The form states if email delivery is unavailable. I have not sent a message or opened a support ticket, and cannot promise a reply time.';
+    return label + 'Open /contact to reach the Omnistu team. You can save an enquiry in the store support inbox there. No email is sent. I have not sent a message or opened a support ticket, and cannot promise a reply time.';
   }
   if (/\b(payment|pay|checkout|cash|paypal|stripe|card)/.test(q)) {
     if (testCheckoutMode()) return label + 'This deployment has a simulated test checkout. Test payment makes no real charge, shipment or supplier order. Check the payment page for the methods currently shown.';

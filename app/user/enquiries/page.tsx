@@ -22,7 +22,7 @@ export default async function MyEnquiriesPage() {
     <div className='space-y-3'>
       <h2 className='h2-bold'>Enquiries</h2>
       <p className='text-sm text-muted-foreground'>
-        Service enquiries you sent while signed in. Enquiries sent as a guest are not linked to your account.
+        Support and service enquiries you sent while signed in. Enquiries sent as a guest are not linked to your account.
       </p>
       {failed ? (
         <p role='alert' className='rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800'>

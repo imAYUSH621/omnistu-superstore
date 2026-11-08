@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import SupportMessage from '@/components/shared/support-message';
 import T from '@/components/shared/i18n-text';
 import { Sparkles, X, MessageSquare, Send } from 'lucide-react';
@@ -143,6 +144,11 @@ export default function AiConcierge() {
               </div>
             ))}
             <div ref={endRef} />
+          </div>
+
+          <div className='border-t px-3 py-2 text-xs'>
+            <Link href='/contact' className='underline underline-offset-2'>Leave an enquiry for the team</Link>
+            <span className='block text-muted-foreground'>Only what you enter in the form is saved. No chat is forwarded automatically.</span>
           </div>
 
           {/* Input Form */}
