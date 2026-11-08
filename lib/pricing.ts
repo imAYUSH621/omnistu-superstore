@@ -36,16 +36,17 @@ export function priceFor(
   shippingCost: number,
   cfg: PricingConfig = pricingConfigFromEnv(),
 ): PriceResult {
+  for (const [name, value] of Object.entries({ wholesaleCost, shippingCost, ...cfg })) {
+    if (!Number.isFinite(value) || value < 0) throw new Error(`${name} must be a known non-negative amount`);
+  }
   const feeRate = cfg.feePct / 100;
   const marginRate = cfg.minMarginPct / 100;
   if (feeRate + marginRate >= 1) {
     throw new Error('PAYMENT_FEE_PCT + MIN_MARGIN_PCT must be below 100');
   }
-  const safeCost = Math.max(0, Number.isFinite(wholesaleCost) ? wholesaleCost : 0);
-  const safeShipping = Math.max(0, Number.isFinite(shippingCost) ? shippingCost : 0);
-  const base = safeCost + safeShipping + cfg.feeFixed;
+  const base = wholesaleCost + shippingCost + cfg.feeFixed;
   const raw = base / (1 - feeRate - marginRate);
-  const retailPrice = Math.max(Math.ceil(raw) - 0.01, 0.99);
+  const retailPrice = Math.max(Math.ceil(raw + 0.01) - 0.01, 0.99);
   const profit = retailPrice - base - retailPrice * feeRate;
   return {
     retailPrice: Number(retailPrice.toFixed(2)),
