@@ -9,11 +9,11 @@ export interface NormalizedProduct {
   description: string;
   specs: string[]; // from supplier data only
   category: string;
-  wholesaleCost: number; // USD
-  retailPrice: number; // USD, set by pricing.ts
+  wholesaleCost: number | null; // USD reference cost; null means unknown
+  retailPrice: number | null; // USD reference price, not permission to publish; null until qualified
   compareAtPrice: number | null; // only from a verifiable source
   images: string[];
-  inStock: boolean;
+  inStock: boolean | null; // null when inventory has not been independently checked
   stockQuantity: number | null;
   shippingNote: string;
 }

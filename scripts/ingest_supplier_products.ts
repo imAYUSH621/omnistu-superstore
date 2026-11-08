@@ -9,7 +9,7 @@
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { searchAllSuppliers } from '../lib/suppliers/router';
-import { priceFor } from '../lib/pricing';
+import { supplierStagingCandidate } from '../lib/suppliers/staging';
 
 const queries = process.argv.slice(2);
 if (!queries.length) {
@@ -17,7 +17,6 @@ if (!queries.length) {
   queries.push('phone stand');
 }
 
-const usdToInr = Number(process.env.USD_TO_INR) || null;
 
 async function main() {
   const staged: Record<string, unknown>[] = [];
@@ -29,18 +28,9 @@ async function main() {
     for (const p of products) {
       if (seen.has(p.id)) continue;
       seen.add(p.id);
-      // Shipping is never guessed: without a verified per-item quote (SHIPPING_COST_USD) no retail price is computed.
-      const shipping = Number(process.env.SHIPPING_COST_USD);
-      const price = Number.isFinite(shipping) && process.env.SHIPPING_COST_USD ? priceFor(p.wholesaleCost, shipping) : null;
-      staged.push({
-        ...p,
-        retailPrice: p.supplier === 'PRINTIFY' ? p.retailPrice : price?.retailPrice ?? null,
-        estimatedMarginPct: price?.marginPct ?? null,
-        retailPriceInr: usdToInr && price ? Math.round(price.retailPrice * usdToInr) : null,
-        sourceQuery: q,
-        status: 'pending_review',
-        reviewChecklist: ['specs verified', 'images licensed/usable', 'ships to target country', 'shipping cost confirmed'],
-      });
+      // A global shipping environment value is not an exact variant/destination
+      // quote. Staging never turns cost-only evidence into a retail price.
+      staged.push(supplierStagingCandidate(p, q));
     }
     console.log(`"${q}": ${products.length} results`);
   }

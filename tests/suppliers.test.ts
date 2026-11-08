@@ -11,12 +11,12 @@ describe('CJ Adapter Cost Parsing & Normalization', () => {
     expect(parseCost('1.20 -- 3.40')).toBe(3.4);
     expect(parseCost('5.50')).toBe(5.5);
     expect(parseCost(12.99)).toBe(12.99);
-    expect(parseCost('')).toBe(0);
-    expect(parseCost(undefined)).toBe(0);
+    expect(parseCost('')).toBeNull();
+    expect(parseCost(undefined)).toBeNull();
   });
 
-  test('CjAdapter normalize maps fields and formats prices correctly', () => {
-    const adapter = new CjAdapter(undefined, 4);
+  test('CjAdapter keeps reference fields but refuses invented stock or retail price', () => {
+    const adapter = new CjAdapter(undefined);
     const normalized = adapter.normalize({
       pid: 'test-pid-123',
       productNameEn: 'Magnetic Desk Sculpture Kinetic Sphere',
@@ -31,7 +31,8 @@ describe('CJ Adapter Cost Parsing & Normalization', () => {
     expect(normalized.id).toBe('CJ-test-pid-123');
     expect(normalized.supplier).toBe('CJ');
     expect(normalized.wholesaleCost).toBe(4.5);
-    expect(normalized.retailPrice).toBeGreaterThan(normalized.wholesaleCost);
+    expect(normalized.retailPrice).toBeNull();
+    expect(normalized.inStock).toBeNull();
     expect(normalized.images).toHaveLength(2);
     expect(normalized.description).toBe('High precision neodymium fidget spheres.');
   });
@@ -103,7 +104,8 @@ describe('Blanka Private-Label Skincare & Soap Adapter Normalization', () => {
     expect(normalized.supplier).toBe('BLANKA');
     expect(normalized.sku).toBe('BLANKA-TURMERIC-BAR');
     expect(normalized.wholesaleCost).toBe(6.5);
-    expect(normalized.retailPrice).toBeGreaterThan(normalized.wholesaleCost);
+    expect(normalized.wholesaleCost).not.toBeNull();
+    expect(normalized.retailPrice).toBeGreaterThan(normalized.wholesaleCost!);
     expect(normalized.shippingNote).toContain('Omnistu Botanics');
   });
 
