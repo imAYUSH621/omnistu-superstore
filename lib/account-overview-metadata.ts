@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {DICTIONARY} from './i18n';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function accountOverviewMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;return{title:DICTIONARY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))].footerYourAccount}}

@@ -5,8 +5,11 @@ import { getMyOrders } from '@/lib/actions/order.actions';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getMyReturns } from '@/lib/actions/return.actions';
 import T from '@/components/shared/i18n-text';
+import OrderHistoryText from '@/components/shared/order-history-text';
+import {isSimulatedOrder} from '@/lib/order-simulation';
+import {accountOverviewMetadata} from '@/lib/account-overview-metadata';
 
-export const metadata = { title: 'Account Overview | Omnistu Superstore' };
+export const generateMetadata = accountOverviewMetadata;
 
 // Account overview: only the signed-in user's own orders, cart and
 // return requests - no invented recommendations or tracking.
@@ -53,11 +56,11 @@ export default async function AccountOverviewPage() {
                 <li key={o.id}>
                   <Link
                     href={`/order/${o.id}`}
-                    className='flex items-center justify-between text-[12px] text-[#0f172a] dark:text-neutral-200 hover:text-[#4f46e5]'
+                    className='flex flex-wrap gap-y-1 items-center justify-between text-[12px] text-[#0f172a] dark:text-neutral-200 hover:text-[#4f46e5]'
                   >
-                    <span className='truncate'>#{o.id.slice(0, 8)} &middot; {new Date(o.createdAt).toLocaleDateString()}</span>
+                    <span className='truncate'>#{o.id.slice(0, 8)} &middot; <OrderHistoryText date={new Date(o.createdAt).toISOString()}/> UTC</span>
                     <span className='shrink-0 ml-2 font-medium'>
-                      ${Number(o.totalPrice).toFixed(2)} &middot; {o.isPaid ? <T k='paid' /> : <T k='notPaid' />}
+                      ${Number(o.totalPrice).toFixed(2)} USD &middot; {isSimulatedOrder(o) ? <OrderHistoryText name={o.isPaid?'testPaid':'test'}/> : o.isPaid ? <T k='paid' /> : <T k='notPaid' />}
                     </span>
                   </Link>
                 </li>
@@ -102,7 +105,7 @@ export default async function AccountOverviewPage() {
                   key={r.id}
                   className='flex items-center justify-between text-[12px] text-[#0f172a] dark:text-neutral-200'
                 >
-                  <span className='truncate'>#{r.id.slice(0, 8)} &middot; {new Date(r.createdAt).toLocaleDateString()}</span>
+                  <span className='truncate'>#{r.id.slice(0, 8)} &middot; <OrderHistoryText date={new Date(r.createdAt).toISOString()}/> UTC</span>
                   <span className='shrink-0 ml-2 font-medium'>{r.status}</span>
                 </li>
               ))}
