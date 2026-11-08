@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {ADMIN_ORDER_COPY} from './admin-order-language';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function adminOrderMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;return{title:ADMIN_ORDER_COPY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))].title}}
