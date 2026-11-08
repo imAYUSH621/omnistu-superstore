@@ -56,9 +56,11 @@ export class PrintifyAdapter implements SupplierAdapter {
   public normalize(p: PrintifyProduct): NormalizedProduct | null {
     const variants = (p.variants ?? []).filter((v) => v.is_enabled !== false);
     if (!variants.length) return null;
-    const cheapest = variants.reduce((a, b) => (a.price <= b.price ? a : b));
-    const retail = cheapest.price / 100;
-    const cost = (cheapest.cost ?? cheapest.price) / 100;
+    // This product-level shape has no selected variant. Never combine the
+    // cheapest retail variant with another cost or use retail as production cost.
+    const cents = variants.length === 1 ? variants[0].cost : undefined;
+    const cost = typeof cents === 'number' && Number.isSafeInteger(cents) && cents >= 0
+      ? cents / 100 : null;
     return {
       id: `PRINTIFY-${p.id}`,
       supplier: 'PRINTIFY',
@@ -69,13 +71,13 @@ export class PrintifyAdapter implements SupplierAdapter {
       specs: [],
       category: p.tags?.[0] ?? 'Apparel & Merch',
       wholesaleCost: cost,
-      retailPrice: retail,
+      retailPrice: null,
       compareAtPrice: null,
       images: (p.images ?? []).map((i) => i.src),
-      inStock: variants.some((v) => v.is_available !== false),
+      inStock: null, // provider availability is not selected-variant stock/reservation
       stockQuantity: null,
       shippingNote:
-        'Printed on demand by a Printify print provider. Production plus shipping time varies by provider and destination.',
+        'Reference listing only. Exact variant, provider availability, production cost, destination freight and processing time require independent qualification.',
     };
   }
 

@@ -45,7 +45,7 @@ describe('CJ Adapter Cost Parsing & Normalization', () => {
 });
 
 describe('Printify Adapter Normalization', () => {
-  test('PrintifyAdapter normalize selects cheapest active variant and cleans html', () => {
+  test('PrintifyAdapter normalize keeps multi-variant price unknown and cleans html', () => {
     const adapter = new PrintifyAdapter('dummy-token', 'dummy-shop-id');
     const normalized = adapter.normalize({
       id: 'printify-prod-1',
@@ -63,10 +63,10 @@ describe('Printify Adapter Normalization', () => {
     expect(normalized).not.toBeNull();
     if (normalized) {
       expect(normalized.id).toBe('PRINTIFY-printify-prod-1');
-      expect(normalized.retailPrice).toBe(42.0); // cheapest enabled variant ($42.00)
-      expect(normalized.wholesaleCost).toBe(20.0);
+      expect(normalized.retailPrice).toBeNull();
+      expect(normalized.wholesaleCost).toBeNull();
       expect(normalized.description).toBe('100% Organic Cotton Streetwear');
-      expect(normalized.inStock).toBe(true);
+      expect(normalized.inStock).toBeNull();
     }
   });
 
