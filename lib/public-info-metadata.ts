@@ -1,0 +1,2 @@
+import{cookies,headers}from 'next/headers';import{supportLanguage}from './support-language';import{detectLanguage}from './locale-detect';import{PUBLIC_INFO_COPY,type PublicInfoKind}from './public-info-language';
+export function publicInfoMetadata(kind:PublicInfoKind){return async()=>{const value=(await cookies()).get('omnistu_lang')?.value;const lang=value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language')),c=PUBLIC_INFO_COPY[lang][kind];return{title:c.title,description:c.description}}}
