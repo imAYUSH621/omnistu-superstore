@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, MessageCircle, Package } from 'lucide-react';
+import { Inbox, MessageCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -15,13 +15,14 @@ export default function ContactPage() {
     setErrorText('');
     const form = new FormData(e.currentTarget);
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch('/api/enquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.get('name'),
           email: form.get('email'),
           message: form.get('message'),
+          website: form.get('website'),
         }),
       });
       const data = await res.json();
@@ -43,7 +44,7 @@ export default function ContactPage() {
         <h1 className='text-2xl font-bold text-foreground'>Contact &amp; Support</h1>
         <p className='text-sm text-muted-foreground mt-1'>
           Automated store help can guide you to products and your order page. To contact the team,
-          use the form below. It will tell you if message delivery is unavailable.
+          use the form below to save an enquiry in the store support inbox. No email is sent.
         </p>
       </div>
 
@@ -67,15 +68,16 @@ export default function ContactPage() {
 
       <form onSubmit={handleSubmit} className='rounded-xl border border-neutral-200 dark:border-neutral-800 p-5 space-y-4'>
         <div className='flex items-center gap-2'>
-          <Mail className='w-5 h-5 text-amber-500' />
-          <h2 className='font-semibold text-sm'>Email us</h2>
+          <Inbox className='w-5 h-5 text-amber-500' />
+          <h2 className='font-semibold text-sm'>Send an enquiry</h2>
         </div>
         {status === 'sent' ? (
           <p className='text-sm text-emerald-600 dark:text-emerald-400 font-medium'>
-            Message accepted by the email service. This does not confirm inbox delivery or a reply time.
+            Your enquiry was saved in the store support inbox. No email was sent and no reply time is promised.
           </p>
         ) : (
           <>
+            <input name='website' type='text' tabIndex={-1} autoComplete='off' aria-hidden='true' className='hidden' />
             <div className='grid sm:grid-cols-2 gap-4'>
               <label className='space-y-1 text-xs font-medium text-foreground'>
                 Name
@@ -83,6 +85,7 @@ export default function ContactPage() {
                   name='name'
                   required
                   minLength={2}
+                  maxLength={120}
                   className='mt-1 w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-background px-3 py-2 text-sm'
                 />
               </label>
@@ -91,6 +94,7 @@ export default function ContactPage() {
                 <input
                   name='email'
                   type='email'
+                  maxLength={254}
                   required
                   className='mt-1 w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-background px-3 py-2 text-sm'
                 />
@@ -115,11 +119,13 @@ export default function ContactPage() {
               disabled={status === 'sending'}
               className='bg-amber-400 hover:bg-amber-500 text-neutral-900 font-bold rounded-full px-6'
             >
-              {status === 'sending' ? 'Sending...' : 'Send message'}
+              {status === 'sending' ? 'Saving...' : 'Save enquiry'}
             </Button>
             <p className='text-[11px] text-muted-foreground'>
-              Email support activates once the store&apos;s support mailbox is configured; until
-              then this form tells you so instead of silently dropping your message.
+              Only what you enter here is saved, not your chat history. Do not include passwords,
+              payment details or other sensitive information. Signed-in enquiries appear in{' '}
+              <Link href='/user/enquiries' className='underline'>My enquiries</Link>. Guest enquiries
+              are not linked to an account by email.
             </p>
           </>
         )}

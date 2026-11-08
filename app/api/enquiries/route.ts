@@ -3,7 +3,7 @@ import { prisma, databaseConfigured } from '@/db/prisma';
 import { auth } from '@/auth';
 import { rateLimited, validateEnquiry } from '@/lib/enquiries';
 
-// Service enquiry intake. The enquiry is stored in the database FIRST; that
+// Shared store support and service enquiry intake. The enquiry is stored in the database FIRST; that
 // is the record. Email forwarding is not attempted here, so success means
 // "saved for the team", never "emailed". If the database is not configured
 // the endpoint says so (503) instead of pretending to have saved anything.
