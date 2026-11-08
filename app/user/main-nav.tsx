@@ -38,7 +38,7 @@ const MainNav = ({
   return (
     <nav
       className={cn(
-        'flex items-center space-x-4 lg:space-x-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        'flex items-center gap-x-4 lg:gap-x-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         className
       )}
       {...props}
