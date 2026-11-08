@@ -36,7 +36,8 @@ describe('checkout transition pending feedback (D12)', () => {
 
   it('place-order shows the note while placing and names the idempotent retry', () => {
     expect(po).toContain('show={pending}');
-    expect(po).toContain('second submit reuses the same order');
+    expect(po).toContain('label={t.pending}');
+    expect(readFileSync('lib/review-language.ts','utf8')).toContain('A second submit reuses the same order.');
   });
 
   it('all three step buttons stay disabled while pending (double-submit guard)', () => {

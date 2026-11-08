@@ -1,0 +1,5 @@
+# Existing final review language
+
+The ordinary final review uses the existing six language preferences, original stored amounts with explicit USD, original product names, and persisted payment method. A simulated/no-charge label appears only when current test mode is enabled and the persisted method is TestPayment, independent of arbitrary sample-product slug. Tax and shipping are then marked as test estimates. This is presentation, not a change to pricing, provider availability, settlement or server order gates.
+
+The existing order action and idempotency handling are unchanged. Pending copy and generic failure feedback are localized. Test-only submit labels wrap at narrow widths. Component fixtures mock the order action. Hosted acceptance must inspect a persisted synthetic cart/address/TestPayment final review without clicking the order button, then verify zero orders and clean up exact test rows and credentials. Do not treat read-only review inspection as a completed checkout or real payment proof.

@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button';
 import { createOrder } from '@/lib/actions/order.actions';
 import { useToast } from '@/hooks/use-toast';
 import T from '@/components/shared/i18n-text';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{REVIEW_COPY}from '@/lib/review-language';
 import CheckoutPendingNote from '@/components/shared/checkout-pending-note';
 
-const PlaceOrderForm = () => {
+const PlaceOrderForm = ({testOnly=false}:{testOnly?:boolean}) => {
+  const language=useStoreLanguage();const t=REVIEW_COPY[language];
   const router = useRouter();
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
@@ -33,7 +36,7 @@ const PlaceOrderForm = () => {
       // after the user fixes the issue.
       toast({
         variant: 'destructive',
-        description: res.message || 'Could not place the order. Please try again.',
+        description: t.failed,
       });
       idempotencyKey.current = crypto.randomUUID();
     } finally {
@@ -43,17 +46,17 @@ const PlaceOrderForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className='w-full'>
-      <Button disabled={pending} className='w-full' type='submit'>
+      <Button disabled={pending} className='w-full h-auto min-h-10 whitespace-normal break-words' type='submit'>
         {pending ? (
           <Loader className='w-4 h-4 animate-spin' />
         ) : (
           <Check className='w-4 h-4' />
         )}{' '}
-        <T k='placeOrder' />
+        {testOnly?t.placeTest:<T k='placeOrder' />}
       </Button>
       <CheckoutPendingNote
         show={pending}
-        label='Placing your order - this can take up to a minute on first load. No need to click again; a second submit reuses the same order.'
+        label={t.pending}
       />
     </form>
   );
