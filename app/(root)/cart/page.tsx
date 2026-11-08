@@ -1,3 +1,6 @@
+import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {readQualifiedCart} from '@/lib/retail/store';
+import QualifiedCart from '@/components/shared/retail/qualified-cart';
 import {sampleCatalogAllowed}from '@/lib/test-fixture';
 import { auth } from '@/auth';
 import { cookies } from 'next/headers';
@@ -13,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CartPage() {
+  if(qualifiedRetailTestEnabled()) {const viewer=await auth();return viewer?.user?.id ? <QualifiedCart cart={await readQualifiedCart(viewer.user.id)}/> : <p className='p-8'>Sign in to review your cart.</p>;}
   const cart = await getMyCart();
   const session = await auth();
   const sessionCartId = (await cookies()).get('sessionCartId')?.value;

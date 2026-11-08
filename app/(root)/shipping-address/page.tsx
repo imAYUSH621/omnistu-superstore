@@ -1,3 +1,4 @@
+import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
 import { auth } from '@/auth';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getUserById } from '@/lib/actions/user.actions';
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 const ShippingAddressPage = async () => {
   const cart = await getMyCart();
 
-  if (!cart || cart.items.length === 0) redirect('/cart');
+  if (!qualifiedRetailTestEnabled() && (!cart || cart.items.length === 0)) redirect('/cart');
 
   const session = await auth();
 
