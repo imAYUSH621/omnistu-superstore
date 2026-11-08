@@ -1,0 +1,2 @@
+import {cookies,headers} from 'next/headers';import {TRACKING_ENTRY_COPY} from './tracking-entry-language';import {supportLanguage} from './support-language';import {detectLanguage} from './locale-detect';
+export async function trackingEntryMetadata(){const value=(await cookies()).get('omnistu_lang')?.value;return{title:TRACKING_ENTRY_COPY[value?supportLanguage('',value):detectLanguage((await headers()).get('accept-language'))].title}}

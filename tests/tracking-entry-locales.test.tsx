@@ -1,0 +1,4 @@
+import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
+let mockLang:'EN'|'HI'|'ES'|'FR'|'DE'|'JA'='EN';jest.mock('@/hooks/use-store-language',()=>({useStoreLanguage:()=>mockLang}));
+import Page from '@/app/(root)/track/page';import {TRACKING_ENTRY_COPY} from '@/lib/tracking-entry-language';
+it.each(Object.keys(TRACKING_ENTRY_COPY)as(keyof typeof TRACKING_ENTRY_COPY)[])('actual tracking landing %s is complete and no lookup form implies tracking',lang=>{mockLang=lang;const c=TRACKING_ENTRY_COPY[lang];expect(Object.keys(c).sort()).toEqual(Object.keys(TRACKING_ENTRY_COPY.EN).sort());const s=renderToStaticMarkup(<Page/>);for(const value of Object.values(c))expect(s).toContain(value);expect(s).toContain('href="/user/orders"');expect(s).toContain('href="/contact"');expect(s).not.toContain('<form');expect(s).not.toContain('<input')});
