@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import T from '@/components/shared/i18n-text';
+import CT from '@/components/shared/cart-text';
+import {useStoreLanguage} from '@/hooks/use-store-language';
+import {CART_COPY} from '@/lib/cart-language';
 import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import { addItemToCart, removeItemFromCart } from '@/lib/actions/cart.actions';
@@ -21,7 +23,7 @@ import { Cart, CartItem } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils';
+
 
 // Recommended fallback items for empty cart with verified local assets
 const RECOMMENDED_ITEMS = [
@@ -57,9 +59,11 @@ const RECOMMENDED_ITEMS = [
 
 function AddButton({ item }: { item: CartItem }) {
   const { toast } = useToast();
+  const lang=useStoreLanguage();
   const [isPending, startTransition] = useTransition();
   return (
     <Button
+      aria-label={CART_COPY[lang].increase}
       disabled={isPending}
       variant='outline'
       size='icon'
@@ -88,9 +92,11 @@ function AddButton({ item }: { item: CartItem }) {
 
 function RemoveButton({ item }: { item: CartItem }) {
   const { toast } = useToast();
+  const lang=useStoreLanguage();
   const [isPending, startTransition] = useTransition();
   return (
     <Button
+      aria-label={CART_COPY[lang].decrease}
       disabled={isPending}
       variant='outline'
       size='icon'
@@ -140,16 +146,15 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                   </div>
                   <div className='space-y-3 text-center sm:text-left'>
                     <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
-                      Your Omnistu Cart is empty
+                      <CT name='emptyTitle'/>
                     </h1>
                     <p className='text-sm text-neutral-600 dark:text-neutral-400 max-w-xl leading-relaxed'>
-                      Your shopping cart lives to serve. Give it purpose — fill it with
-                      electronics, streetwear, desk tech, sensory fidgets, and viral drops.
+                      <CT name='emptyBody'/>
                     </p>
                     <div className='flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2'>
-                      <Link href='/search?sort=deals'>
-                        <Button className='bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold px-6 h-10 rounded-full shadow-sm'>
-                          Shop Today&apos;s Deals
+                      <Link href='/search'>
+                        <Button className='bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold px-6 h-10 rounded-full shadow-sm'>
+                          <CT name='browse'/>
                         </Button>
                       </Link>
                       <Link href='/sign-in'>
@@ -157,7 +162,7 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                           variant='outline'
                           className='border-neutral-300 dark:border-neutral-700 font-semibold px-6 h-10 rounded-full'
                         >
-                          Sign in to your account
+                          <CT name='signIn'/>
                         </Button>
                       </Link>
                     </div>
@@ -165,31 +170,29 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                 </div>
 
                 <div className='border-t border-neutral-200 dark:border-neutral-800 mt-8 pt-4 text-xs text-neutral-500'>
-                  The price and availability of items at Omnistu Superstore are subject to change. The Cart is a temporary place to store a list of your items and reflects each item&apos;s most recent price.
+                  <CT name='priceNotice'/>
                 </div>
               </div>
 
               {/* Right 1 Col: Direct Assurance Sidebar */}
               <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
                 <h3 className='font-bold text-sm text-[#0f172a] dark:text-white flex items-center gap-1.5'>
-                  <Sparkles className='w-4 h-4 text-amber-500' /> Shipping and fulfillment
+                  <Sparkles className='w-4 h-4 text-amber-500' /> <CT name='shippingTitle'/>
                 </h3>
                 <ul className='space-y-3 text-xs text-neutral-600 dark:text-neutral-300'>
                   <li className='flex items-start gap-2'>
                     <Truck className='w-4 h-4 text-amber-600 shrink-0 mt-0.5' />
                     <span>{testMode
-                      ? 'Simulated TEST shipping rates shown at checkout; no real shipment happens.'
-                      : 'Shipping is calculated at checkout.'}</span>
+                      ? <CT name='testShipping'/> : <CT name='shipping'/>}</span>
                   </li>
                   <li className='flex items-start gap-2'>
                     <ShieldCheck className='w-4 h-4 text-emerald-600 shrink-0 mt-0.5' />
-                    <span>Refund policy is in draft - see the refund policy page.</span>
+                    <span><CT name='draftRefund'/></span>
                   </li>
                   <li className='flex items-start gap-2'>
                     <CheckCircle2 className='w-4 h-4 text-blue-600 shrink-0 mt-0.5' />
                     <span>{testMode
-                      ? 'Simulated fulfillment only - no real supplier dispatch or delivery.'
-                      : 'Delivery times vary by item.'}</span>
+                      ? <CT name='testDelivery'/> : <CT name='delivery'/>}</span>
                   </li>
                 </ul>
               </div>
@@ -198,7 +201,7 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
             {/* Recommended Products Carousel Shelf */}
             {showDemoRecommendations && <div className='bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none'>
               <h2 className='text-lg md:text-xl font-bold text-[#0f172a] dark:text-white mb-4'>
-                Demo product examples - not based on your browsing or purchases
+                <CT name='demo'/>
               </h2>
               <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
                 {RECOMMENDED_ITEMS.map((item, idx) => (
@@ -222,16 +225,16 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                         </h4>
                       </Link>
                       <div className='text-sm font-bold text-[#0f172a] dark:text-white mt-1'>
-                        ${item.price}
+                        {item.price} USD
                       </div>
                     </div>
 
                     <Link href={`/product/${item.slug}`} className='mt-3'>
                       <Button
                         size='sm'
-                        className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold text-xs h-8 rounded-full'
+                        className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold text-xs h-8 rounded-full'
                       >
-                        View Product
+                        <CT name='view'/>
                       </Button>
                     </Link>
                   </div>
@@ -248,19 +251,19 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
             <div className='lg:col-span-3 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
               <div className='flex items-baseline justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3'>
                 <h1 className='text-2xl md:text-3xl font-bold text-[#0f172a] dark:text-white'>
-                  <T k='shoppingCart' />
+                  <CT name='title'/>
                 </h1>
-                <span className='text-xs text-neutral-500 font-medium'>Price</span>
+                <span className='text-xs text-neutral-500 font-medium'><CT name='price'/></span>
               </div>
 
               {/* Items List */}
               <div className='divide-y divide-neutral-200 dark:divide-neutral-800'>
                 {cart.items.map((item) => (
-                  <div key={item.slug} className='py-4 flex gap-4 items-start'>
+                  <div key={item.slug} className='py-4 grid grid-cols-[5rem_minmax(0,1fr)] sm:flex gap-4 items-start'>
                     {/* Thumbnail */}
                     <Link
                       href={`/product/${item.slug}`}
-                      className='w-24 h-24 md:w-32 md:h-32 shrink-0 relative bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden'
+                      className='w-20 h-20 md:w-32 md:h-32 shrink-0 relative bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden'
                     >
                       <Image
                         src={item.image}
@@ -272,7 +275,7 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                     </Link>
 
                     {/* Details */}
-                    <div className='flex-1 space-y-1.5'>
+                    <div className='min-w-0 flex-1 space-y-1.5 break-words'>
                       <Link
                         href={`/product/${item.slug}`}
                         className='font-bold text-sm md:text-base text-[#0f172a] dark:text-white hover:text-[#c7511f] line-clamp-2 leading-tight'
@@ -296,15 +299,15 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                           onClick={() => removeItemFromCart(item.productId)}
                           className='text-xs text-[#4f46e5] hover:text-[#c7511f] hover:underline flex items-center gap-1'
                         >
-                          <Trash2 className='w-3.5 h-3.5' /> Delete
+                          <Trash2 className='w-3.5 h-3.5' /> <CT name='removeOne'/>
                         </button>
                       </div>
                     </div>
 
                     {/* Price */}
-                    <div className='text-right'>
+                    <div className='col-start-2 sm:ml-auto text-right'>
                       <div className='text-base md:text-lg font-bold text-[#0f172a] dark:text-white'>
-                        ${item.price}
+                        {item.price} USD
                       </div>
                     </div>
                   </div>
@@ -313,9 +316,9 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
 
               {/* Subtotal Bottom Bar */}
               <div className='border-t border-neutral-200 dark:border-neutral-800 pt-4 text-right text-base md:text-lg'>
-                <T k='subtotal' /> ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
+                <CT name='subtotal'/> ({cart.items.reduce((a, c) => a + c.qty, 0)} <CT name='items'/>):{' '}
                 <strong className='text-xl text-[#0f172a] dark:text-white font-extrabold'>
-                  {formatCurrency(cart.itemsPrice)}
+                  {cart.itemsPrice} USD
                 </strong>
               </div>
             </div>
@@ -324,21 +327,15 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
             <div className='sticky top-20 bg-white dark:bg-[#1a202c] p-6 shadow-[0_2px_5px_rgba(213,217,217,0.6)] dark:shadow-md border border-[#d5d9d9]/70 dark:border-neutral-800 rounded-none space-y-4'>
 
               <div className='text-lg font-medium'>
-                Subtotal ({cart.items.reduce((a, c) => a + c.qty, 0)} items):{' '}
+                <CT name='subtotal'/> ({cart.items.reduce((a, c) => a + c.qty, 0)} <CT name='items'/>):{' '}
                 <span className='font-extrabold text-xl text-[#0f172a] dark:text-white block pt-1'>
-                  {formatCurrency(cart.itemsPrice)}
+                  {cart.itemsPrice} USD
                 </span>
               </div>
 
-              <div className='flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300'>
-                <input type='checkbox' id='is-gift' className='rounded text-amber-500' />
-                <label htmlFor='is-gift' className='cursor-pointer'>
-                  This order contains a gift
-                </label>
-              </div>
 
               <Button
-                className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-neutral-900 font-bold h-11 rounded-full shadow-sm text-sm'
+                className='w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold h-11 rounded-full shadow-sm text-sm'
                 disabled={isPending}
                 onClick={() =>
                   startTransition(() => router.push('/shipping-address'))
@@ -349,13 +346,13 @@ const CartTable = ({ cart, testMode = false, showDemoRecommendations = false }: 
                 ) : (
                   <ArrowRight className='w-4 h-4 mr-2' />
                 )}
-                Proceed to Checkout
+                <CT name='checkout'/>
               </Button>
 
               {testMode && (
                 <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-[11px] text-neutral-500 space-y-1.5'>
                   <div className='flex items-center gap-1'>
-                    <ShieldCheck className='w-3.5 h-3.5' /> Demo checkout: simulated payment only - no card is charged.
+                    <ShieldCheck className='w-3.5 h-3.5' /> <CT name='testPayment'/>
                   </div>
                 </div>
               )}
