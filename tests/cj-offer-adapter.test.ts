@@ -24,12 +24,13 @@ describe('CJ cached-offer adapter (no provider calls, no invented data)', () => 
     expect(offers.map((o) => o.providerSku).sort()).toEqual(['CW15-UK', 'CW15-US']);
   });
 
-  test('stock is the summed supplier inventory snapshot, price in cents', () => {
+  test('reported totals are retained separately, warehouse-ready stock unknown without exact origin', () => {
     const offers = cjCachedOffers(item);
-    expect(offers.find((o) => o.providerSku === 'CW15-US')?.stock).toBe(8739);
-    expect(offers.find((o) => o.providerSku === 'CW15-UK')?.stock).toBe(7);
+    expect(offers.find((o) => o.providerSku === 'CW15-US')?.supplierReportedStock).toBe(8739);
+    expect(offers.find((o) => o.providerSku === 'CW15-UK')?.supplierReportedStock).toBe(7);
     expect(offers.find((o) => o.providerSku === 'CW15-US')?.priceCents).toBe(2790);
     expect(offers[0].currency).toBe('USD');
+    expect(offers.every(o=>o.stock===null)).toBe(true);
   });
 
   test('cached CJ offers carry no shipping, so the selector excludes them from ranking', () => {

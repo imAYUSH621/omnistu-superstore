@@ -22,10 +22,13 @@ export interface FreightEvidence {
   currency: 'USD';
   shippingCents: number;
   method?: string;
+  originCountry?: string;
   fetchedAt: Date;
 }
 
 export interface FreightContext {
+  method?:string;
+  originCountry?:string;
   quantity: number;
   destinationCountry: string;
   destinationPostal: string;
@@ -46,6 +49,8 @@ function evidenceMatchesOffer(e: FreightEvidence, offer: Offer): boolean {
 
 function evidenceMatchesContext(e: FreightEvidence, ctx: FreightContext): boolean {
   return (
+    (!ctx.method||e.method===ctx.method) &&
+    (!ctx.originCountry||(e.originCountry===ctx.originCountry)) &&
     e.quantity === ctx.quantity &&
     e.destinationCountry === ctx.destinationCountry &&
     e.destinationPostal === ctx.destinationPostal &&
@@ -60,8 +65,11 @@ export function applyFreightEvidence(
   now: Date,
   opts: { maxAgeMs: number }
 ): Offer[] {
+  const valid=Number.isFinite(now.getTime())&&Number.isFinite(opts.maxAgeMs)&&opts.maxAgeMs>0&&Number.isSafeInteger(ctx.quantity)&&ctx.quantity>0;
   return offers.map((offer) => {
+    if(!valid||ctx.originCountry&&offer.originCountry!==ctx.originCountry)return {...offer,shippingCents:undefined,quoteQuantity:undefined};
     const match = evidence.find((e) => {
+      if(!Number.isSafeInteger(e.shippingCents)||e.shippingCents<0)return false;
       if (!evidenceMatchesOffer(e, offer)) return false;
       if (!evidenceMatchesContext(e, ctx)) return false;
       const t = new Date(e.fetchedAt).getTime();
@@ -70,8 +78,8 @@ export function applyFreightEvidence(
       if (now.getTime() - t > opts.maxAgeMs) return false;
       return true;
     });
-    if (!match) return offer; // unchanged: shipping stays unknown, excluded from ranking
-    return { ...offer, shippingCents: match.shippingCents };
+    if (!match) return {...offer,shippingCents:undefined,quoteQuantity:undefined}; // never carry shipping from an unproven prior context
+    return { ...offer, shippingCents: match.shippingCents,quoteQuantity:ctx.quantity };
   });
 }
 

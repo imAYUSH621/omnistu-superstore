@@ -16,8 +16,11 @@ export interface Offer {
   variantKey: string;      // normalized variant identity (catalog-owned)
   priceCents: number;      // supplier item price, integer cents
   currency: 'USD';
-  stock: number;           // supplier-reported units; never fabricated
+  stock: number | null;    // exact-origin warehouse-ready snapshot, null if unestablished
+  supplierReportedStock?: number | null; // factory+warehouse report, not ready stock
+  originCountry?: string; // exact stock origin, required by preparation pipeline
   fetchedAt: Date;         // when this quote was read from the provider
+  quoteQuantity?:number; // exact freight quantity, if attached by evidence pipeline
   shippingCents?: number;  // supplier shipping if known; else undefined
 }
 
