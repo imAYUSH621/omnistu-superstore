@@ -12,6 +12,7 @@ import UserButton from './user-button';
 import CartBadge from './cart-badge';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import ModeToggle from './mode-toggle';
+import HeaderText from './header-text';
 import GlobalSelector from './global-selector';
 
 const Menu = async () => {
@@ -36,7 +37,7 @@ const Menu = async () => {
         {/* 3. Returns & Orders */}
         <Link
           href='/user/orders'
-          className='hidden lg:flex flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
+          className='hidden lg:flex max-w-[180px] whitespace-normal flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
         >
           <T k='returnsOrders' className='text-[13px] font-bold text-white leading-tight' />
         </Link>
@@ -50,10 +51,11 @@ const Menu = async () => {
         <CartBadge initialCount={cartCount} />
         <Sheet>
           <SheetTrigger className='p-1.5 align-middle rounded-xs text-white hover:border hover:border-white transition'>
-            <EllipsisVertical className='w-5 h-5' />
+            <span className='sr-only'><HeaderText name='openMenu'/></span>
+            <EllipsisVertical aria-hidden className='w-5 h-5' />
           </SheetTrigger>
           <SheetContent className='flex flex-col items-start space-y-4 pt-8 bg-[#1e293b] text-white border-neutral-800'>
-            <SheetTitle className='font-bold text-lg text-white'>Menu</SheetTitle>
+            <SheetTitle className='font-bold text-lg text-white'><HeaderText name='menu'/></SheetTitle>
             <div className='w-full border-b border-neutral-700 pb-3'>
               <UserButton />
             </div>
@@ -70,12 +72,12 @@ const Menu = async () => {
               <T k='todaysDeals' />
             </Link>
             <div className='flex items-center justify-between py-2 border-b border-neutral-700 w-full'>
-              <span className='text-xs text-neutral-300'>Language</span>
+              <span className='text-xs text-neutral-300'><HeaderText name='language'/></span>
               <GlobalSelector />
             </div>
             <div className='flex items-center gap-3 pt-3 border-t border-neutral-700 w-full'>
               <ModeToggle />
-              <span className='text-xs text-neutral-400'>Toggle Theme</span>
+              <span className='text-xs text-neutral-400'><HeaderText name='appearance'/></span>
             </div>
             <SheetDescription></SheetDescription>
           </SheetContent>

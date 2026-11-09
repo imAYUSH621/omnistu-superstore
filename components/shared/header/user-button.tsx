@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import T from '@/components/shared/i18n-text';
+import HeaderText from './header-text';
 import { auth } from '@/auth';
 import { signOutUser } from '@/lib/actions/user.actions';
 import { Button } from '@/components/ui/button';
@@ -40,10 +41,10 @@ const UserButton = async () => {
       <DropdownMenuTrigger asChild>
         <div className='flex flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight cursor-pointer transition-colors'>
           <span className='text-[11px] text-[#cccccc] font-normal leading-none'>
-            Hello, {firstName}
+            <HeaderText value={firstName}/>
           </span>
           <span className='text-[13px] font-bold text-white leading-tight flex items-center gap-0.5 mt-0.5'>
-            Account & Lists
+            <HeaderText name='account'/>
             <ChevronDown className='w-3 h-3 text-[#a7acb2]' />
           </span>
         </div>
@@ -63,19 +64,19 @@ const UserButton = async () => {
 
         <DropdownMenuItem asChild>
           <Link href='/user/profile' className='w-full cursor-pointer text-xs'>
-            Your Account
+            <HeaderText name='yourAccount'/>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href='/user/orders' className='w-full cursor-pointer text-xs'>
-            Your Orders
+            <HeaderText name='yourOrders'/>
           </Link>
         </DropdownMenuItem>
 
         {session?.user?.role === 'admin' && (
           <DropdownMenuItem asChild>
             <Link href='/admin/overview' className='w-full cursor-pointer text-xs text-amber-600 font-bold flex items-center gap-1.5'>
-              <ShieldCheck className='w-3.5 h-3.5' /> Seller Central / Admin
+              <ShieldCheck className='w-3.5 h-3.5' /> <HeaderText name='admin'/>
             </Link>
           </DropdownMenuItem>
         )}
@@ -87,7 +88,7 @@ const UserButton = async () => {
               className='w-full py-2 px-3 h-8 justify-start text-xs font-semibold'
               variant='ghost'
             >
-              Sign Out
+              <HeaderText name='signOut'/>
             </Button>
           </form>
         </DropdownMenuItem>

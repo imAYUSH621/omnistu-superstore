@@ -67,7 +67,7 @@ describe('premium category-first homepage', () => {
 
   it('header renders the All drawer label exactly once', () => {
     expect(header).not.toContain(">All</span>");
-    expect(drawer).toContain('>All</span>');
+    expect(drawer).toContain("<HeaderText name='all'/>");
     expect(drawer).not.toContain('hidden sm:inline');
   });
 

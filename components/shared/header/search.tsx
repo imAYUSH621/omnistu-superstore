@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import SearchInput from './search-input';
+import HeaderText from './header-text';
 import {
   Select,
   SelectContent,
@@ -19,15 +20,15 @@ const Search = async () => {
         {/* Category Picker */}
         <Select name='category' defaultValue='all'>
           <SelectTrigger className='flex xl:hidden 2xl:flex w-[130px] md:w-[150px] h-10 border-0 rounded-none bg-[#f3f3f3] hover:bg-[#dadada] text-[#555] text-[12px] font-normal focus:ring-0 border-r border-[#cdcdcd] px-2.5 transition-colors cursor-pointer'>
-            <SelectValue placeholder='All' />
+            <SelectValue placeholder={<HeaderText name='all'/>} />
           </SelectTrigger>
           <SelectContent className='text-xs'>
             <SelectItem key='All' value='all'>
-              All Categories
+              <HeaderText name='allCategories'/>
             </SelectItem>
             {categories.map((x) => (
               <SelectItem key={x.category} value={x.category}>
-                {x.category}
+                <HeaderText category={x.category}/>
               </SelectItem>
             ))}
           </SelectContent>
@@ -40,9 +41,10 @@ const Search = async () => {
         <Button
           type='submit'
           className='h-10 px-4 rounded-none bg-[#4f46e5] hover:bg-[#f3a847] active:bg-[#e09838] text-[#111] border-0 transition-colors cursor-pointer'
-          aria-label='Search'
+
         >
-          <SearchIcon className='w-5 h-5 text-[#333]' />
+          <span className='sr-only'><HeaderText name='search'/></span>
+          <SearchIcon aria-hidden className='w-5 h-5 text-[#333]' />
         </Button>
       </div>
     </form>

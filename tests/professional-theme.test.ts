@@ -20,8 +20,8 @@ describe('three global themes (light, dark, professional) + system', () => {
   });
 
   it('mode toggle offers System, Light, Dark and Professional', () => {
-    for (const option of ['System', 'Light', 'Dark', 'Professional']) {
-      expect(toggle).toContain(option);
+    for (const option of ['system', 'light', 'dark', 'professional']) {
+      expect(toggle).toContain(`{c.${option}}`);
     }
     expect(toggle).toContain("setTheme('professional')");
     expect(toggle).toContain("theme === 'professional'");
