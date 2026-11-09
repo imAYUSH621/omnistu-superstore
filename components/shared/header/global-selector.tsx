@@ -18,6 +18,7 @@ export default function GlobalSelector() {
   const selectedLang=useStoreLanguage(),copy=HEADER_COPY[selectedLang];
   const [selectedCurrency, setSelectedCurrency] = useState<DisplayCurrency>('USD');
   const [isOpen, setIsOpen] = useState(false);
+  const [openUp,setOpenUp]=useState(false);
   // Honest default until the live feed answers: reference, not hourly.
   const [disclosure, setDisclosure] = useState<RatesDisclosure>(ratesDisclosure(null));
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,9 +45,11 @@ export default function GlobalSelector() {
       }
     };
     const onCurrency=(event:Event)=>{const code=(event as CustomEvent<{currency?:string}>).detail?.currency;if(code&&(SUPPORTED_CURRENCY_CODES as readonly string[]).includes(code))setSelectedCurrency(code as DisplayCurrency)};
+    const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setIsOpen(false)};
+    document.addEventListener('keydown',onKey);
     document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('omnistu:currency-change',onCurrency);
-    return () => {active=false;window.clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('mousedown', handleClickOutside);window.removeEventListener('omnistu:currency-change',onCurrency)};
+    return () => {active=false;document.removeEventListener('keydown',onKey);window.clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('mousedown', handleClickOutside);window.removeEventListener('omnistu:currency-change',onCurrency)};
   }, []);
 
   const handleLangChange = (lang: SupportedLang) => {
@@ -68,7 +71,7 @@ export default function GlobalSelector() {
     <div className='relative' ref={containerRef}>
       {/* Trigger Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={event=>{setOpenUp(event.currentTarget.getBoundingClientRect().top>window.innerHeight/2);setIsOpen(!isOpen)}}
         className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white text-[13px] font-bold transition-colors select-none'
         aria-label={copy.localeChoose}
         aria-expanded={isOpen}
@@ -82,7 +85,7 @@ export default function GlobalSelector() {
 
       {/* Popover Menu */}
       {isOpen && (
-        <div className='absolute right-0 top-full mt-1 w-72 bg-white dark:bg-[#1a202c] text-[#0f172a] dark:text-white rounded-sm shadow-2xl border border-neutral-200 dark:border-neutral-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-100'>
+        <div className={`fixed left-4 right-4 top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto sm:absolute sm:left-auto sm:right-0 sm:w-72 sm:max-h-[70dvh] ${openUp?'sm:top-auto sm:bottom-full sm:mb-1':'sm:top-full sm:mt-1'} bg-white dark:bg-[#1a202c] text-[#0f172a] dark:text-white rounded-sm shadow-2xl border border-neutral-200 dark:border-neutral-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-100`}>
           {/* Language Section */}
           <div className='border-b border-neutral-200 dark:border-neutral-700 pb-2.5 mb-2.5'>
             <div className='flex items-center gap-1.5 mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
