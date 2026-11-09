@@ -3,6 +3,8 @@ import '@/assets/styles/globals.css';
 import { APP_DESCRIPTION, APP_NAME, SERVER_URL } from '@/lib/constants';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
+import TrafficAnalytics from '@/components/shared/analytics/traffic-analytics';
+import {trafficConfig}from '@/lib/traffic-analytics';
 
 export const metadata: Metadata = {
   title: {
@@ -36,6 +38,7 @@ export default function RootLayout({
           themes={['light', 'dark', 'professional']}
           disableTransitionOnChange
         >
+          <TrafficAnalytics config={trafficConfig(process.env)} />
           {children}
           <Toaster />
         </ThemeProvider>
