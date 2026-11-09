@@ -1,12 +1,12 @@
 /**
  * Visitor-facing wording for the currency display, keyed to the actual
- * source /api/rates reported. Never claim "hourly rates" when the feed
+ * source /api/rates reported. Never claim "provider rates" when the feed
  * fell back to the bundled default table or an env override.
  */
 export type RatesSource = 'live_api' | 'env_override' | 'cache' | 'default_safe';
 
 export interface RatesDisclosure {
-  /** True when the numbers come from the live hourly feed (or its cache). */
+  /** True when the numbers come from the daily provider feed (or its cache). */
   live: boolean;
   /** Short clause used inside the selector disclosure sentence. */
   ratesClause: string;
@@ -20,12 +20,12 @@ export function ratesDisclosure(source: RatesSource | string | null | undefined)
   const live = source === 'live_api' || source === 'cache';
   return {
     live,
-    ratesClause: live ? 'hourly live rates' : 'reference rates - live rates temporarily unavailable',
+    ratesClause: live ? 'daily provider rates (checked hourly)' : 'reference rates - live rates temporarily unavailable',
     noteText: live
-      ? 'Approximate price at hourly live rates. You are charged in USD at checkout.'
+      ? 'Approximate price at daily provider rates (checked hourly). You are charged in USD at checkout.'
       : 'Approximate price at reference rates (live rates temporarily unavailable). You are charged in USD at checkout.',
     priceTitle: live
-      ? 'Approximate conversion at hourly live rates - checkout charges USD'
+      ? 'Approximate conversion at daily provider rates (checked hourly) - checkout charges USD'
       : 'Approximate conversion at reference rates (live rates temporarily unavailable) - checkout charges USD',
   };
 }

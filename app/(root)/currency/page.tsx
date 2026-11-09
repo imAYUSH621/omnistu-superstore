@@ -46,7 +46,7 @@ export default function CurrencyPolicyPage() {
               sourced internationally. At {APP_NAME}, we believe in full financial transparency:
             </p>
             <ul className='list-disc pl-5 space-y-1.5'>
-              <li><strong>Estimated Rates:</strong> Converted prices across USD ($), EUR (€), GBP (£), INR (₹), CAD (C$), and AUD (A$) use market exchange rates fetched about hourly. If they cannot be fetched, fixed fallback rates are used. Converted amounts are estimates.</li>
+              <li><strong>Estimated Rates:</strong> Converted prices across USD ($), EUR (€), GBP (£), INR (₹), CAD (C$), and AUD (A$) use daily provider exchange rates checked about hourly. If they cannot be fetched, fixed fallback rates are used. Converted amounts are estimates.</li>
               <li><strong>Zero DCC Surcharges:</strong> We never apply predatory Dynamic Currency Conversion (DCC) fees. What you see in your cart is exactly what your bank or card statement will reflect.</li>
               <li><strong>Clear Price Breakdown:</strong> Product base price, calculated estimated local sales tax/VAT, and international shipping options are explicitly itemized prior to final payment authorization.</li>
             </ul>

@@ -15,6 +15,7 @@ export default function Footer() {
 
   return (
     <footer className='w-full bg-[#334155] text-white text-[13px] font-sans mt-12'>
+      <p className='text-center px-4 py-2 text-xs'><a href='https://www.exchangerate-api.com' className='underline underline-offset-2'>Rates By Exchange Rate API</a></p>
       {/* 1. Back to Top Bar */}
       <button
         onClick={scrollToTop}

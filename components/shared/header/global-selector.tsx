@@ -7,6 +7,7 @@ import { SUPPORTED_CURRENCY_CODES, loadRatesInfo, type DisplayCurrency } from '@
 import { ratesDisclosure, type RatesDisclosure } from '@/lib/rates-disclosure';
 import{useStoreLanguage}from '@/hooks/use-store-language';
 import{HEADER_COPY,headerDisclosure}from '@/lib/header-language';
+import{RATE_CACHE_MS}from '@/lib/rates-validation';
 
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
@@ -31,9 +32,11 @@ export default function GlobalSelector() {
       setSelectedCurrency(savedCur as DisplayCurrency);
     }
 
-    loadRatesInfo().then((info) => {
-      if (info) setDisclosure(ratesDisclosure(info.source));
-    });
+    let active=true;
+    const refresh=()=>loadRatesInfo().then(info=>{if(active)setDisclosure(ratesDisclosure(info?.source))});
+    refresh();
+    window.addEventListener('focus',refresh);
+    const timer=window.setInterval(refresh,RATE_CACHE_MS);
 
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -43,7 +46,7 @@ export default function GlobalSelector() {
     const onCurrency=(event:Event)=>{const code=(event as CustomEvent<{currency?:string}>).detail?.currency;if(code&&(SUPPORTED_CURRENCY_CODES as readonly string[]).includes(code))setSelectedCurrency(code as DisplayCurrency)};
     document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('omnistu:currency-change',onCurrency);
-    return () => {document.removeEventListener('mousedown', handleClickOutside);window.removeEventListener('omnistu:currency-change',onCurrency)};
+    return () => {active=false;window.clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('mousedown', handleClickOutside);window.removeEventListener('omnistu:currency-change',onCurrency)};
   }, []);
 
   const handleLangChange = (lang: SupportedLang) => {
