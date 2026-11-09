@@ -1,3 +1,4 @@
+import {isSimulatedOrder} from '@/lib/order-simulation';
 import {getMyOrders} from '@/lib/actions/order.actions';
 import {formatCurrency,formatId} from '@/lib/utils';
 import {auth} from '@/auth';import {redirect} from 'next/navigation';import Link from 'next/link';
@@ -10,7 +11,7 @@ export default async function OrdersPage({searchParams}:{searchParams:Promise<{p
  try{orders=await getMyOrders({page})}catch{}
  return <div className='space-y-3'><h2 className='h2-bold'><OrderText name='heading'/></h2><p className='text-sm text-muted-foreground'><OrderText name='note'/></p>
  {!orders?<p role='alert' className='text-sm text-destructive'><OrderText name='unavailable'/></p>:<>
- {orders.data.length===0?<p className='rounded border p-3 text-sm'><OrderText name='empty'/></p>:<div className='overflow-x-auto'><Table><TableHeader><TableRow>{(['id','date','total','paid','delivered','actions']as const).map(name=><TableHead key={name}><OrderText name={name}/></TableHead>)}</TableRow></TableHeader><TableBody>{orders.data.map(order=>{const test=order.paymentMethod==='TestPayment';return <TableRow key={order.id}>
+ {orders.data.length===0?<p className='rounded border p-3 text-sm'><OrderText name='empty'/></p>:<div className='overflow-x-auto'><Table><TableHeader><TableRow>{(['id','date','total','paid','delivered','actions']as const).map(name=><TableHead key={name}><OrderText name={name}/></TableHead>)}</TableRow></TableHeader><TableBody>{orders.data.map(order=>{const test=isSimulatedOrder(order);return <TableRow key={order.id}>
  <TableCell>{formatId(order.id)}{test?<span className='block text-xs text-muted-foreground'><OrderText name='test'/></span>:null}</TableCell><TableCell><OrderText date={order.createdAt.toISOString()}/></TableCell><TableCell>{formatCurrency(order.totalPrice)}</TableCell>
  <TableCell>{order.isPaid&&order.paidAt?<>{test?<span className='block'><OrderText name='testPaid'/></span>:null}<OrderText date={order.paidAt.toISOString()}/></>:<OrderText name='notPaid'/>}</TableCell>
  <TableCell>{order.isDelivered&&order.deliveredAt?<>{test?<span className='block'><OrderText name='testDelivered'/></span>:null}<OrderText date={order.deliveredAt.toISOString()}/></>:<OrderText name='notDelivered'/>}</TableCell>
