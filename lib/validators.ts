@@ -81,6 +81,8 @@ export const shippingAddressSchema = z.object({
   city: z.string().min(3, 'City must be at least 3 characters'),
   postalCode: z.string().min(3, 'Postal code must be at least 3 characters'),
   country: z.string().trim().min(2, 'Enter your country (a 2-letter code such as US, or the full name)'),
+  state: z.string().trim().max(100, 'State or province is too long').optional(),
+  phone: z.string().trim().refine(v=>v===''||/^\+[1-9][0-9]{6,14}$/.test(v), 'Use an international phone number, starting with + and the country code').optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
 });

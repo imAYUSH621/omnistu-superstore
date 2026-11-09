@@ -1,4 +1,6 @@
 'use client';
+import {CHECKOUT_COPY} from '@/lib/checkout-language';
+import CancelUnpaidOrder,{CancelledUnpaidOrderNotice} from '@/components/shared/order/cancel-unpaid-order';
 import { Badge } from '@/components/ui/badge';
 import { shippingBadgeState } from '@/lib/tracking';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +19,7 @@ import { Order } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
+import { useState,useTransition } from 'react';
 import {
   PayPalButtons,
   PayPalScriptProvider,
@@ -44,11 +46,13 @@ const OrderDetailsTable = ({
   paypalClientId,
   isAdmin,
   stripeClientSecret,
+  cancellationOffered=false,
 }: {
   order: Omit<Order, 'paymentResult'>;
   paypalClientId: string;
   isAdmin: boolean;
   stripeClientSecret: string | null;
+  cancellationOffered?:boolean;
 }) => {
   const {
     id,
@@ -72,6 +76,9 @@ const OrderDetailsTable = ({
   const language=useStoreLanguage();
   const copy=ORDER_DETAIL_COPY[language];
   const date=(value:Date|string)=>orderHistoryDate(value,language)+' UTC';
+  const[cancelAttempted,setCancelAttempted]=useState(false);
+  const[cancelledLocally,setCancelledLocally]=useState(false);
+  const cancelled=cancelledLocally||order.paymentNote?.includes('SUPPLIER_ORDER_CANCELLED')===true;
   const simulated = isSimulatedOrder(order);
   const qualifiedTest = Boolean(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'));
   const { toast } = useToast();
@@ -202,7 +209,7 @@ const OrderDetailsTable = ({
   return (
     <div className='space-y-6'>
       {/* 4-Step Amazon Carrier Tracking Stepper */}
-      <OrderTrackingStepper
+      {cancelled?<CancelledUnpaidOrderNotice/>:<OrderTrackingStepper
         orderId={id}
         simulated={simulated}
         isPaid={isPaid}
@@ -211,7 +218,7 @@ const OrderDetailsTable = ({
         trackingNumber={trackingNumber}
         trackingCarrier={trackingCarrier}
         dispatchedAt={dispatchedAt}
-      />
+      />}
 
       <div className='grid md:grid-cols-3 md:gap-5'>
         <div className='col-span-2 space-y-4 overflow-x-auto'>
@@ -239,8 +246,9 @@ const OrderDetailsTable = ({
               <p className='font-semibold'>{shippingAddress.fullName}</p>
               <p className='mb-2 text-muted-foreground'>
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
-                {shippingAddress.postalCode}, {shippingAddress.country}
+                {shippingAddress.state?shippingAddress.state+', ':''}{shippingAddress.postalCode}, {shippingAddress.country}
               </p>
+              {shippingAddress.phone&&<p className='mb-2 text-sm'>{CHECKOUT_COPY[language].phone}: {shippingAddress.phone}</p>}
               {simulated ? (<Badge variant='outline'>{isDelivered ? copy.testDelivered : copy.testShipping}</Badge>) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
                 <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
                   {copy.deliveredAt} {date(deliveredAt!)}
@@ -331,8 +339,9 @@ const OrderDetailsTable = ({
                 <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>
 
+              {!cancelled&&cancellationOffered&&<CancelUnpaidOrder orderId={id} onAttempt={()=>setCancelAttempted(true)} onCancelled={()=>setCancelledLocally(true)}/>}
               {/* PayPal Payment */}
-              {!simulated && !isPaid && paymentMethod === 'PayPal' && (
+              {!cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'PayPal' && (
                 <div className='pt-2'>
                   <PayPalScriptProvider options={{ clientId: paypalClientId }}>
                     <PrintLoadingState />
@@ -345,7 +354,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Stripe Payment */}
-              {!simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
+              {!cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
                 <div className='pt-2'>
                   <StripePayment
                     priceInCents={Number(order.totalPrice) * 100}
@@ -356,7 +365,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Cash On Delivery */}
-              {isAdmin && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
+              {isAdmin && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}

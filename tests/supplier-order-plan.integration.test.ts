@@ -1,3 +1,5 @@
+import {cancelMyUnattemptedSupplierOrder} from '@/lib/actions/order.actions';
+import {cancelUnattemptedSupplierOrderTx} from '@/lib/supplier-order-cancellation';
 import {readFileSync} from 'node:fs';
 const mockAuth=jest.fn();const mockCreatePayPal=jest.fn();const mockCapturePayPal=jest.fn();
 jest.mock('@/auth',()=>({auth:(...a:unknown[])=>mockAuth(...a)}));
@@ -23,7 +25,7 @@ import {persistSupplierOrderPlanTx,loadSupplierOrderPlanTx} from '@/lib/supplier
 const suite=localDatabaseTestEnabled()?describe:describe.skip;
 suite('persisted supplier order binding on disposable real Postgres; no providers',()=>{
  let preparedOrderId:string;let userId:string,orderId:string,line:ReturnType<typeof bindRetailLine>;const now=new Date();const maxAgeMs=600000;
- const shipping={fullName:'Synthetic buyer',streetAddress:'Fixture only',city:'Fixture City',state:'NY',postalCode:'10001',country:'US',phone:'synthetic-not-a-number'};
+ const shipping={fullName:'Synthetic buyer',streetAddress:'Fixture only',city:'Fixture City',state:'NY',postalCode:'10001',country:'US',phone:'+12025550100'};
  beforeAll(async()=>{
   userId=(await prisma.user.create({data:{email:`binding-${randomUUID()}@example.invalid`,name:'Synthetic only',password:'not-a-login'}})).id;
   const p=await prisma.product.create({data:{name:'Synthetic line',slug:`binding-itest-${randomUUID()}`,category:'test',description:'No merchant offer',images:[],stock:10,price:10}});const v=await prisma.productVariant.create({data:{productId:p.id,sku:randomUUID(),name:'Synthetic exact option'}});
@@ -97,6 +99,49 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
    expect(permissions).toEqual([{quote_insert:false,publish:false,rewrite_plan:false,erase_attempt:false}]);
    throw rolledBack;
   })).rejects.toBe(rolledBack);
+ });
+
+ it('approved shipping/tax bind immutably; unpaid unattempted cancellation releases once and cannot re-enable payment',async()=>{
+  const rollback=Error('fee-cancel-fixture');
+  await expect(prisma.$transaction(async tx=>{
+   await tx.user.update({where:{id:userId},data:{address:shipping,paymentMethod:'PayPal'}});
+   const carts=await tx.$queryRaw<{id:string}[]>`INSERT INTO "RetailCart"("userId",lines,"destinationCountry","destinationPostal") VALUES(${userId}::uuid,${JSON.stringify([line])}::jsonb,'US','10001') RETURNING id`;
+   const id=await prepareSupplierBoundOrderTx(tx,{userId,cartId:carts[0].id,reviewToken:retailCartReviewToken({lines:[line],destinationCountry:'US',destinationPostal:'10001'}),idempotencyKey:randomUUID(),now,maxAgeMs,approvedShippingCents:275,approvedTaxCents:125,commercialTermsSource:'LOCAL EXPLICIT FEE FIXTURE, NOT LIVE TERMS'});
+   const p=await validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs});expect(p).toMatchObject({amountCents:1400,shippingCents:275,taxCents:125});
+   await tx.order.update({where:{id},data:{shippingPrice:1.25,taxPrice:2.75}});
+   await expect(validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs})).rejects.toThrow('Order changed');
+   await tx.order.update({where:{id},data:{shippingPrice:2.75,taxPrice:1.25}});
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId:randomUUID()})).rejects.toThrow('Order unavailable');
+   await tx.order.update({where:{id},data:{paymentResult:{id:'SYNTHETIC_ATTEMPT'}}});
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).rejects.toThrow('Payment outcome');
+   await tx.order.update({where:{id},data:{paymentResult:(await import('@prisma/client')).Prisma.DbNull}});
+   await tx.$executeRaw`UPDATE "OrderSupplierAllocation" SET state='CONSUMED' WHERE "orderId"=${id}::uuid`;
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).rejects.toThrow('Exact held allocation');
+   await tx.$executeRaw`UPDATE "OrderSupplierAllocation" SET state='HELD' WHERE "orderId"=${id}::uuid`;
+   await tx.$executeRaw`INSERT INTO "OrderSupplierAttempt"("orderId",state) VALUES(${id}::uuid,'UNKNOWN')`;
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).rejects.toThrow('Supplier attempt');
+   await tx.$executeRaw`DELETE FROM "OrderSupplierAttempt" WHERE "orderId"=${id}::uuid`;
+   await tx.order.update({where:{id},data:{paymentNote:'SUPPLIER_BOUND_PREPARATION | CAPTURE_UNCONFIRMED'}});
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).rejects.toThrow('Payment outcome');
+   await tx.order.update({where:{id},data:{paymentNote:'SUPPLIER_BOUND_PREPARATION',isPaid:true}});
+   await expect(cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).rejects.toThrow('Paid order');
+   await tx.order.update({where:{id},data:{isPaid:false}});
+   expect(await cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).toMatchObject({cancelled:true,replayed:false});expect(await cancelUnattemptedSupplierOrderTx(tx,{orderId:id,userId})).toMatchObject({cancelled:true,replayed:true});
+   expect(await tx.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "lineKey"=${line.lineKey}`).toEqual([{availableQty:2}]);
+   await expect(validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs})).rejects.toThrow('Exact supplier allocation required');
+   throw rollback;
+  })).rejects.toBe(rollback);
+ });
+
+ it('customer cancellation action authenticates the owner and restores an unattempted allocation once',async()=>{
+  const carts=await prisma.$queryRaw<{id:string}[]>`INSERT INTO "RetailCart"("userId",lines,"destinationCountry","destinationPostal") VALUES(${userId}::uuid,${JSON.stringify([line])}::jsonb,'US','10001') RETURNING id`;
+  const id=await prisma.$transaction(tx=>prepareSupplierBoundOrderTx(tx,{userId,cartId:carts[0].id,reviewToken:retailCartReviewToken({lines:[line],destinationCountry:'US',destinationPostal:'10001'}),idempotencyKey:randomUUID(),now,maxAgeMs,approvedShippingCents:0,approvedTaxCents:0,commercialTermsSource:'LOCAL CANCEL ACTION FIXTURE'}));
+  mockAuth.mockResolvedValue(null);expect((await cancelMyUnattemptedSupplierOrder(id)).success).toBe(false);
+  mockAuth.mockResolvedValue({user:{id:randomUUID(),role:'admin'}});expect((await cancelMyUnattemptedSupplierOrder(id)).success).toBe(false);
+  mockAuth.mockResolvedValue({user:{id:userId,role:'user'}});expect((await cancelMyUnattemptedSupplierOrder(id)).success).toBe(true);expect((await cancelMyUnattemptedSupplierOrder(id)).success).toBe(true);
+  expect(await prisma.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "lineKey"=${line.lineKey}`).toEqual([{availableQty:2}]);
+  expect((await prisma.order.findUniqueOrThrow({where:{id}})).paymentNote).toContain('SUPPLIER_ORDER_CANCELLED');
+  await prisma.$executeRaw`DELETE FROM "RetailCart" WHERE id=${carts[0].id}::uuid`;
  });
 
  it('atomically binds a customer-selected cart, reserves the exact option and replays one order',async()=>{

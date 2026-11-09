@@ -1,5 +1,6 @@
 'use server';
 import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/supplier-order-plan';
+import {cancelUnattemptedSupplierOrderTx} from '@/lib/supplier-order-cancellation';
 import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
@@ -740,4 +741,13 @@ export async function deliverOrderTest(orderId: string) {
     if (isRedirectError(error)) throw error;
     return { success: false, message: formatError(error) };
   }
+}
+
+/** Owner cancellation of an internal, unpaid and never-attempted order only.
+ * The transaction independently checks every condition. No provider call. */
+export async function cancelMyUnattemptedSupplierOrder(orderId:string){
+ const session=await auth();
+ if(!session?.user?.id||typeof orderId!=='string'||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId))return{success:false as const};
+ try{await prisma.$transaction(tx=>cancelUnattemptedSupplierOrderTx(tx,{orderId,userId:session.user!.id!}));revalidatePath('/order/'+orderId);revalidatePath('/user/orders');return{success:true as const}}
+ catch{return{success:false as const}}
 }

@@ -20,6 +20,8 @@ export const signUpDefaultValues = {
 };
 
 export const shippingAddressDefaultValues = {
+  state: '',
+  phone: '',
   fullName: '',
   streetAddress: '',
   city: '',

@@ -35,6 +35,7 @@ const OrderDetailsPage = async (props: {
       }}
       stripeClientSecret={client_secret}
       paypalClientId={process.env.PAYPAL_CLIENT_ID || 'sb'}
+      cancellationOffered={!!order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')&&!order.paymentNote?.includes('SUPPLIER_ORDER_CANCELLED')&&!order.isPaid&&order.paymentResult===null}
       isAdmin={session?.user?.role === 'admin' || false}
     />
   );
