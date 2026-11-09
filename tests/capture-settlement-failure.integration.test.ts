@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * Capture -> settlement failure regression through the REAL approvePayPalOrder orchestration.
  * PayPal is mocked (a COMPLETED capture, no network); the DB is a disposable Postgres with insufficient stock so the paid transaction fails for real. Asserts: the buyer sees an error, the order
@@ -6,7 +7,7 @@
  * DATABASE_URL (explicit opt-in to a disposable DB).
  */
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB && process.env.DATABASE_URL === DB && !DB.includes('supabase') ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 
 const mockAuth = jest.fn();
 const mockCapture = jest.fn();

@@ -11,6 +11,20 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable_local_ci_only
+          POSTGRES_DB: omnistu_test_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d omnistu_test_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,7 +35,16 @@ jobs:
       - run: npx prisma generate
       - run: npx tsc --noEmit
       - run: node --test scripts/lib/*.test.mjs
-      - run: npx jest
+      - name: Apply migrations to disposable local CI database only
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:disposable_local_ci_only@localhost:5432/omnistu_test_ci?schema=public
+      - name: Unit and real local Postgres integration gates
+        run: npx jest --runInBand
+        env:
+          OMNISTU_LOCAL_DB_TEST: 'true'
+          DATABASE_URL: postgresql://postgres:disposable_local_ci_only@localhost:5432/omnistu_test_ci?schema=public
+          REFUND_ITEST_DATABASE_URL: postgresql://postgres:disposable_local_ci_only@localhost:5432/omnistu_test_ci?schema=public
       - run: npx next build
         env:
           # D13/D14: build must pass with zero secrets configured.

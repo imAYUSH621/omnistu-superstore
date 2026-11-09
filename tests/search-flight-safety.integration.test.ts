@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * REAL Postgres regression test for the /search Flight crash: raw groupBy
  * rows from getAllCategories carried the extended Prisma client's computed
@@ -8,9 +9,12 @@
  * Requires DATABASE_URL pointing at disposable Postgres. Skipped otherwise.
  */
 export {};
-const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
+const RUN = localDatabaseTestEnabled();
 
 (RUN ? describe : describe.skip)('search flight safety (real DB)', () => {
+  const slug='fxt-flight-local-'+Date.now();
+  beforeAll(async()=>{const {prisma}=await import('@/db/prisma');await prisma.product.create({data:{name:'Local flight fixture',slug,category:'Local flight fixture',description:'Disposable local only',images:[],stock:0,price:0}})});
+  afterAll(async()=>{const {prisma}=await import('@/db/prisma');await prisma.product.deleteMany({where:{slug}});await prisma.$disconnect()});
   it('getAllCategories returns plain JSON-safe rows on the real database', async () => {
     const { getAllCategories } = await import('@/lib/actions/product.actions');
     const rows = await getAllCategories();

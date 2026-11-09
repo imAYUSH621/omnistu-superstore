@@ -1,8 +1,9 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '@/db/prisma';
 import { bindRetailLine, type RetailSnapshot } from '@/lib/retail/snapshot';
 import { addQualifiedItem, readQualifiedCart, createQualifiedTestOrder, payQualifiedTestOrder, listQualifiedOptions, removeQualifiedItem } from '@/lib/retail/store';
-const RUN = process.env.QUALIFIED_RETAIL_NATIVE_TEST === 'true' && /^postgresql:\/\/[^@]+@127\.0\.0\.1:55444\/omnistu_test_qualified_release\?/.test(process.env.DATABASE_URL || '');
+const RUN = localDatabaseTestEnabled();
 (RUN ? describe : describe.skip)('ordinary Store qualified variant transaction integration', () => {
   let userId: string, otherId: string, productId: string;
   const offers: {lineKey:string;snapshotId:string;variantId:string}[] = [];

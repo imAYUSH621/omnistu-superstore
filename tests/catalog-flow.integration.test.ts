@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * REAL Postgres catalog flow (category -> list/search/filter/sort/pagination -> product page lookup).
  * Seeds its own deterministic fixture products (slug prefix "fxt-<run>") and removes only those.
@@ -12,7 +13,7 @@ import { prisma } from '@/db/prisma';
 import { getAllProducts, getAllCategories, getProductBySlug, getFeaturedProducts, getFacetCounts } from '@/lib/actions/product.actions';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB && process.env.DATABASE_URL === DB ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 
 maybe('catalog flow on REAL Postgres (fixtures)', () => {
   const run = Date.now().toString(36);

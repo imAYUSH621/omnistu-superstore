@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled,localPsqlUrl} from './helpers/local-database';
 /**
  * REAL Postgres integration test for the paid transition (concurrency, replay, rollback).
  * Mocked boundaries: auth, outbound email, Supabase mirror sync, supplier dispatch, receipts,
@@ -26,13 +27,13 @@ import { enqueueFulfillmentTask } from '@/lib/fulfillment-queue';
 import { findPaidOrdersNeedingAttention, findPaidOrdersNeedingAttentionPage } from '@/lib/paid-reconciliation';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 
 function psql(sql: string) {
   const f = `/tmp/itest-${process.pid}-${Math.random().toString(36).slice(2)}.sql`;
   writeFileSync(f, sql);
   try {
-    execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -f ${f}`, { stdio: 'pipe' });
+    execSync(`psql "${localPsqlUrl()}" -v ON_ERROR_STOP=1 -f ${f}`, { stdio: 'pipe' });
   } finally {
     unlinkSync(f);
   }

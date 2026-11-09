@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /** Disposable local DB; provider fully mocked. No real Stripe call or credential. */
 const mockCreate = jest.fn(); const mockRetrieve = jest.fn();
 jest.mock('@/lib/payment-capabilities', () => ({ isPaymentMethodAvailable: () => true }));
@@ -5,7 +6,7 @@ jest.mock('stripe', () => ({ __esModule: true, default: jest.fn().mockImplementa
 import { prisma } from '@/db/prisma';
 import { stripeClientSecretForOrder } from '@/lib/stripe-intent';
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB && DB === process.env.DATABASE_URL && DB.includes('localhost') ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 maybe('Stripe intent durable binding on local Postgres', () => {
   let userId = '';
   beforeAll(async () => { userId = (await prisma.user.create({ data: { name: 'intent', email: `intent-${Date.now()}@example.test`, password: 'x' } })).id; });
