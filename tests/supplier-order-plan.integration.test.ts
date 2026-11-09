@@ -275,4 +275,20 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   }finally{for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
  });
 
+ it('hosted inherited defaults cannot grant review writing, publication or attempt erasure after scoped hardening',async()=>{
+  const rollback=Error('acl-fixture-rollback');await expect(prisma.$transaction(async tx=>{
+   await tx.$executeRawUnsafe(`DO $$BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app')THEN CREATE ROLE omnistu_app NOLOGIN NOSUPERUSER NOBYPASSRLS;END IF;END$$`);
+   const tables=['RetailQuote','RetailOffer','RetailCart','OrderSupplierPlan','OrderSupplierAllocation','OrderSupplierAttempt','ReviewedCheckoutTerms'];
+   for(const table of tables)await tx.$executeRawUnsafe('GRANT SELECT,INSERT,UPDATE,DELETE ON "'+table+'" TO omnistu_app');
+   await tx.$executeRawUnsafe('GRANT UPDATE (published) ON "RetailOffer" TO omnistu_app');
+   const before=await tx.$queryRaw`SELECT has_table_privilege('omnistu_app','"ReviewedCheckoutTerms"','INSERT') terms_write,has_column_privilege('omnistu_app','"RetailOffer"','published','UPDATE') publish`;
+   expect(before).toEqual([{terms_write:true,publish:true}]);
+   const coreBefore=await tx.$queryRaw`SELECT relacl::text FROM pg_class WHERE oid='"Order"'::regclass`;
+   const migration=readFileSync('prisma/migrations/20261109130000_scoped_runtime_privileges/migration.sql','utf8');await tx.$executeRawUnsafe(migration);await tx.$executeRawUnsafe(migration);
+   const after=await tx.$queryRaw`SELECT has_table_privilege('omnistu_app','"ReviewedCheckoutTerms"','SELECT') terms_read,has_table_privilege('omnistu_app','"ReviewedCheckoutTerms"','INSERT,UPDATE,DELETE') terms_write,has_column_privilege('omnistu_app','"RetailOffer"','published','UPDATE') publish,has_column_privilege('omnistu_app','"RetailOffer"','availableQty','UPDATE') stock,has_table_privilege('omnistu_app','"OrderSupplierAttempt"','DELETE') erase,has_table_privilege('omnistu_app','"OrderSupplierPlan"','UPDATE') rewrite`;
+   expect(after).toEqual([{terms_read:true,terms_write:false,publish:false,stock:true,erase:false,rewrite:false}]);expect(await tx.$queryRaw`SELECT relacl::text FROM pg_class WHERE oid='"Order"'::regclass`).toEqual(coreBefore);
+   throw rollback;
+  })).rejects.toThrow(rollback);
+ });
+
 });
