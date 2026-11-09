@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * Real Postgres test of the reset flow (request, consume, single use, expiry,
  * unknown email). Needs a disposable DATABASE_URL; skipped otherwise.
@@ -7,7 +8,7 @@ import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
+const RUN = localDatabaseTestEnabled();
 
 (RUN ? describe : describe.skip)('password reset (real DB)', () => {
   const email = `reset-${Date.now()}@example.test`;

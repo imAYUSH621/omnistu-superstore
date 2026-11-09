@@ -1,8 +1,9 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * Real Postgres test of the CAPTURED_UNSETTLED recorder (note kept, incident appended, idempotent,
  * paid orders untouched). Needs a disposable DATABASE_URL; skipped otherwise. No provider calls.
  */
-const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
+const RUN = localDatabaseTestEnabled();
 
 (RUN ? describe : describe.skip)('recordCapturedUnsettled (real DB)', () => {
   const email = `unsettled-${Date.now()}@example.test`;

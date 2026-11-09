@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled,localPsqlUrl} from './helpers/local-database';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
 import { execFileSync } from 'child_process';
 
@@ -11,8 +12,7 @@ it('uses the same explicit simulation exclusions in Prisma and SQL, preserving n
 
 // Optional actual SQL semantics, restricted to an explicitly supplied disposable
 // localhost database. It creates only a TEMP table in a rolled-back transaction.
-const url = process.env.REAL_SALES_ITEST_DATABASE_URL;
-const run = url && /^postgresql:\/\/[^@]+@(?:127\.0\.0\.1|localhost):/.test(url) ? test : test.skip;
+const run = localDatabaseTestEnabled()?test:test.skip;
 run('mixed real and simulated rows contribute only real paid amounts', () => {
   const sql = `BEGIN;
     CREATE TEMP TABLE sales_reference ("isPaid" boolean,"paymentMethod" text,"paymentNote" text,"dispatchStatus" text,"totalPrice" numeric);
@@ -25,6 +25,6 @@ run('mixed real and simulated rows contribute only real paid amounts', () => {
       (true,'Stripe',NULL,'TEST_ONLY',3000);
     SELECT COALESCE(sum("totalPrice"),0) FROM sales_reference WHERE ${realPaidOrderSql.sql};
     ROLLBACK;`;
-  const out = execFileSync('psql', ['-X','-At','-v','ON_ERROR_STOP=1','-d',url!], { input: sql, encoding: 'utf8' });
+  const out = execFileSync('psql', ['-X','-At','-v','ON_ERROR_STOP=1','-d',localPsqlUrl()], { input: sql, encoding: 'utf8' });
   expect(out.split('\n')).toContain('50');
 });

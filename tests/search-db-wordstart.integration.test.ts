@@ -4,16 +4,17 @@
  * Hermetic: the suite inserts its own fxt- fixture rows in beforeAll and
  * deletes them in afterAll, so it does not depend on any pre-existing
  * catalog content (standalone "Men" products) on the target database.
- * Catalog data itself is only read, never written.
+ * Uses only this explicitly opted-in disposable local database.
  */
 import { beforeAll, afterAll, describe, expect, test } from '@jest/globals';
-import { isDatabaseAvailable } from '../lib/utils';
+jest.mock('../lib/utils',()=>({...jest.requireActual('../lib/utils'),isDatabaseAvailable:()=>localDatabaseTestEnabled()}));
+import {localDatabaseTestEnabled} from './helpers/local-database';
 import { getAllProducts, getFacetCounts } from '../lib/actions/product.actions';
 import { prisma } from '../db/prisma';
 
-const db = isDatabaseAvailable() ? test : test.skip;
+const db = localDatabaseTestEnabled() ? test : test.skip;
 
-jest.setTimeout(30000); // remote dev DB round trips
+jest.setTimeout(30000); // bounded local database integration
 
 // fxt- rows are test fixtures (lib/test-fixture): visible to queries in a
 // test runtime, excluded from any production storefront by slug prefix.
@@ -39,14 +40,14 @@ const FIXTURES = [
 ];
 
 beforeAll(async () => {
-  if (!isDatabaseAvailable()) return;
+  if (!localDatabaseTestEnabled()) return;
   for (const p of FIXTURES) {
     await prisma.product.upsert({ where: { slug: p.slug }, update: {}, create: p });
   }
 });
 
 afterAll(async () => {
-  if (!isDatabaseAvailable()) return;
+  if (!localDatabaseTestEnabled()) return;
   await prisma.product.deleteMany({ where: { slug: { startsWith: 'fxt-' } } });
   await prisma.$disconnect();
 });

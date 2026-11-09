@@ -1,9 +1,10 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * Real Postgres test (disposable DB with the 20261102003000 migration applied).
  * Skipped without DATABASE_URL or when the tables are missing.
  */
 export {};
-const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('127.0.0.1');
+const RUN = localDatabaseTestEnabled();
 
 (RUN ? describe : describe.skip)('auth limits and session version (real DB)', () => {
   const key = `limit-${Date.now()}@example.test`;
@@ -11,7 +12,7 @@ const RUN = !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('12
   it('blocks after the maximum, isolates keys, and clears', async () => {
     const { hitLimit, clearLimit } = await import('@/lib/auth-limits');
     const first = await hitLimit('itest', key, 3, 60);
-    if (!first.available) return; // migration not applied on this DB: nothing to assert
+    expect(first.available).toBe(true); // Missing migration is a failure, never a silent pass.
     expect(first.allowed).toBe(true);
     expect((await hitLimit('itest', key, 3, 60)).allowed).toBe(true);
     expect((await hitLimit('itest', key, 3, 60)).allowed).toBe(true);

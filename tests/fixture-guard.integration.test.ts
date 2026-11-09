@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /**
  * REAL Postgres negative tests: fixture rows (fxt-/cjstg-) can never be added to a cart or ordered.
  * No payment provider, no email, no money. Requires REFUND_ITEST_DATABASE_URL = DATABASE_URL (disposable DB).
@@ -14,7 +15,7 @@ import { addItemToCart } from '@/lib/actions/cart.actions';
 import { createOrder } from '@/lib/actions/order.actions';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB && process.env.DATABASE_URL === DB ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 
 maybe('fixture guard on REAL Postgres', () => {
   const run = Date.now().toString(36);

@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled} from './helpers/local-database';
 /** Disposable local Postgres only. Stripe signature/event parser mocked, no provider/network/money. */
 const mockEvent = jest.fn();
 const mockSideEffect = jest.fn(async () => undefined);
@@ -11,7 +12,7 @@ import { prisma } from '@/db/prisma';
 import { POST } from '@/app/api/webhooks/stripe/route';
 import { NextRequest } from 'next/server';
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB && DB === process.env.DATABASE_URL && DB.includes('localhost') ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 const request = () => new NextRequest('https://omnistu.test/api/webhooks/stripe', { method: 'POST', body: '{}', headers: { 'stripe-signature': 'mocked' } });
 maybe('Stripe confirmed charge recovery with real disposable DB', () => {
   let userId = ''; let productId = ''; const ids: string[] = [];

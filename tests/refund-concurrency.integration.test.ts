@@ -1,3 +1,4 @@
+import {localDatabaseTestEnabled,localPsqlUrl} from './helpers/local-database';
 /**
  * REAL Postgres integration test for refund concurrency and transaction
  * durability (G3). Runs against the disposable sandbox database; the
@@ -33,13 +34,13 @@ import { prisma } from '@/db/prisma';
 import { requestReturn, reviewReturn } from '@/lib/actions/return.actions';
 
 const DB = process.env.REFUND_ITEST_DATABASE_URL;
-const maybe = DB ? describe : describe.skip;
+const maybe = localDatabaseTestEnabled()?describe:describe.skip;
 
 function psql(sql: string) {
   const f = `/tmp/itest-${process.pid}-${Math.random().toString(36).slice(2)}.sql`;
   writeFileSync(f, sql);
   try {
-    execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -f ${f}`, { stdio: 'pipe' });
+    execSync(`psql "${localPsqlUrl()}" -v ON_ERROR_STOP=1 -f ${f}`, { stdio: 'pipe' });
   } finally {
     unlinkSync(f);
   }
