@@ -1,4 +1,6 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{PRODUCT_COPY,productText}from '@/lib/product-language';
 
 import { useState, useTransition } from 'react';
 import { isTestFixtureSlug, isTestCatalogSlug } from '@/lib/test-fixture';
@@ -18,10 +20,8 @@ import {
 import {
   ShoppingCart,
   Zap,
-  ShieldCheck,
   RotateCcw,
   Lock,
-  Heart,
   Loader2,
   CheckCircle2,
 } from 'lucide-react';
@@ -40,9 +40,9 @@ export default function BuyBox({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const language=useStoreLanguage();const t=PRODUCT_COPY[language];
   const [qty, setQty] = useState(1);
   const [isPending, startTransition] = useTransition();
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const itemInCart = cart?.items.find((x) => x.productId === product.id);
 
   const priceNum = Number(product.price);
@@ -90,7 +90,7 @@ export default function BuyBox({
             <div className='flex items-center gap-2'>
               <CheckCircle2 className='w-5 h-5 text-emerald-600' />
               <span>
-                Added {qty}x <strong>{product.name.slice(0, 30)}...</strong> to cart!
+                {t.addedCart}: {qty} × <strong>{product.name}</strong>
               </span>
             </div>
           ),
@@ -104,10 +104,10 @@ export default function BuyBox({
       <Card className='border border-red-300 shadow-md rounded-xl bg-card text-card-foreground'>
         <CardContent className='p-5 space-y-3'>
           <div className='rounded-md border border-red-300 bg-red-50 px-3 py-2.5 text-sm font-bold text-red-900' data-testid='test-fixture-note'>
-            TEST FIXTURE - not for sale
+            {t.fixture}
           </div>
           <p className='text-xs text-muted-foreground'>
-            Reference only: supplier cost ${priceNum.toFixed(2)} (not a retail price). Supplier warehouse stock total {product.stock} (not an availability promise). No checkout is available for this item.
+            {productText(language,'fixtureDetail',{cost:priceNum.toFixed(2),stock:product.stock})}
           </p>
         </CardContent>
       </Card>
@@ -134,7 +134,7 @@ export default function BuyBox({
         <div>
           {product.stock > 0 ? (
             <p className='text-emerald-600 dark:text-emerald-400 font-semibold text-base flex items-center gap-1.5'>
-              <CheckCircle2 className='w-5 h-5' /> Demo item - test mode checkout only
+              <CheckCircle2 className='w-5 h-5' /> {t.demoCheckout}
             </p>
           ) : (
             <p className='text-destructive font-semibold text-base'>
@@ -147,14 +147,14 @@ export default function BuyBox({
         {product.stock > 0 && (
           <div className='space-y-1.5'>
             <label className='text-xs font-medium text-muted-foreground flex items-center justify-between'>
-              <span>Quantity:</span>
-              {itemInCart && <span className='text-[11px] text-primary font-normal'>{itemInCart.qty} in cart</span>}
+              <span>{t.quantity}:</span>
+              {itemInCart && <span className='text-[11px] text-primary font-normal'>{productText(language,'inCart',{qty:itemInCart.qty})}</span>}
             </label>
             <Select
               value={String(qty)}
               onValueChange={(val) => setQty(Number(val))}
             >
-              <SelectTrigger className='w-full bg-background border-neutral-300 dark:border-neutral-700 h-9'>
+              <SelectTrigger aria-label={t.quantity} className='w-full bg-background border-neutral-300 dark:border-neutral-700 h-9'>
                 <SelectValue placeholder='1' />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +162,7 @@ export default function BuyBox({
                   { length: Math.min(10, Math.max(1, product.stock)) },
                   (_, i) => (
                     <SelectItem key={i + 1} value={String(i + 1)}>
-                      {i + 1} {i === 0 ? '(Single item)' : `items ($${(priceNum * (i + 1)).toFixed(2)})`}
+                      {i===0?t.single:productText(language,'items',{qty:i+1,cost:(priceNum*(i+1)).toFixed(2)})}
                     </SelectItem>
                   )
                 )}
@@ -181,12 +181,7 @@ export default function BuyBox({
         )}
         {isTestCatalogSlug(product.slug) && (
           <div className='rounded-md border border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-700 px-3 py-2.5 text-xs text-sky-900 dark:text-sky-200' data-testid='test-catalog-note'>
-            TEST CATALOG - real supplier (CJ) data imported for testing. Price is supplier cost plus a demo markup, not a retail offer. Images and product claims are unverified. Orders are simulated: no real payment and no real shipment.
-          </div>
-        )}
-        {isTestFixtureSlug(product.slug) && (
-          <div className='rounded-md border border-red-300 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-900' data-testid='test-fixture-note'>
-            TEST FIXTURE - not for sale. Price shown is a supplier cost and stock is a supplier warehouse total, not a retail offer.
+            {t.testCatalog}
           </div>
         )}
         {product.stock > 0 && !product.id.startsWith('sample-') && !isTestFixtureSlug(product.slug) && (!isTestCatalogSlug(product.slug) || testMode) && (
@@ -227,54 +222,29 @@ export default function BuyBox({
 
         {/* Enterprise Trust Table */}
         <div className='border-t border-neutral-200 dark:border-neutral-800 pt-3 text-xs space-y-1.5 text-muted-foreground'>
-          <div className='flex justify-between py-0.5'>
+          <div className='flex flex-wrap justify-between gap-2 py-0.5'>
             <span><T k='shipsFrom' /></span>
-            <span className='font-medium text-foreground'>Demo - no real fulfillment</span>
+            <span className='font-medium text-foreground'>{t.noFulfillment}</span>
           </div>
-          <div className='flex justify-between py-0.5'>
+          <div className='flex flex-wrap justify-between gap-2 py-0.5'>
             <span><T k='soldBy' /></span>
-            <span className='font-medium text-foreground'>Demo catalog (sample data)</span>
+            <span className='font-medium text-foreground'>{t.sampleSeller}</span>
           </div>
-          <div className='flex justify-between py-0.5'>
+          <div className='flex flex-wrap justify-between gap-2 py-0.5'>
             <span><T k='returnsLabel' /></span>
             <span className='font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1'>
               <RotateCcw className='w-3 h-3' /> <T k='refundPolicyDraft' />
             </span>
           </div>
-          <div className='flex justify-between py-0.5'>
+          <div className='flex flex-wrap justify-between gap-2 py-0.5'>
             <span><T k='paymentLabel' /></span>
             <span className='font-medium text-foreground flex items-center gap-1'>
-              <Lock className='w-3 h-3 text-neutral-500' /> {testMode ? 'Simulated payment (test mode) - no card is charged.' : <T k='securePaymentNote' />}
+              <Lock className='w-3 h-3 text-neutral-500' /> {testMode ? t.simulated : t.paymentOff}
             </span>
           </div>
         </div>
 
-        {/* Secondary Wishlist / Gift Row */}
-        <div className='pt-2 flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 text-xs text-muted-foreground'>
-          <button
-            type='button'
-            onClick={() => {
-              setIsWishlisted(!isWishlisted);
-              toast({
-                description: isWishlisted
-                  ? 'Removed from your Wishlist'
-                  : 'Added to your Wishlist!',
-              });
-            }}
-            className='flex items-center gap-1 hover:text-foreground transition'
-          >
-            <Heart
-              className={`w-3.5 h-3.5 ${
-                isWishlisted ? 'text-red-500 fill-red-500' : ''
-              }`}
-            />
-            <span>{isWishlisted ? <T k='inWishlist' /> : <T k='addToWishlist' />}</span>
-          </button>
-          <div className='flex items-center gap-1'>
-            <ShieldCheck className='w-3.5 h-3.5 text-emerald-600' />
-            <span><T k='buyerProtection' /></span>
-          </div>
-        </div>
+
       </CardContent>
     </Card>
   );

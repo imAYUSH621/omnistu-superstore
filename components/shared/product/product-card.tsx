@@ -1,6 +1,9 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{PRODUCT_COPY,productText}from '@/lib/product-language';
+import{homeDepartment}from '@/lib/home-language';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
 import Link from 'next/link';
 import LocalizedPrice from '@/components/shared/localized-price';
@@ -9,14 +12,14 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types';
 import Rating from './rating';
-import { ShoppingCart, Heart, Loader2 } from 'lucide-react';
+import { ShoppingCart, Loader2 } from 'lucide-react';
 import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { toast } = useToast();
+  const language=useStoreLanguage();const t=PRODUCT_COPY[language];
   const [isPending, startTransition] = useTransition();
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const priceNum = Number(product.price);
   const isFixture = isTestFixtureSlug(product.slug);
@@ -66,34 +69,11 @@ const ProductCard = ({ product }: { product: Product }) => {
       <div className='absolute top-2.5 left-2.5 z-10 flex flex-col gap-1'>
         {product.isFeatured && (
           <span className='bg-indigo-600 text-white font-bold text-[11px] px-2 py-0.5 rounded shadow-sm'>
-            Featured
+            {t.featured}
           </span>
         )}
       </div>
 
-      {/* Wishlist Button */}
-      <button
-        type='button'
-        onClick={(e) => {
-          e.preventDefault();
-          setIsWishlisted(!isWishlisted);
-          toast({
-            description: isWishlisted
-              ? 'Removed from your Wishlist'
-              : 'Added to your Wishlist!',
-          });
-        }}
-        className='absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white/90 dark:bg-neutral-900/90 shadow-sm flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:text-red-500 transition'
-        aria-label='Save to Wishlist'
-      >
-        <Heart
-          className={`w-4 h-4 ${
-            isWishlisted ? 'text-red-500 fill-red-500' : ''
-          }`}
-        />
-      </button>
-
-      {/* Product Image */}
       <CardHeader className='p-0 overflow-hidden bg-neutral-50 dark:bg-neutral-900/50 aspect-square flex items-center justify-center relative'>
         <Link href={`/product/${product.slug}`} className='w-full h-full relative'>
           <ProductImage
@@ -105,7 +85,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           />
           {isFixture && (
             <span className='absolute bottom-0 left-0 right-0 bg-red-700/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white' data-testid='placeholder-image-label'>
-              Placeholder image - not a photo of this product
+              {t.placeholder}
             </span>
           )}
         </Link>
@@ -116,8 +96,8 @@ const ProductCard = ({ product }: { product: Product }) => {
         <div className='space-y-1.5'>
           <div className='flex items-center justify-between text-[11px] text-muted-foreground uppercase tracking-wider font-semibold'>
             <span>{product.brand ?? ''}</span>
-            {isFixture && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>TEST FIXTURE</span>}
-            <span className='truncate max-w-[120px]'>{product.category}</span>
+            {isFixture && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>{t.fixture}</span>}
+            <span className='truncate max-w-[120px]'>{homeDepartment(product.category,language)}</span>
           </div>
 
           <Link href={`/product/${product.slug}`} className='group-hover:text-primary transition'>
@@ -135,7 +115,7 @@ const ProductCard = ({ product }: { product: Product }) => {
               </span>
             </div>
           ) : (
-            <p className='text-xs text-muted-foreground pt-0.5'>No reviews yet</p>
+            <p className='text-xs text-muted-foreground pt-0.5'>{t.noReviews}</p>
           )}
         </div>
 
@@ -143,7 +123,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         <div className='space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800/80'>
           {isFixture ? (
             <p className='text-xs text-red-900' data-testid='fixture-card-cost'>
-              <span className='font-bold'>Reference only</span> - supplier cost ${priceNum.toFixed(2)}, not a sale price
+              {productText(language,'reference',{cost:priceNum.toFixed(2)})}
             </p>
           ) : (
           <div className='flex items-baseline gap-2'>
@@ -157,7 +137,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 
           {/* Quick Add To Cart Button */}
           {isFixture ? (
-            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>Test fixture - not for sale</p>
+            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>{t.fixture}</p>
           ) : product.stock > 0 ? (
             <Button
               type='button'
@@ -170,11 +150,11 @@ const ProductCard = ({ product }: { product: Product }) => {
               ) : (
                 <ShoppingCart className='w-3.5 h-3.5 mr-1.5' />
               )}
-              Quick Add
+              {t.quickAdd}
             </Button>
           ) : (
             <p className='text-xs text-destructive font-semibold pt-1'>
-              Out Of Stock
+              {t.outOfStock}
             </p>
           )}
         </div>
