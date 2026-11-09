@@ -1,7 +1,7 @@
 import{SHOPPING_HELP,shoppingHelpIntent}from './store-shopping-help';
 import{CATALOG_UNAVAILABLE}from './catalog-retrieval-language';
 import{homeDepartment}from './home-language';
-import {workflowIntent,workflowAnswer,type WorkflowIntent} from './store-workflow-help';
+import {WORKFLOW_HELP,workflowIntent,workflowAnswer,type WorkflowIntent} from './store-workflow-help';
 import { findProductsState } from './chat';
 import { getAllCategoriesState } from './actions/product.actions';
 import { testCheckoutMode, ordersEnabled } from './payment-capabilities';
@@ -23,21 +23,30 @@ export function supportIntent(text:string):SupportIntent {
  if (/^(hi|hello|hey|namaste|hola|bonjour|salut|hallo|guten tag|नमस्ते|नमस्कार|こんにちは|おはよう)[!?.।\s]*$/u.test(q.trim())) return 'greeting';
  return 'product';
 }
-/** Public facts only. Never retrieves orders, calls a model, sends mail or changes an account. */
-export async function groundedSupportAnswer(text: string, preferredLanguage?: string): Promise<string> {
- const copy=SUPPORT_COPY[supportLanguage(text,preferredLanguage)],label=copy.label+'\n';
- const intent=supportIntent(text);
- if(intent==='policy')return label+copy.policy;
- if(intent==='cart'||intent==='address'||intent==='checkout')return label+SHOPPING_HELP[intent].copy[supportLanguage(text,preferredLanguage)]+(intent==='checkout'?'\n'+(testCheckoutMode()?copy.test:!ordersEnabled()?copy.closed:copy.payment):'');
- if(['account','recovery','locale','enquiries'].includes(intent))return label+workflowAnswer(intent as WorkflowIntent,supportLanguage(text,preferredLanguage));
- if(intent==='order')return label+copy.order;
- if(intent==='contact')return label+copy.contact;
- if(intent==='payment')return label+(testCheckoutMode()?copy.test:!ordersEnabled()?copy.closed:copy.payment);
- if(intent==='shipping')return label+copy.shipping;
- if(intent==='greeting')return label+copy.greeting;
+export type StoreHelpResult={intent:SupportIntent;language:ReturnType<typeof supportLanguage>;status:'available'|'unavailable';sources:string[];answer:string;catalogData?:string};
+/** One bounded retrieval contract for public help and the optional model path.
+ * Static workflow text is application-owned; catalogData is untrusted stored data.
+ * Neither branch reads private cart/address/orders/enquiries or executes effects. */
+export async function retrieveStoreHelp(text:string,preferredLanguage?:string):Promise<StoreHelpResult>{
+ const language=supportLanguage(text,preferredLanguage),copy=SUPPORT_COPY[language],intent=supportIntent(text);
+ const result=(body:string,sources:string[],status:StoreHelpResult['status']='available',catalogData?:string):StoreHelpResult=>({intent,language,status,sources,answer:copy.label+'\n'+body,...(catalogData!==undefined?{catalogData}:{})});
+ const payment=testCheckoutMode()?copy.test:!ordersEnabled()?copy.closed:copy.payment;
+ if(intent==='policy')return result(copy.policy,['/contact']);
+ if(intent==='cart'||intent==='address'||intent==='checkout')return result(SHOPPING_HELP[intent].copy[language]+(intent==='checkout'?'\n'+payment:''),SHOPPING_HELP[intent].sources);
+ if(intent==='account'||intent==='recovery'||intent==='locale'||intent==='enquiries')return result(workflowAnswer(intent,language),WORKFLOW_HELP[intent].sources);
+ if(intent==='order')return result(copy.order,['/user/orders','/contact']);
+ if(intent==='contact')return result(copy.contact,['/contact']);
+ if(intent==='payment')return result(payment,['/payment-method']);
+ if(intent==='shipping')return result(copy.shipping,['/contact']);
+ if(intent==='greeting')return result(copy.greeting,['/search','/user/orders','/contact']);
  if(intent==='categories'){
-  try { const state=await getAllCategoriesState();if(state.status==='unavailable')return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)];const categories=state.categories;if(categories.length)return label+copy.categories+' '+categories.map(c=>`${homeDepartment(c.category,supportLanguage(text,preferredLanguage))} (${c._count})`).join(', ')+'. '+copy.categoryEnd; } catch { return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)]; }
-  return label+copy.noCategories;
+  try{const state=await getAllCategoriesState();if(state.status==='unavailable')return result(CATALOG_UNAVAILABLE[language],['/search','/contact'],'unavailable');
+   return result(state.categories.length?copy.categories+' '+state.categories.map(c=>`${homeDepartment(c.category,language)} (${c._count})`).join(', ')+'. '+copy.categoryEnd:copy.noCategories,['/search']);
+  }catch{return result(CATALOG_UNAVAILABLE[language],['/search','/contact'],'unavailable')}
  }
- try{const state=await findProductsState(text);if(state.status==='unavailable')return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)];return state.products?label+copy.matches+'\n'+state.products+'\n'+copy.productEnd:label+copy.noProduct}catch{return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)]}
+ try{const state=await findProductsState(text);if(state.status==='unavailable')return result(CATALOG_UNAVAILABLE[language],['/search','/contact'],'unavailable');
+  return result(state.products?copy.matches+'\n'+state.products+'\n'+copy.productEnd:copy.noProduct,['/search','/contact'], 'available',state.products);
+ }catch{return result(CATALOG_UNAVAILABLE[language],['/search','/contact'],'unavailable')}
 }
+/** Compatibility answer surface backed by the same source-mapped retrieval. */
+export async function groundedSupportAnswer(text:string,preferredLanguage?:string):Promise<string>{return(await retrieveStoreHelp(text,preferredLanguage)).answer}

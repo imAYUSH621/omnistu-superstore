@@ -1,3 +1,5 @@
+// Legacy compatibility knowledge index, not used by the chat route.
+// Current routing and optional model input share retrieveStoreHelp instead.
 // Store knowledge for the shopping assistant.
 //
 // Only verified, operative facts live here: things that are true about how the
