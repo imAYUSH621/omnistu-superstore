@@ -1,17 +1,14 @@
 import { requestSupportLanguage } from '@/lib/support-language';
-import { groundedSupportAnswer } from '@/lib/grounded-support';
+import { groundedSupportAnswer, retrieveStoreHelp } from '@/lib/grounded-support';
 import {
   MAX_MESSAGES,
   MAX_CHARS,
   PROVIDERS,
   ChatMessage,
   limited,
-  findProducts,
-  lookupOrder,
   SYSTEM_PROMPT,
-  deterministicTestAnswer,
 } from '@/lib/chat';
-import { findStoreKnowledge } from '@/lib/store-knowledge';
+import{buildStoreModelContext,storeModelEnabled}from '@/lib/store-model-context';
 
 export async function POST(req: Request): Promise<Response> {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
@@ -31,39 +28,25 @@ export async function POST(req: Request): Promise<Response> {
 
   if (!body || typeof body !== 'object' || !Array.isArray(body.messages)) return new Response('Invalid messages', { status: 400 });
 
-  if (!apiKey) {
-    // Deterministic grounded TEST mode: rule-based answers over live store
-    // data, clearly labeled, nothing sent to any external model. Explicit
-    // opt-in via ASSISTANT_TEST_MODE; otherwise public grounded help below uses no external model.
-    if (process.env.ASSISTANT_TEST_MODE === 'true') {
-      const raw = (body.messages ?? [])
-        .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-        .slice(-MAX_MESSAGES)
-        .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) }));
-      const lastTestUser = [...raw].reverse().find((m) => m.role === 'user');
-      if (!lastTestUser) return new Response('No message', { status: 400 });
-      const answer = await deterministicTestAnswer(lastTestUser.content);
-      return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-    }
-    const messages = Array.isArray(body.messages) ? body.messages : [];
-    const lastUser = [...messages].reverse().find(m => m?.role === 'user' && typeof m.content === 'string');
-    if (!lastUser) return new Response('No message', { status: 400 });
-    const answer = await groundedSupportAnswer(lastUser.content.slice(0, MAX_CHARS), requestSupportLanguage(req));
-    return new Response(answer, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
+  const rawMessages=body.messages.filter(m=>m&&(m.role==='user'||m.role==='assistant')&&typeof m.content==='string').slice(-MAX_MESSAGES).map(m=>({role:m.role,content:m.content.slice(0,MAX_CHARS)}));
+  const currentUser=[...rawMessages].reverse().find(m=>m.role==='user');
+  if(!currentUser)return new Response('No message',{status:400});
+  // A stored key or legacy test flag alone never activates an external model.
+  // Public, test and dormant-model paths use the same knowledge boundary.
+  if(!apiKey||!storeModelEnabled()){
+   const answer=await groundedSupportAnswer(currentUser.content,requestSupportLanguage(req));
+   return new Response(answer,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});
   }
 
-  const messages = (body.messages ?? [])
-    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-    .slice(-MAX_MESSAGES)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) }));
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-  if (!lastUser) return new Response('No message', { status: 400 });
+  const lastUser=currentUser;
 
-  const recentUserText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
-  const [products, order] = await Promise.all([findProducts(lastUser.content), lookupOrder(recentUserText)]);
-  const knowledge = findStoreKnowledge(recentUserText);
-
-  const system = `${SYSTEM_PROMPT}\n\nSTORE KNOWLEDGE:\n${knowledge || '(no store knowledge matched)'}\n\nPRODUCT CONTEXT:\n${products || '(no matching products found)'}\n\n${order}`;
+  const retrieval=await retrieveStoreHelp(lastUser.content,requestSupportLanguage(req));
+  // Policies, account/shopping workflows, empty and unavailable catalog reads
+  // are answered verbatim by the same application facts, never improvised.
+  if(retrieval.intent!=='product'||retrieval.status!=='available'||!retrieval.catalogData){
+   return new Response(retrieval.answer,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});
+  }
+  const system=SYSTEM_PROMPT+'\n'+buildStoreModelContext(retrieval);
 
   const upstream = await fetch(provider.url, {
     method: 'POST',
@@ -73,7 +56,7 @@ export async function POST(req: Request): Promise<Response> {
       stream: true,
       temperature: 0.3,
       max_tokens: 500,
-      messages: [{ role: 'system', content: system }, ...messages],
+      messages: [{ role: 'system', content: system }, {role:'user',content:lastUser.content}],
     }),
   });
 
