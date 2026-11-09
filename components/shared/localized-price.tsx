@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { convertPrice } from '@/lib/i18n';
 import { ratesDisclosure } from '@/lib/rates-disclosure';
+import{completeUsdRates,providerObservationValid,RATE_CACHE_MS}from '@/lib/rates-validation';
 
 export const SUPPORTED_CURRENCY_CODES = ['USD', 'INR', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'] as const;
 export type DisplayCurrency = (typeof SUPPORTED_CURRENCY_CODES)[number];
@@ -25,17 +26,17 @@ export interface RatesInfo {
   source: string | null;
 }
 let ratesPromise: Promise<RatesInfo | null> | null = null;
+let ratesLoadedAt=0;
 export function loadRatesInfo(): Promise<RatesInfo | null> {
-  if (!ratesPromise) {
-    ratesPromise = fetch('/api/rates')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) =>
-        d && d.success && d.rates
-          ? { rates: d.rates as Record<string, number>, source: (d.source as string) ?? null }
-          : null
-      )
-      .catch(() => null);
-  }
+  if(ratesPromise&&Date.now()-ratesLoadedAt>=0&&Date.now()-ratesLoadedAt<RATE_CACHE_MS)return ratesPromise;
+  ratesLoadedAt=Date.now();
+  ratesPromise=fetch('/api/rates',{cache:'no-store'})
+    .then(r=>r.ok?r.json():null).then(d=>{
+      const rates=completeUsdRates(d?.rates);
+      if(!d?.success||d.base!=='USD'||!rates||!['live_api','cache','env_override','default_safe'].includes(d.source))return null;
+      if(['live_api','cache'].includes(d.source)&&!providerObservationValid(d.timestamp))return null;
+      return{rates,source:d.source};
+    }).catch(()=>null);
   return ratesPromise;
 }
 
@@ -64,14 +65,16 @@ export default function LocalizedPrice({
 
   useEffect(() => {
     let cancelled = false;
+    let revision=0;
     const apply = async () => {
+      const current=++revision;
       const currency = readCurrencyPreference();
       if (currency === 'USD') {
         if (!cancelled) setDisplay(null);
         return;
       }
       const info = await loadRatesInfo();
-      if (cancelled) return;
+      if (cancelled||current!==revision) return;
       const { formatted } = convertPrice(safe, currency, info?.rates ?? undefined);
       const d = ratesDisclosure(info?.source);
       setDisplay({ formatted, approx: true, title: d.priceTitle, note: d.noteText });
@@ -79,9 +82,13 @@ export default function LocalizedPrice({
     apply();
     const onChange = () => apply();
     window.addEventListener('omnistu:currency-change', onChange);
+    window.addEventListener('focus', onChange);
+    const timer=window.setInterval(onChange,RATE_CACHE_MS);
     return () => {
       cancelled = true;
       window.removeEventListener('omnistu:currency-change', onChange);
+      window.removeEventListener('focus',onChange);
+      window.clearInterval(timer);
     };
   }, [safe]);
 

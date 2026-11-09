@@ -2,9 +2,9 @@ import { describe, expect, test } from '@jest/globals';
 import { ratesDisclosure } from '@/lib/rates-disclosure';
 
 describe('ratesDisclosure honesty copy', () => {
-  test('live_api and cache are labeled hourly live rates', () => {
-    expect(ratesDisclosure('live_api').ratesClause).toContain('hourly live rates');
-    expect(ratesDisclosure('cache').ratesClause).toContain('hourly live rates');
+  test('live_api and cache are labeled daily provider rates (checked hourly)', () => {
+    expect(ratesDisclosure('live_api').ratesClause).toContain('daily provider rates (checked hourly)');
+    expect(ratesDisclosure('cache').ratesClause).toContain('daily provider rates (checked hourly)');
     expect(ratesDisclosure('live_api').live).toBe(true);
     expect(ratesDisclosure('cache').live).toBe(true);
   });
@@ -38,7 +38,7 @@ describe('ratesDisclosure honesty copy', () => {
 describe('ratesDisclosure noteText', () => {
   it('states USD checkout and matches the source', () => {
     for (const s of ['live_api', 'cache'] as const) {
-      expect(ratesDisclosure(s).noteText).toContain('hourly live rates');
+      expect(ratesDisclosure(s).noteText).toContain('daily provider rates (checked hourly)');
       expect(ratesDisclosure(s).noteText).toContain('charged in USD');
     }
     for (const s of ['default_safe', 'env_override'] as const) {
