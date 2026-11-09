@@ -1,3 +1,10 @@
+const mockAuth=jest.fn();const mockCreatePayPal=jest.fn();const mockCapturePayPal=jest.fn();
+jest.mock('@/auth',()=>({auth:(...a:unknown[])=>mockAuth(...a)}));
+jest.mock('@/lib/payment-capabilities',()=>({isPaymentMethodAvailable:()=>true,testCheckoutMode:()=>false}));
+jest.mock('@/lib/paypal',()=>({paypal:{environment:'live',createOrder:(...a:unknown[])=>mockCreatePayPal(...a),capturePayment:(...a:unknown[])=>mockCapturePayPal(...a)}}));
+import {createPayPalOrder,approvePayPalOrder} from '@/lib/actions/order.actions';
+import {POST as operatorFulfillment} from '@/app/api/fulfillment/route';
+import {dispatchOrderFulfillment} from '@/lib/fulfillment-dispatcher';
 import {dispatchPersistedSupplierOrder,cjPayloadFromSupplierPlan} from '@/lib/bound-supplier-dispatch';
 import {prepareSupplierBoundOrderTx} from '@/lib/supplier-checkout-preparation';
 import {retailCartReviewToken} from '@/lib/retail/transactions';
@@ -70,8 +77,15 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   expect(await prisma.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "lineKey"=${line.lineKey}`).toEqual([{availableQty:1}]);
   const plan=await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId:ids[0],now,maxAgeMs}));expect(plan.lines[0].snapshot.providerVariantId).toBe('exact-variant');
   const before=await prisma.product.findUniqueOrThrow({where:{id:line.snapshot.productId}});
-  await prisma.order.update({where:{id:ids[0]},data:{paymentResult:{id:'synthetic-only',paypalEnv:'live'}}});
-  await updateOrderToPaid({orderId:ids[0],paymentResult:{id:'synthetic-only',status:'COMPLETED',pricePaid:'10.00',email_address:'test@example.invalid',paypalEnv:'sandbox'}});
+  mockAuth.mockResolvedValue({user:{id:userId,role:'user'}});mockCreatePayPal.mockResolvedValue({id:'PP_SYNTHETIC_PLAN'});
+  expect((await createPayPalOrder(ids[0])).success).toBe(true);expect((await createPayPalOrder(ids[0])).data).toBe('PP_SYNTHETIC_PLAN');expect(mockCreatePayPal).toHaveBeenCalledTimes(1);expect(mockCreatePayPal).toHaveBeenCalledWith(10);
+  await prisma.order.update({where:{id:ids[0]},data:{shippingAddress:{...shipping,streetAddress:'Changed after mock payment create'}}});
+  expect((await approvePayPalOrder(ids[0],{orderID:'PP_SYNTHETIC_PLAN'})).success).toBe(false);expect(mockCapturePayPal).not.toHaveBeenCalled();
+  await prisma.order.update({where:{id:ids[0]},data:{shippingAddress:shipping}});
+  expect((await approvePayPalOrder(ids[0],{orderID:'PP_WRONG_PLAN'})).success).toBe(false);expect(mockCapturePayPal).not.toHaveBeenCalled();
+  mockCapturePayPal.mockResolvedValue({id:'PP_SYNTHETIC_PLAN',status:'COMPLETED',purchase_units:[{payments:{captures:[{id:'CAP_SYNTHETIC_ONLY',status:'COMPLETED',amount:{value:'10.00',currency_code:'USD'}}]}}]});
+  expect((await approvePayPalOrder(ids[0],{orderID:'PP_SYNTHETIC_PLAN'})).success).toBe(true);expect(mockCapturePayPal).toHaveBeenCalledTimes(1);
+  expect((await approvePayPalOrder(ids[0],{orderID:'PP_SYNTHETIC_PLAN'})).success).toBe(false);expect(mockCapturePayPal).toHaveBeenCalledTimes(1);
   expect((await prisma.order.findUniqueOrThrow({where:{id:ids[0]}})).paymentResult).toMatchObject({paypalEnv:'live'});
   expect(await prisma.$queryRaw`SELECT state FROM "OrderSupplierAllocation" WHERE "orderId"=${ids[0]}::uuid`).toEqual([{state:'CONSUMED'}]);
   expect((await prisma.product.findUniqueOrThrow({where:{id:line.snapshot.productId}})).stock).toBe(before.stock);
@@ -83,8 +97,9 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   const calls:{url:string;body:Record<string,unknown>}[]=[];
   const fetcher=jest.spyOn(global,'fetch').mockImplementation(async(url,init)=>{calls.push({url:String(url),body:JSON.parse(String(init?.body))});return new Response(JSON.stringify(String(url).includes('getAccessToken')?{result:true,data:{accessToken:'synthetic-token'}}:{result:true,data:{orderId:'inert-supplier-order'}}),{status:200})});
   try{
-   const results=await Promise.all([1,2].map(()=>dispatchPersistedSupplierOrder(preparedOrderId)));
-   expect(results.map(r=>r.status).sort()).toEqual(['REVIEW_REQUIRED','SUPPLIER_ORDER_CREATED_UNPAID']);
+   mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});
+   const [automatic,operator]=await Promise.all([dispatchOrderFulfillment({id:preparedOrderId,orderitems:[],shippingAddress:{}}),operatorFulfillment(new Request('http://localhost/api/fulfillment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:preparedOrderId})}))]);
+   const operatorBody=await operator.json();expect([automatic.dispatches[0].status,operatorBody.receipt.status].sort()).toEqual(['REVIEW_REQUIRED','SUPPLIER_ORDER_CREATED_UNPAID']);expect(automatic.success).toBe(false);expect(automatic.dispatches[0].trackingNumber).toBeNull();
    const orders=calls.filter(c=>c.url.includes('createOrderV2'));expect(orders).toHaveLength(1);
    expect(orders[0].body).toMatchObject({orderNumber:preparedOrderId,fromCountryCode:'CN',storageId:'exact-warehouse',logisticName:'inert-method',shippingProvince:'NY',shippingCountryCode:'US',payType:3,products:[{vid:'exact-variant',quantity:1,storeLineItemId:line.lineKey}]});
    expect(JSON.stringify(orders[0].body)).not.toContain('CJYD223039801AZ');
