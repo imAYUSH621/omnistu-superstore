@@ -113,7 +113,7 @@ it('place-order failure is never silent: the form toasts the server message', ()
   // idempotency key and re-enabled the button with zero user feedback.
   const src = fs.readFileSync('app/(root)/place-order/place-order-form.tsx', 'utf8');
   expect(src).toContain("variant: 'destructive'");
-  expect(src).toContain('res.message');
+  expect(src).toContain('description: t.failed');
 });
 
 it('simulated tax and shipping are labeled as TEST estimates, never real rates', () => {
@@ -124,7 +124,8 @@ it('simulated tax and shipping are labeled as TEST estimates, never real rates',
   expect(require('@/lib/order-detail-language').ORDER_DETAIL_COPY.EN.testShippingRate).toBe('Simulated shipping (TEST estimate - not a real rate)');
   const page = fs.readFileSync('app/(root)/place-order/page.tsx', 'utf8');
   expect(page).toContain("data-testid='test-estimates-note'");
-  expect(page).toContain('not real tax or shipping rates');
+  expect(page).toContain("<RT name='testEstimates'/>");
+  expect(require('@/lib/review-language').REVIEW_COPY.EN.testEstimates).toContain('not real tax or shipping rates');
 });
 
 it('auth origin falls back to the deployment URL when no fixed public URL exists', () => {
