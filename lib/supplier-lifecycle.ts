@@ -15,9 +15,9 @@ export async function reconcileSupplierLifecycle(orderId:string){
   return {plan,supplierOrderId:attempts[0].supplierOrderId};
  });
  const key=process.env.CJ_API_KEY||process.env.FULFILLMENT_API_KEY;if(!key)throw Error('Supplier credentials unavailable');
- async function read(url:string,token:string){const r=await fetch(url,{headers:{'CJ-Access-Token':token},signal:AbortSignal.timeout(15000),cache:'no-store'});const body=await r.json();if(!r.ok||body.result!==true)throw Error('Supplier read unavailable; existing delivery unchanged');return body.data;}
+ async function read(url:string,token:string){const r=await fetch(url,{headers:{'CJ-Access-Token':token},signal:AbortSignal.timeout(15000),cache:'no-store',redirect:'error'});const body=await r.json();if(!r.ok||body.result!==true||(body.code!==undefined&&body.code!==200))throw Error('Supplier read unavailable; existing delivery unchanged');return body.data;}
  const auth=await fetch('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:key}),signal:AbortSignal.timeout(10000)});
- const token=await auth.json();if(!auth.ok||token.result!==true||typeof token.data?.accessToken!=='string'||!token.data.accessToken.trim())throw Error('Supplier authentication unavailable');
+ const token=await auth.json();if(!auth.ok||token.result!==true||(token.code!==undefined&&token.code!==200)||typeof token.data?.accessToken!=='string'||!token.data.accessToken.trim())throw Error('Supplier authentication unavailable');
  const detail=await read('https://developers.cjdropshipping.com/api2.0/v1/shopping/order/getOrderDetail?orderId='+encodeURIComponent(initial.supplierOrderId),token.data.accessToken);
  let tracking:unknown=null;
  if(detail?.orderStatus==='DELIVERED'){

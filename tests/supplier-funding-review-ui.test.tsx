@@ -1,0 +1,11 @@
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {readFileSync} from 'node:fs';
+jest.mock('@/lib/actions/supplier-funding.actions',()=>({prepareSupplierFundingReviewAction:jest.fn()}));
+import{SupplierFundingReviewPanel}from'@/components/shared/order/supplier-funding-review';
+import{supplierFundingQuote}from'@/lib/cj-funding-evidence';
+import{syntheticFundingParent}from'./helpers/cj-funding-fixture';
+it('OFF view states that customer payment does not fund supplier and provides no mutation button',()=>{const html=renderToStaticMarkup(<SupplierFundingReviewPanel enabled={false} state={null} quote={null}/>);expect(html).toContain('Customer payment does not fund the supplier');expect(html).toContain('not enabled');expect(html).not.toContain('<button')});
+it('UNKNOWN blocks another preparation and never provides a pay or retry button',()=>{const html=renderToStaticMarkup(<SupplierFundingReviewPanel enabled state='CONFIRM_UNKNOWN' quote={null}/>);expect(html).toContain('Automatic retries are blocked');expect(html).not.toContain('<button')});
+it('provider quote renders exact USD fields with unresolved expiry warning and no payment control',()=>{const quote=supplierFundingQuote(syntheticFundingParent('CJ'),'CJ','SHIP');const html=renderToStaticMarkup(<SupplierFundingReviewPanel enabled state='REVIEW_ONLY' quote={quote}/>);expect(html).toContain('USD 3.00');expect(html).toContain('USD 2.00');expect(html).toContain('not payment approval');expect(html).toContain('timezone has not been verified');expect(html).not.toContain('<button')});
+it('prepare control is distinct from spending and the real page keeps it admin-only for bound paid non-simulated orders',()=>{const html=renderToStaticMarkup(<SupplierFundingReviewPanel enabled state={null} quote={null}/>);expect(html).toContain('Prepare supplier cost review');const source=readFileSync('app/(root)/order/[id]/order-details-table.tsx','utf8');expect(source).toContain("isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')");expect(readFileSync('lib/order-detail-language.ts','utf8')).toContain("markDelivered:'Check supplier delivery'")});

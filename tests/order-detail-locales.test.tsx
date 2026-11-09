@@ -1,3 +1,4 @@
+jest.mock('@/lib/actions/supplier-funding.actions',()=>({prepareSupplierFundingReviewAction:jest.fn()}));
 import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 let mockLang:'EN'|'HI'|'ES'|'FR'|'DE'|'JA'='EN';jest.mock('@/hooks/use-store-language',()=>({useStoreLanguage:()=>mockLang}));
 jest.mock('@/hooks/use-toast',()=>({useToast:()=>({toast:jest.fn()})}));jest.mock('@/lib/actions/order.actions',()=>({}));jest.mock('@/lib/actions/return.actions',()=>({}));jest.mock('@/app/(root)/order/[id]/stripe-payment',()=>({__esModule:true,default:()=>null}));jest.mock('next/image',()=>({__esModule:true,default:()=>null}));
