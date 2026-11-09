@@ -1,4 +1,5 @@
 'use server';
+import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/supplier-order-plan';
 import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
@@ -271,6 +272,7 @@ export async function createPayPalOrder(orderId: string) {
       if (order.isPaid) throw new Error('Order is already paid');
       if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
       if (needsPaymentReview(order.paymentNote)) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      if(requiresSupplierOrderPlan(order))await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}));
       const stored = order.paymentResult as PaymentResult | null;
       if (stored?.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
       {
@@ -342,6 +344,7 @@ export async function approvePayPalOrder(
 
     if (order.isPaid) throw new Error('Order is already paid');
     if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
+    if(requiresSupplierOrderPlan(order))await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}));
     const stored = order.paymentResult as PaymentResult | null;
     if (typeof data?.orderID !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(data.orderID) || !stored?.id || data.orderID !== stored.id) {
       throw new Error('Payment order does not match this order');
