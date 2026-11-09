@@ -220,8 +220,8 @@ const OrderDetailsTable = ({
         dispatchedAt={dispatchedAt}
       />}
 
-      <div className='grid md:grid-cols-3 md:gap-5'>
-        <div className='col-span-2 space-y-4 overflow-x-auto'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5'>
+        <div className='md:col-span-2 min-w-0 space-y-4 overflow-x-auto'>
           <Card>
             <CardContent className='p-4 gap-4'>
               <h2 className='text-xl pb-4 font-bold'><T k='paymentMethod' /></h2>
@@ -277,7 +277,7 @@ const OrderDetailsTable = ({
                 </TableHeader>
                 <TableBody>
                   {orderitems.map((item) => (
-                    <TableRow key={`${item.slug}:${item.name}`}>
+                    <TableRow key={item.lineKey||`${item.slug}:${item.name}`}>
                       <TableCell>
                         <Link
                           href={`/product/${item.slug}`}
@@ -334,7 +334,7 @@ const OrderDetailsTable = ({
                   {Number(shippingPrice) === 0 ? copy.free : formatCurrency(shippingPrice)}
                 </span>
               </div>
-              <div className='flex justify-between text-base font-extrabold pt-2 border-t'>
+              <div className='flex flex-wrap justify-between gap-x-3 gap-y-1 text-base font-extrabold pt-2 border-t'>
                 <span><T k='totalLabel' /> (USD)</span>
                 <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>

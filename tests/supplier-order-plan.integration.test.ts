@@ -33,7 +33,7 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   line=bindRetailLine(s,1,now,maxAgeMs);
   await prisma.$executeRaw`INSERT INTO "RetailQuote"("lineKey","snapshotId",snapshot,"productId","variantId") VALUES(${line.lineKey},${line.snapshotId},${JSON.stringify(s)}::jsonb,${p.id}::uuid,${v.id}::uuid)`;
   await prisma.$executeRaw`INSERT INTO "RetailOffer"("lineKey","snapshotId",snapshot,"productId","variantId","availableQty",published) VALUES(${line.lineKey},${line.snapshotId},${JSON.stringify(s)}::jsonb,${p.id}::uuid,${v.id}::uuid,2,true)`;
-  orderId=(await prisma.order.create({data:{userId,shippingAddress:shipping,paymentMethod:'PayPal',itemsPrice:10,shippingPrice:0,taxPrice:0,totalPrice:10,orderitems:{create:{productId:p.id,qty:1,price:10,name:p.name,slug:p.slug,image:''}}}})).id;
+  orderId=(await prisma.order.create({data:{userId,shippingAddress:shipping,paymentMethod:'PayPal',itemsPrice:10,shippingPrice:0,taxPrice:0,totalPrice:10,orderitems:{create:{lineKey:line.lineKey,productId:p.id,qty:1,price:10,name:p.name,slug:p.slug,image:''}}}})).id;
  });
  afterAll(async()=>{await prisma.$disconnect()});
  const bind=()=>prisma.$transaction(tx=>persistSupplierOrderPlanTx(tx,{orderId,userId,lines:[line],now,maxAgeMs,commercialTermsSource:'LOCAL TEST ONLY'}));
@@ -194,6 +194,44 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   await updateOrderToPaid({orderId:id});process.env.FULFILLMENT_DISPATCH_ENABLED='true';process.env.CJ_API_KEY='synthetic-key';
   let submits=0;const fetcher=jest.spyOn(global,'fetch').mockImplementation(async(url)=>{if(String(url).includes('getAccessToken'))return new Response(JSON.stringify({result:true,data:{accessToken:'synthetic'}}));submits++;throw Error('synthetic transport timeout')});
   try{expect((await dispatchPersistedSupplierOrder(id)).status).toBe('REVIEW_REQUIRED');expect((await dispatchPersistedSupplierOrder(id)).status).toBe('REVIEW_REQUIRED');expect(submits).toBe(1);expect(await prisma.$queryRaw`SELECT state FROM "OrderSupplierAttempt" WHERE "orderId"=${id}::uuid`).toEqual([{state:'UNKNOWN'}])}finally{fetcher.mockRestore();process.env.FULFILLMENT_DISPATCH_ENABLED='false';delete process.env.CJ_API_KEY}
+ });
+
+
+ it('retains an existing pre-line-key approval without guessing a new variant or rewriting its evidence',async()=>{
+  const rollback=Error('legacy-binding-fixture');await expect(prisma.$transaction(async tx=>{
+   const source=await loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now,maxAgeMs});
+   const legacyOrder=await tx.order.create({data:{userId,shippingAddress:shipping,paymentMethod:'PayPal',itemsPrice:10,shippingPrice:0,taxPrice:0,totalPrice:10,orderitems:{create:{productId:line.snapshot.productId,name:'Existing legacy option',slug:'legacy-option',image:'',qty:1,price:10}}}});
+   const {orderLineIdentity,shippingCents,taxCents,...priorShape}=source;void orderLineIdentity;void shippingCents;void taxCents;
+   const priorPlan={...priorShape,orderId:legacyOrder.id};const {supplierPlanDigest}=await import('@/lib/supplier-order-plan');
+   await tx.$executeRaw`INSERT INTO "OrderSupplierPlan"("orderId",digest,plan) VALUES(${legacyOrder.id}::uuid,${supplierPlanDigest(priorPlan as never)},${JSON.stringify(priorPlan)}::jsonb)`;
+   expect((await loadSupplierOrderPlanTx(tx,{orderId:legacyOrder.id,requirePaid:false,now,maxAgeMs})).lines[0].snapshotId).toBe(source.lines[0].snapshotId);
+   await tx.orderItem.create({data:{orderId:legacyOrder.id,productId:line.snapshot.productId,lineKey:'unauthorized-extra-line',name:'Must not become a legacy variant',slug:'legacy-option',image:'',qty:1,price:10}});
+   await expect(loadSupplierOrderPlanTx(tx,{orderId:legacyOrder.id,requirePaid:false,now,maxAgeMs})).rejects.toThrow('Order items changed');
+   throw rollback;
+  })).rejects.toBe(rollback);
+ });
+ it('two exact variants of one parent survive real payment actions with parent stock zero',async()=>{
+  const uid=(await prisma.user.create({data:{email:`multi-${randomUUID()}@example.invalid`,name:'Synthetic multi buyer',address:shipping,paymentMethod:'PayPal'}})).id;
+  const product=await prisma.product.create({data:{name:'Synthetic two-option product',slug:`binding-multi-${randomUUID()}`,category:'test',description:'Local fixture only',images:[],price:10,stock:0}});
+  const selected:ReturnType<typeof bindRetailLine>[]=[];
+  for(const [label,cents]of [['Red',1000],['Blue',1500]]as const){
+   const v=await prisma.productVariant.create({data:{productId:product.id,sku:randomUUID(),name:label}});
+   const snapshot={...line.snapshot,productId:product.id,variantId:v.id,providerProductId:'synthetic-multi-product',providerVariantId:'synthetic-'+label,quoteId:randomUUID(),retailUnitCents:cents,availableQty:3};const l=bindRetailLine(snapshot,1,now,maxAgeMs);selected.push(l);
+   await prisma.$executeRaw`INSERT INTO "RetailQuote"("lineKey","snapshotId",snapshot,"productId","variantId") VALUES(${l.lineKey},${l.snapshotId},${JSON.stringify(snapshot)}::jsonb,${product.id}::uuid,${v.id}::uuid)`;
+   await prisma.$executeRaw`INSERT INTO "RetailOffer"("lineKey","snapshotId",snapshot,"productId","variantId","availableQty",published) VALUES(${l.lineKey},${l.snapshotId},${JSON.stringify(snapshot)}::jsonb,${product.id}::uuid,${v.id}::uuid,3,true)`;
+  }
+  const carts=await prisma.$queryRaw<{id:string}[]>`INSERT INTO "RetailCart"("userId",lines,"destinationCountry","destinationPostal") VALUES(${uid}::uuid,${JSON.stringify(selected)}::jsonb,'US','10001') RETURNING id`;
+  const id=await prisma.$transaction(tx=>prepareSupplierBoundOrderTx(tx,{userId:uid,cartId:carts[0].id,reviewToken:retailCartReviewToken({lines:selected,destinationCountry:'US',destinationPostal:'10001'}),idempotencyKey:randomUUID(),now,maxAgeMs,approvedShippingCents:275,approvedTaxCents:125,commercialTermsSource:'LOCAL MULTIVARIANT FEE FIXTURE, NOT LIVE POLICY'}));
+  const items=await prisma.orderItem.findMany({where:{orderId:id}});expect(items).toHaveLength(2);expect(new Set(items.map(i=>i.productId)).size).toBe(1);expect(new Set(items.map(i=>i.lineKey)).size).toBe(2);expect(items.map(i=>i.name).sort()).toEqual(['Synthetic two-option product - Blue','Synthetic two-option product - Red']);
+  mockAuth.mockResolvedValue({user:{id:uid,role:'user'}});mockCreatePayPal.mockClear();mockCapturePayPal.mockClear();mockCreatePayPal.mockResolvedValue({id:'PP_MULTI_SYNTHETIC'});
+  await prisma.orderItem.update({where:{orderId_lineKey:{orderId:id,lineKey:selected[0].lineKey}},data:{lineKey:'wrong-key'}});
+  expect((await createPayPalOrder(id)).success).toBe(false);expect(mockCreatePayPal).not.toHaveBeenCalled();
+  await prisma.orderItem.update({where:{orderId_lineKey:{orderId:id,lineKey:'wrong-key'}},data:{lineKey:selected[0].lineKey}});
+  expect((await createPayPalOrder(id)).success).toBe(true);expect(mockCreatePayPal).toHaveBeenCalledWith(29);
+  mockCapturePayPal.mockResolvedValue({id:'PP_MULTI_SYNTHETIC',status:'COMPLETED',purchase_units:[{payments:{captures:[{id:'CAP_MULTI_SYNTHETIC',status:'COMPLETED',amount:{value:'29.00',currency_code:'USD'}}]}}]});
+  expect((await approvePayPalOrder(id,{orderID:'PP_MULTI_SYNTHETIC'})).success).toBe(true);expect(mockCapturePayPal).toHaveBeenCalledTimes(1);
+  const plan=await prisma.$transaction(tx=>loadSupplierOrderPlanTx(tx,{orderId:id,requirePaid:true,now,maxAgeMs}));expect(plan.orderLineIdentity).toBe('EXACT_LINE_KEY');expect(plan.lines).toHaveLength(2);expect(cjPayloadFromSupplierPlan(plan).products.map(p=>p.vid).sort()).toEqual(['synthetic-Blue','synthetic-Red']);
+  expect(await prisma.$queryRaw`SELECT state FROM "OrderSupplierAllocation" WHERE "orderId"=${id}::uuid`).toEqual([{state:'CONSUMED'},{state:'CONSUMED'}]);expect((await prisma.product.findUniqueOrThrow({where:{id:product.id}})).stock).toBe(0);
  });
 
 });

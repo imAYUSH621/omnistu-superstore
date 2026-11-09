@@ -153,5 +153,5 @@ export async function payQualifiedTestOrder(userId: string, orderId: string) {
 export async function qualifiedOrderItems(orderId: string) {
   const rows = await prisma.$queryRaw<{displayLines:SafeLine[]}[]>`SELECT "displayLines" FROM "RetailCheckout" WHERE "orderId"=${orderId}::uuid`;
   if (rows.length !== 1 || !Array.isArray(rows[0].displayLines)) throw Error('Qualified receipt unavailable');
-  return rows[0].displayLines.map(line => ({ productId: line.productId, orderId, supplierLineKey:null,supplierSnapshotId:null,supplierSnapshot:null, name: `${line.name} (${line.variantLabel})`, slug: line.slug, image: line.image, qty: line.qty, price: line.price }));
+  return rows[0].displayLines.map(line => ({ lineKey:line.lineKey, productId: line.productId, orderId, supplierLineKey:null,supplierSnapshotId:null,supplierSnapshot:null, name: `${line.name} (${line.variantLabel})`, slug: line.slug, image: line.image, qty: line.qty, price: line.price }));
 }

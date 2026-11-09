@@ -276,7 +276,7 @@ export async function createPayPalOrder(orderId: string) {
       if(requiresSupplierOrderPlan(order))await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}));
       const stored = order.paymentResult as PaymentResult | null;
       if (stored?.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
-      {
+      if(!requiresSupplierOrderPlan(order)){
         const lines = await prisma.orderItem.findMany({
           where: { orderId },
           select: { productId: true, qty: true, name: true },

@@ -13,3 +13,10 @@ it('canceled bound order never mounts payment or a payment-awaiting tracking ste
  const html=renderToStaticMarkup(<Detail order={o as never} isAdmin={false} stripeClientSecret='must-not-use' paypalClientId='must-not-use' cancellationOffered/>);
  expect(html).toContain('Order canceled.');expect(html).toContain('New York');expect(html).toContain('+12025550100');expect(html).not.toContain('Cancel unpaid order');expect(html).not.toContain('Awaiting payment');expect(html).not.toContain('Loading PayPal');
 });
+
+it('two variants of one parent render distinct names/prices and exact order amounts in the ordinary view',()=>{
+ const order={...base,isPaid:true,isDelivered:false,paymentMethod:'PayPal',paymentNote:'SUPPLIER_BOUND_PREPARATION',itemsPrice:'25.00',shippingPrice:'2.75',taxPrice:'1.25',totalPrice:'29.00',orderitems:[{lineKey:'exact-red',productId:'same-parent',name:'Synthetic product - Red',slug:'synthetic-product',image:'/fixture-only.png',qty:1,price:'10.00'},{lineKey:'exact-blue',productId:'same-parent',name:'Synthetic product - Blue',slug:'synthetic-product',image:'/fixture-only.png',qty:1,price:'15.00'}]};
+ const html=renderToStaticMarkup(<Detail order={order as never} isAdmin={false} stripeClientSecret={null} paypalClientId='unused'/>);
+ for(const text of ['Synthetic product - Red','Synthetic product - Blue','10.00','15.00','2.75','1.25','29.00'])expect(html).toContain(text);
+ if(process.env.MULTI_VISUAL_OUTPUT_DIR)require('fs').writeFileSync(process.env.MULTI_VISUAL_OUTPUT_DIR+'/multi-EN.html','<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/address.css"></head><body><main class="max-w-5xl mx-auto p-4"><h1 class="text-2xl font-bold mb-6">Synthetic two-option order</h1>'+html+'</main></body></html>');
+});

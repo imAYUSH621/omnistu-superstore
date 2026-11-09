@@ -1,17 +1,8 @@
 import {prisma} from '@/db/prisma';
-import {loadSupplierOrderPlanTx,type SupplierOrderPlan} from './supplier-order-plan';
+import {loadSupplierOrderPlanTx} from './supplier-order-plan';
 import {assertDispatchSpendAllowed} from './spend-guard';
-/** Pure provider projection. No slug, Store UUID, default SKU, default origin,
- * or guessed delivery line can choose a supplier product. Unsupported providers
- * and incomplete source modes require review instead of routing elsewhere. */
-export function cjPayloadFromSupplierPlan(plan:SupplierOrderPlan){
- if(!plan.lines.length||plan.lines.some(l=>l.snapshot.provider!=='CJ'))throw Error('Unsupported supplier plan');
- const first=plan.lines[0].snapshot;
- if(!first.originCountry||first.cjShippingMode!==1)throw Error('Exact warehouse requires approved CJ platform-logistics mode1');
- if(plan.lines.some(l=>l.snapshot.originCountry!==first.originCountry||l.snapshot.warehouseId!==first.warehouseId||l.snapshot.shippingMethod!==first.shippingMethod||l.snapshot.cjShippingMode!==first.cjShippingMode))throw Error('Separate supplier shipments need explicit reviewed split');
- const a=plan.address;
- return {orderNumber:plan.orderId,shippingZip:a.postalCode,shippingCountry:a.country,shippingCountryCode:a.country,shippingProvince:a.state,shippingCity:a.city,shippingPhone:a.phone,shippingCustomerName:a.fullName,shippingAddress:a.streetAddress,fromCountryCode:first.originCountry,logisticName:first.shippingMethod,shopLogisticsType:first.cjShippingMode,...(first.cjShippingMode===1?{storageId:first.warehouseId}:{}),payType:3,orderFlow:1,products:plan.lines.map(l=>({vid:l.snapshot.providerVariantId,quantity:l.qty,storeLineItemId:l.lineKey}))};
-}
+export {cjPayloadFromSupplierPlan} from './bound-supplier-payload';
+import {cjPayloadFromSupplierPlan} from './bound-supplier-payload';
 /** Single entry for automatic and operator requests. A durable request marker
  * precedes provider I/O. Uncertain outcomes are never retried automatically.
  * payType3 creates an unpaid supplier order only; funding/dispatch is separate. */
