@@ -83,12 +83,14 @@ describe('deliverOrder authorization', () => {
     expect(r).toMatchObject({success:false,message:'No shipment exists for qualified test checkout'});
     expect(mockUpdate).not.toHaveBeenCalled();
   });
-  it('lets an admin mark a paid order delivered', async () => {
+  it('cannot turn customer payment into delivery when supplier verification is OFF', async () => {
+    delete process.env.CJ_LIFECYCLE_RECONCILIATION_ENABLED;
     mockAuth.mockResolvedValue({ user: { id: 'a1', role: 'admin' } });
-    mockFindFirst.mockResolvedValue({ isPaid: true });
+    mockFindFirst.mockResolvedValue({ isPaid: true, paymentMethod:'PayPal' });
     const r = await deliverOrder('o1');
-    expect(r.success).toBe(true);
-    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(r.success).toBe(false);
+    expect(r.message).toContain('verification is OFF');
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });
 

@@ -1,7 +1,7 @@
 import {cjPayloadFromSupplierPlan} from './bound-supplier-payload';
 import {createHash} from 'node:crypto';
 import {z} from 'zod';
-import {bindRetailLine,assertRetailLineCurrent,type BoundRetailLine} from '@/lib/retail/snapshot';
+import {bindRetailLine,assertRetailLineCurrent,assertHistoricalRetailLine,type BoundRetailLine} from '@/lib/retail/snapshot';
 import type {RetailRawTx} from '@/lib/retail/transactions';
 const address=z.object({fullName:z.string().trim().min(1),streetAddress:z.string().trim().min(1),city:z.string().trim().min(1),postalCode:z.string().trim().min(1),country:z.string().regex(/^[A-Z]{2}$/),phone:z.string().trim().regex(/^\+[1-9][0-9]{6,14}$/),state:z.string().trim().min(1)}).passthrough();
 type Address=z.infer<typeof address>;
@@ -36,7 +36,7 @@ export async function persistSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:s
 }
 /** The same persisted record is the source for payment review and both dispatch entry
  * points. Historical unbound orders remain untouched and require review, never backfill. */
-export async function loadSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:string;requirePaid:boolean;now:Date;maxAgeMs:number}){
+export async function loadSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:string;requirePaid:boolean;now:Date;maxAgeMs:number;purpose?:'READ_ONLY_LIFECYCLE'}){
  const orders=await tx.$queryRaw<OrderRow[]>`SELECT id,"userId","shippingAddress","totalPrice"::text,"itemsPrice"::text,"shippingPrice"::text,"taxPrice"::text,"isPaid","paymentMethod" FROM "Order" WHERE id=${input.orderId}::uuid FOR UPDATE`;
  const o=orders[0];if(orders.length!==1||o.paymentMethod==='TestPayment'||(input.requirePaid&&!o.isPaid))throw Error('Real order state requires review');
  const rows=await tx.$queryRaw<{digest:string;plan:SupplierOrderPlan}[]>`SELECT digest,plan FROM "OrderSupplierPlan" WHERE "orderId"=${o.id}::uuid`;
@@ -45,7 +45,7 @@ export async function loadSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:stri
  if(!Array.isArray(p.lines)||!p.lines.length)throw Error('Missing supplier lines');
  const items=await tx.$queryRaw<{lineKey:string;productId:string;qty:number;price:string}[]>`SELECT "lineKey","productId",qty,price::text FROM "OrderItem" WHERE "orderId"=${o.id}::uuid ORDER BY "productId"`;
  if(items.length!==p.lines.length||(p.orderLineIdentity!=='EXACT_LINE_KEY'&&new Set(p.lines.map(l=>l.snapshot.productId)).size!==p.lines.length)||items.some(i=>!p.lines.some(l=>(p.orderLineIdentity!=='EXACT_LINE_KEY'||l.lineKey===i.lineKey)&&l.snapshot.productId===i.productId&&l.qty===i.qty&&l.snapshot.retailUnitCents===moneyCents(i.price)))||p.lines.reduce((n,l)=>n+l.qty*l.snapshot.retailUnitCents,0)!==moneyCents(o.itemsPrice)||p.lines.reduce((n,l)=>n+l.qty*l.snapshot.retailUnitCents,0)+(p.shippingCents??0)+(p.taxCents??0)!==p.amountCents)throw Error('Order items changed after supplier approval');
- for(const l of p.lines){const b=bindRetailLine(l.snapshot,l.qty,input.now,input.maxAgeMs);if(b.snapshotId!==l.snapshotId||b.lineKey!==l.lineKey||b.snapshot.destinationCountry!==p.address.country||b.snapshot.destinationPostal!==p.address.postalCode)throw Error('Supplier quote needs review')}
+ for(const l of p.lines){const b=input.purpose==='READ_ONLY_LIFECYCLE'?assertHistoricalRetailLine(l):bindRetailLine(l.snapshot,l.qty,input.now,input.maxAgeMs);if(b.snapshotId!==l.snapshotId||b.lineKey!==l.lineKey||b.snapshot.destinationCountry!==p.address.country||b.snapshot.destinationPostal!==p.address.postalCode)throw Error('Supplier quote needs review')}
  return p;
 }
 

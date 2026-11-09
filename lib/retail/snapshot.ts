@@ -58,3 +58,11 @@ export function parseRetailSnapshotShape(raw:unknown):RetailSnapshot|null{const 
 export function parseRetailSnapshot(raw:unknown,now:Date,maxAgeMs:number):RetailSnapshot{return parse(raw,now,maxAgeMs)}
 /** Deterministic offer identity for a validated snapshot. */
 export function retailSnapshotIdentity(s:RetailSnapshot){return {lineKey:lineKey(s),snapshotId:snapshotId(s)}}
+
+/** Immutable historical identity only, never availability or permission to spend.
+ * Reconciliation days after shipment must not revive an expired commercial quote. */
+export function assertHistoricalRetailLine(line:BoundRetailLine):BoundRetailLine{
+ const parsed=snapshotSchema.safeParse(line.snapshot);if(!parsed.success)return fail();
+ const s=parsed.data;if(!Number.isSafeInteger(line.qty)||line.qty<=0||line.qty>s.availableQty||line.qty>s.freightQuotedQty||(s.version===2&&line.qty>s.managedOrigin!.confirmedAvailableQty)||line.lineKey!==lineKey(s)||line.snapshotId!==snapshotId(s))return fail();
+ return {...line,snapshot:s};
+}
