@@ -1,3 +1,4 @@
+import{SHOPPING_HELP,shoppingHelpIntent}from './store-shopping-help';
 import{CATALOG_UNAVAILABLE}from './catalog-retrieval-language';
 import{homeDepartment}from './home-language';
 import {workflowIntent,workflowAnswer,type WorkflowIntent} from './store-workflow-help';
@@ -7,12 +8,13 @@ import { testCheckoutMode, ordersEnabled } from './payment-capabilities';
 import { SUPPORT_COPY, supportLanguage } from './support-language';
 
 export const SUPPORT_LABEL = SUPPORT_COPY.EN.label;
-export type SupportIntent = 'policy'|'order'|'contact'|'payment'|'shipping'|'categories'|'greeting'|'product'|WorkflowIntent;
+export type SupportIntent = 'policy'|'order'|'contact'|'payment'|'shipping'|'categories'|'greeting'|'product'|WorkflowIntent|keyof typeof SHOPPING_HELP;
 /** Restricted intent routing, never an instruction interpreter or a policy source. */
 export function supportIntent(text:string):SupportIntent {
  const q=text.toLowerCase().normalize('NFC');
  if (/refund|return|replace|polic|guarantee|warranty|cancel|discount|coupon|रिफंड|वापस|वापसी|रद्द|नीति|गारंटी|devolu|reembolso|cancelar|garantía|rembours|retour|annul|garantie|rückgab|erstattung|stornier|返品|返金|キャンセル|保証/u.test(q)) return 'policy';
- if (/order|track|package|parcel|dispatch|ऑर्डर|आर्डर|ट्रैक|पार्सल|pedido|seguimiento|commande|suivi|bestellung|sendungsverfolg|注文|追跡/u.test(q)) return 'order';
+ const shopping=shoppingHelpIntent(text);if(shopping)return shopping;
+ if (/order|track|package|parcel|dispatch|ऑर्डर|आर्डर|ट्रैक|पार्सल|pedido|seguimiento|commande|suivi|bestellung|bestellstatus|sendungsverfolg|注文|追跡/u.test(q)) return 'order';
  const workflow=workflowIntent(text);if(workflow)return workflow;
  if (/contact|support|human|agent|email|help|complaint|मदद|सहायता|संपर्क|इंसान|शिकायत|ayuda|humano|equipo|aide|équipe|humain|hilfe|mensch|kontakt|問い合わせ|サポート|担当者/u.test(q)) return 'contact';
  if (/payment|pay|checkout|cash|paypal|stripe|card|भुगतान|पेमेंट|चेकआउट|पैसे|pago|pagar|paiement|payer|zahlung|bezahlen|支払|決済/u.test(q)) return 'payment';
@@ -26,6 +28,7 @@ export async function groundedSupportAnswer(text: string, preferredLanguage?: st
  const copy=SUPPORT_COPY[supportLanguage(text,preferredLanguage)],label=copy.label+'\n';
  const intent=supportIntent(text);
  if(intent==='policy')return label+copy.policy;
+ if(intent==='cart'||intent==='address'||intent==='checkout')return label+SHOPPING_HELP[intent].copy[supportLanguage(text,preferredLanguage)]+(intent==='checkout'?'\n'+(testCheckoutMode()?copy.test:!ordersEnabled()?copy.closed:copy.payment):'');
  if(['account','recovery','locale','enquiries'].includes(intent))return label+workflowAnswer(intent as WorkflowIntent,supportLanguage(text,preferredLanguage));
  if(intent==='order')return label+copy.order;
  if(intent==='contact')return label+copy.contact;
