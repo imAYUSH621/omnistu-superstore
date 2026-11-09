@@ -38,6 +38,10 @@ const OrderDetailsPage = async (props: {
     try{const records=await prisma.$queryRaw<NonNullable<SupplierFundingView>[]>`SELECT state,quote FROM "SupplierFundingPreparation" WHERE "orderId"=${order.id}::uuid`;supplierFundingInitial=records[0]??((order.isDelivered||order.dispatchStatus==='DISPATCHED')?{state:'SUPPLIER_PROGRESSED',quote:null}:null);}
     catch{supplierFundingInitial={state:'UNAVAILABLE',quote:null};}
   }
+  let supplierCreationState:string|null=null;
+  if(session?.user?.role==='admin'&&order.isPaid&&order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){
+    try{const rows=await prisma.$queryRaw<{state:string}[]>`SELECT state FROM "OrderSupplierAttempt" WHERE "orderId"=${order.id}::uuid`;supplierCreationState=rows[0]?.state??null;}catch{supplierCreationState='UNAVAILABLE';}
+  }
   let supplierPaymentInitial:SupplierPaymentObservation|null=null;
   if(session?.user?.role==='admin'&&order.isPaid&&order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){
     try{const rows=await prisma.$queryRaw<{evidence:SupplierPaymentObservation}[]>`SELECT evidence FROM "SupplierPaymentObservation" WHERE "orderId"=${order.id}::uuid ORDER BY "observedAt" DESC LIMIT 1`;supplierPaymentInitial=rows[0]?.evidence??null;}catch{/* Optional read-review schema may not be released yet; never infer payment. */}
@@ -49,6 +53,8 @@ const OrderDetailsPage = async (props: {
         shippingAddress: order.shippingAddress as ShippingAddress,
       }}
       paymentRecovery={paymentRecovery}
+      supplierCreationState={supplierCreationState}
+      supplierCreationEnabled={process.env.CJ_CREATION_RECOVERY_ENABLED==='true'}
       supplierPaymentInitial={supplierPaymentInitial}
       supplierPaymentEnabled={process.env.CJ_PAYMENT_RECONCILIATION_ENABLED==='true'}
       supplierFundingInitial={supplierFundingInitial}

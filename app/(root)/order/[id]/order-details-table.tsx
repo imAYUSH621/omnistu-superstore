@@ -1,4 +1,5 @@
 'use client';
+import SupplierCreationRecovery from '@/components/shared/order/supplier-creation-recovery';
 import SupplierPaymentReview from '@/components/shared/order/supplier-payment-review';
 import type {SupplierPaymentObservation} from '@/lib/supplier-payment-reconciliation';
 import SupplierFundingReview,{type SupplierFundingView} from '@/components/shared/order/supplier-funding-review';
@@ -55,6 +56,8 @@ const OrderDetailsTable = ({
   stripeClientSecret,
   cancellationOffered=false,
   paymentRecovery,
+  supplierCreationEnabled=false,
+  supplierCreationState=null,
   supplierPaymentEnabled=false,
   supplierPaymentInitial=null,
   supplierFundingEnabled=false,
@@ -66,6 +69,8 @@ const OrderDetailsTable = ({
   stripeClientSecret: string | null;
   cancellationOffered?:boolean;
   paymentRecovery?:BoundPaymentRecovery;
+  supplierCreationEnabled?:boolean;
+  supplierCreationState?:string|null;
   supplierPaymentEnabled?:boolean;
   supplierPaymentInitial?:SupplierPaymentObservation|null;
   supplierFundingEnabled?:boolean;
@@ -387,6 +392,7 @@ const OrderDetailsTable = ({
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}
+              {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierCreationRecovery orderId={id} enabled={supplierCreationEnabled} initialState={supplierCreationState}/>}
               {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierPaymentReview orderId={id} enabled={supplierPaymentEnabled} initial={supplierPaymentInitial}/>}
               {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierFundingReview orderId={id} enabled={supplierFundingEnabled} initial={supplierFundingInitial}/>}
 

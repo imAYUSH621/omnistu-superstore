@@ -20,11 +20,11 @@ export async function dispatchPersistedSupplierOrder(orderId:string){
  });
  if(!claimed)return{status:'REVIEW_REQUIRED' as const,supplierOrderId:null};
  try{
-  const auth=await fetch('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:key}),signal:AbortSignal.timeout(10000)});
-  const token=await auth.json();if(!auth.ok||token.result!==true||typeof token.data?.accessToken!=='string'||!token.data.accessToken.trim())throw Error('Supplier authentication unavailable');
-  const response=await fetch('https://developers.cjdropshipping.com/api2.0/v1/shopping/order/createOrderV2',{method:'POST',headers:{'Content-Type':'application/json','CJ-Access-Token':token.data.accessToken},body:JSON.stringify(payload),signal:AbortSignal.timeout(20000)});
+  const auth=await fetch('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:key}),signal:AbortSignal.timeout(10000),cache:'no-store',redirect:'error'});
+  const token=await auth.json();if(!auth.ok||token.result!==true||token.success===false||(token.code!==undefined&&token.code!==200)||typeof token.data?.accessToken!=='string'||!token.data.accessToken.trim())throw Error('Supplier authentication unavailable');
+  const response=await fetch('https://developers.cjdropshipping.com/api2.0/v1/shopping/order/createOrderV2',{method:'POST',headers:{'Content-Type':'application/json','CJ-Access-Token':token.data.accessToken},body:JSON.stringify(payload),signal:AbortSignal.timeout(20000),cache:'no-store',redirect:'error'});
   const body=await response.json();
-  if(!response.ok||body.result!==true||typeof body.data?.orderId!=='string'||!body.data.orderId.trim()){
+  if(!response.ok||body.result!==true||body.success===false||(body.code!==undefined&&body.code!==200)||typeof body.data?.orderId!=='string'||!body.data.orderId.trim()){
    await prisma.$executeRaw`UPDATE "OrderSupplierAttempt" SET state='UNKNOWN' WHERE "orderId"=${orderId}::uuid AND state='REQUESTED'`;
    return{status:'REVIEW_REQUIRED' as const,supplierOrderId:null};
   }
