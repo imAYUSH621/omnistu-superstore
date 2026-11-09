@@ -254,20 +254,16 @@
         "POST",
         "DELETE"
       ],
-      "description": "Programmatic Cart Operations for Autonomous Agents",
-      "payload_example": {
-        "POST": {
-          "asin": "B0DSVTXFNW",
-          "qty": 1
-        }
-      },
+      "description": "Retired cookie-only cart. All methods return HTTP 410 with success false; choose an option on a product page and review the actual Store cart at /cart. DELETE expires only the legacy cookie.",
       "response_schema": {
-        "success": "boolean",
-        "count": "integer",
-        "subtotal": "number",
-        "cart": "array of items (alias: items)",
-        "items": "array of items"
-      }
+        "success": "false",
+        "error": "LEGACY_CART_RETIRED",
+        "message": "string",
+        "cartUrl": "/cart"
+      },
+      "status": "retired",
+      "http_status": 410,
+      "cart_url": "/cart"
     },
     {
       "endpoint": "/api/catalog",
