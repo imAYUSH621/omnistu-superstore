@@ -8,6 +8,7 @@
 import { writeFileSync } from 'node:fs';
 import { createCjReadClient } from './lib/cj-read-client.mjs';
 import { parseCjReferenceNumber } from './lib/cj-reference-number.mjs';
+import { prepareCjOptions } from './lib/cj-option-preparation.mjs';
 const BASE = 'https://developers.cjdropshipping.com/api2.0/v1';
 const [out, ...specs] = process.argv.slice(2);
 const key = process.env.CJ_API_KEY;
@@ -28,9 +29,12 @@ for (const spec of specs) {
     if (seen.has(p.pid)) continue; seen.add(p.pid);
     await sleep(1200);
     const d = (await call(`/product/query?pid=${p.pid}`, tok))?.data;
+    const detailObservedAt = new Date().toISOString();
     if (!d) { items.push({ pid: p.pid, targetCategory: category, error: 'detail unavailable' }); continue; }
     await sleep(1200);
     const inv = (await call(`/product/stock/getInventoryByPid?pid=${p.pid}`, tok))?.data;
+    const inventoryObservedAt = new Date().toISOString();
+    const optionPreparation = inv?.variantInventories ? prepareCjOptions({detail:d,inventory:inv,detailObservedAt,inventoryObservedAt}) : null;
     const warehouses = (inv?.inventories ?? []).map((w) => ({ area: w.areaEn, country: w.countryCode, total: w.totalInventoryNum ?? null, cj: w.cjInventoryNum ?? null, factory: w.factoryInventoryNum ?? null }));
     const perVariant = new Map((inv?.variantInventories ?? []).map((x) => [String(x.vid), x]));
     const variants = (d.variants ?? []).map((v) => ({ vid: v.vid, sku: v.variantSku, name: v.variantNameEn, cost: num(v.variantSellPrice), suggestedPrice: num(v.variantSugSellPrice), stockRaw: perVariant.get(String(v.vid)) ?? null, weightG: num(v.variantWeight) }));
@@ -42,8 +46,8 @@ for (const spec of specs) {
     if (!variants.length) missing.push('variants');
     if (variants.some((v) => v.stockRaw === null)) missing.push('variant_stock');
     if (variants.some((v) => v.cost === null)) missing.push('variant_cost');
-    items.push({ pid: d.pid, targetCategory: category, name: d.productNameEn, supplierCategory: d.categoryName, supplierName: d.supplierName ?? null, brand: null, description, images, sellPriceCostRange: d.sellPrice ?? null, warehouses, variants, stockFetchedAt: fetchedAt, imageLicense: 'unverified', missing, retailPrice: null, retailPriceReason: 'shipping, tax and payment fees unverified' });
+    items.push({ pid: d.pid, targetCategory: category, name: d.productNameEn, supplierCategory: d.categoryName, supplierName: d.supplierName ?? null, brand: null, description, images, sellPriceCostRange: d.sellPrice ?? null, warehouses, variants, optionPreparation, stockFetchedAt: inventoryObservedAt, detailObservedAt, imageLicense: 'unverified', missing, retailPrice: null, retailPriceReason: 'shipping, tax and payment fees unverified' });
   }
 }
 writeFileSync(out, JSON.stringify({ fetchedAt, source: 'CJ Dropshipping API (read-only)', items }, null, 2));
-console.log(JSON.stringify({ items: items.length, withDescription: items.filter((i) => i.description).length, withStock: items.filter((i) => i.variants?.length && !i.missing.includes('variant_stock')).length, withMissing: items.filter((i) => i.missing?.length).length }));
+console.log(JSON.stringify({ items: items.length, withDescription: items.filter((i) => i.description).length, withInventoryEvidence: items.filter((i) => i.variants?.length && !i.missing.includes('variant_stock')).length, warehouseSnapshotOptions: items.flatMap(i=>i.optionPreparation?.options??[]).filter(v=>v.origins.some(o=>o.kind==='WAREHOUSE_SNAPSHOT')).length, withMissing: items.filter((i) => i.missing?.length).length }));
