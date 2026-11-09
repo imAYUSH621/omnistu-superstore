@@ -3,7 +3,7 @@ import{supportLanguage}from '@/lib/support-language';
 import{PRODUCT_COPY}from '@/lib/product-language';
 import{homeDepartment}from '@/lib/home-language';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
-import {listQualifiedOptions} from '@/lib/retail/store';
+import {loadQualifiedOptions} from '@/lib/retail/store';
 import QualifiedBuyBox from '@/components/shared/retail/qualified-buy-box';
 import { getProductBySlug } from '@/lib/actions/product.actions';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
@@ -122,7 +122,7 @@ const ProductDetailsPage = async (props: {
 
           {/* Authentic Buy Box Column (3 Cols) */}
           <div className='lg:col-span-3'>
-            {qualifiedRetailTestEnabled() ? <QualifiedBuyBox signedIn={!!userId} options={userId ? await listQualifiedOptions(userId,product.id).catch(()=>[]) : []}/> : <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />}
+            {qualifiedRetailTestEnabled() ? <QualifiedBuyBox signedIn={!!userId} {...(userId ? await loadQualifiedOptions(userId,product.id) : {status:'available' as const,options:[]})}/> : <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />}
           </div>
         </div>
       </section>

@@ -61,6 +61,12 @@ export async function listQualifiedOptions(userId: string, productId: string) {
     } catch { return []; }
   });
 }
+/** Keep missing destination, a confirmed empty result and a failed lookup distinct.
+ * Never expose runtime/database diagnostics or weaken the existing test-only gate. */
+export async function loadQualifiedOptions(userId:string,productId:string){
+ try{return{status:'available' as const,options:await listQualifiedOptions(userId,productId)}}
+ catch(error){return{status:error instanceof DestinationRequiredError?'destination-required' as const:'unavailable' as const,options:[]}}
+}
 export async function addQualifiedItem(userId: string, input: { lineKey: string; snapshotId: string; qty: number }) {
   await requireEnabled(userId);
   const d = await ownerDestination(userId);
