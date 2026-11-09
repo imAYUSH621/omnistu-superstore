@@ -1,3 +1,4 @@
+import{boundedBillingJson}from './bounded-billing-json';
 import type {CurrentCustomerResult} from './current-customer';
 import {localBillingConfig} from './killbill-local-test';
 type Env=Record<string,string|undefined>;
@@ -17,9 +18,9 @@ export async function readLocalEntitlements(identity:CurrentCustomerResult,env:E
   const options={headers:config.headers,cache:'no-store' as const,redirect:'error' as const,signal:AbortSignal.timeout(4000)};
   const ar=await request(config.base+'/1.0/kb/accounts?'+new URLSearchParams({externalKey:key}),options);
   if(ar.status===404)return{status:'not-linked'};if(!ar.ok)return{status:'unavailable'};
-  const a=await ar.json();if(!a||a.externalKey!==key||!uuid(a.accountId))return{status:'unavailable'};
+  const a=await boundedBillingJson(ar) as Record<string,unknown>;if(!a||a.externalKey!==key||!uuid(a.accountId))return{status:'unavailable'};
   const br=await request(config.base+'/1.0/kb/accounts/'+a.accountId+'/bundles',{...options,signal:AbortSignal.timeout(4000)});
-  if(!br.ok)return{status:'unavailable'};const bundles=await br.json();if(!Array.isArray(bundles)||bundles.length>100)return{status:'unavailable'};
+  if(!br.ok)return{status:'unavailable'};const bundles=await boundedBillingJson(br);if(!Array.isArray(bundles)||bundles.length>100)return{status:'unavailable'};
   const subscriptions:Subscription[]=[],ids=new Set<string>(),bundleIds=new Set<string>();
   for(const b of bundles){
    if(!b||b.accountId!==a.accountId||!uuid(b.bundleId)||bundleIds.has(b.bundleId)||!Array.isArray(b.subscriptions)||b.subscriptions.length>100)return{status:'unavailable'};
