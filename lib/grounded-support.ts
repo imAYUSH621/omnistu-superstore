@@ -1,6 +1,8 @@
+import{CATALOG_UNAVAILABLE}from './catalog-retrieval-language';
+import{homeDepartment}from './home-language';
 import {workflowIntent,workflowAnswer,type WorkflowIntent} from './store-workflow-help';
-import { findProducts } from './chat';
-import { getAllCategories } from './actions/product.actions';
+import { findProductsState } from './chat';
+import { getAllCategoriesState } from './actions/product.actions';
 import { testCheckoutMode, ordersEnabled } from './payment-capabilities';
 import { SUPPORT_COPY, supportLanguage } from './support-language';
 
@@ -31,9 +33,8 @@ export async function groundedSupportAnswer(text: string, preferredLanguage?: st
  if(intent==='shipping')return label+copy.shipping;
  if(intent==='greeting')return label+copy.greeting;
  if(intent==='categories'){
-  try { const categories=await getAllCategories();if(categories.length)return label+copy.categories+' '+categories.map(c=>`${c.category} (${c._count})`).join(', ')+'. '+copy.categoryEnd; } catch { /* Never invent categories on a failed read. */ }
+  try { const state=await getAllCategoriesState();if(state.status==='unavailable')return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)];const categories=state.categories;if(categories.length)return label+copy.categories+' '+categories.map(c=>`${homeDepartment(c.category,supportLanguage(text,preferredLanguage))} (${c._count})`).join(', ')+'. '+copy.categoryEnd; } catch { return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)]; }
   return label+copy.noCategories;
  }
- const products=await findProducts(text);
- return products?label+copy.matches+'\n'+products+'\n'+copy.productEnd:label+copy.noProduct;
+ try{const state=await findProductsState(text);if(state.status==='unavailable')return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)];return state.products?label+copy.matches+'\n'+state.products+'\n'+copy.productEnd:label+copy.noProduct}catch{return label+CATALOG_UNAVAILABLE[supportLanguage(text,preferredLanguage)]}
 }

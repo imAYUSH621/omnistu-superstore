@@ -1,5 +1,5 @@
-jest.mock('@/lib/chat',()=>({findProducts:jest.fn().mockResolvedValue('')}));
-jest.mock('@/lib/actions/product.actions',()=>({getAllCategories:jest.fn().mockResolvedValue([])}));
+jest.mock('@/lib/chat',()=>(()=>{const findProducts=jest.fn().mockResolvedValue('');return{findProducts,findProductsState:async(q:string)=>({status:'available',products:await findProducts(q)})}})());
+jest.mock('@/lib/actions/product.actions',()=>(()=>{const getAllCategories=jest.fn().mockResolvedValue([]);return{getAllCategories,getAllCategoriesState:async()=>({status:'available',categories:await getAllCategories()})}})());
 import {WORKFLOW_HELP,workflowIntent} from '@/lib/store-workflow-help';
 import {SUPPORT_LANGUAGES,SUPPORT_COPY} from '@/lib/support-language';
 import {groundedSupportAnswer,supportIntent} from '@/lib/grounded-support';
