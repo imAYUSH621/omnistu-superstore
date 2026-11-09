@@ -1,6 +1,14 @@
 import type{SupportLanguage}from './support-language';
 export const CHECKOUT_COPY={
  "EN": {
+  "state": "State or province",
+  "phone": "Delivery phone",
+  "statePlaceholder": "State or province",
+  "phonePlaceholder": "+14155552671",
+  "deliveryPhoneNote": "Use +, country code and digits only. Needed for supplier delivery.",
+  "phoneInvalid": "Use an international phone number, starting with + and the country code",
+  "stateInvalid": "State or province is too long",
+
   "addressTitle": "Shipping address",
   "paymentTitle": "Select payment method",
   "selectPayment": "Please select an available payment method.",
@@ -31,6 +39,14 @@ export const CHECKOUT_COPY={
   "continue": "Continue"
  },
  "HI": {
+  "state": "राज्य या प्रांत",
+  "phone": "डिलीवरी फ़ोन",
+  "statePlaceholder": "राज्य या प्रांत",
+  "phonePlaceholder": "+919876543210",
+  "deliveryPhoneNote": "+ और देश कोड के बाद केवल अंक लिखें। सप्लायर डिलीवरी के लिए ज़रूरी है।",
+  "phoneInvalid": "अंतरराष्ट्रीय फ़ोन नंबर लिखें, शुरुआत में + और देश कोड रखें",
+  "stateInvalid": "राज्य या प्रांत का नाम बहुत लंबा है",
+
   "addressTitle": "शिपिंग पता",
   "paymentTitle": "भुगतान का तरीका चुनें",
   "selectPayment": "उपलब्ध भुगतान तरीका चुनें।",
@@ -61,6 +77,14 @@ export const CHECKOUT_COPY={
   "continue": "आगे बढ़ें"
  },
  "ES": {
+  "state": "Estado o provincia",
+  "phone": "Teléfono de entrega",
+  "statePlaceholder": "Estado o provincia",
+  "phonePlaceholder": "+34123456789",
+  "deliveryPhoneNote": "Usa +, el código del país y solo dígitos. Necesario para la entrega del proveedor.",
+  "phoneInvalid": "Usa un número internacional que empiece por + y el código del país",
+  "stateInvalid": "El estado o provincia es demasiado largo",
+
   "addressTitle": "Dirección de envío",
   "paymentTitle": "Seleccionar forma de pago",
   "selectPayment": "Selecciona una forma de pago disponible.",
@@ -91,6 +115,14 @@ export const CHECKOUT_COPY={
   "continue": "Continuar"
  },
  "FR": {
+  "state": "État ou province",
+  "phone": "Téléphone de livraison",
+  "statePlaceholder": "État ou province",
+  "phonePlaceholder": "+33123456789",
+  "deliveryPhoneNote": "Utilisez +, le code pays et des chiffres uniquement. Nécessaire pour la livraison du fournisseur.",
+  "phoneInvalid": "Utilisez un numéro international commençant par + et le code pays",
+  "stateInvalid": "Le nom de l’état ou de la province est trop long",
+
   "addressTitle": "Adresse de livraison",
   "paymentTitle": "Choisir le mode de paiement",
   "selectPayment": "Choisissez un mode de paiement disponible.",
@@ -121,6 +153,14 @@ export const CHECKOUT_COPY={
   "continue": "Continuer"
  },
  "DE": {
+  "state": "Bundesland oder Provinz",
+  "phone": "Telefon für die Lieferung",
+  "statePlaceholder": "Bundesland oder Provinz",
+  "phonePlaceholder": "+491234567890",
+  "deliveryPhoneNote": "Nur +, Landesvorwahl und Ziffern. Für die Lieferung durch den Lieferanten erforderlich.",
+  "phoneInvalid": "Internationale Telefonnummer mit + und Landesvorwahl eingeben",
+  "stateInvalid": "Bundesland oder Provinz ist zu lang",
+
   "addressTitle": "Lieferadresse",
   "paymentTitle": "Zahlungsart auswählen",
   "selectPayment": "Wähle eine verfügbare Zahlungsart aus.",
@@ -151,6 +191,14 @@ export const CHECKOUT_COPY={
   "continue": "Weiter"
  },
  "JA": {
+  "state": "州・都道府県",
+  "phone": "配達用電話番号",
+  "statePlaceholder": "州・都道府県",
+  "phonePlaceholder": "+81123456789",
+  "deliveryPhoneNote": "+、国番号、数字のみを入力してください。仕入先の配達に必要です。",
+  "phoneInvalid": "+と国番号で始まる国際電話番号を入力してください",
+  "stateInvalid": "州・都道府県が長すぎます",
+
   "addressTitle": "配送先住所",
   "paymentTitle": "支払い方法を選択",
   "selectPayment": "利用できる支払い方法を選んでください。",
@@ -183,4 +231,4 @@ export const CHECKOUT_COPY={
 } as const satisfies Record<SupportLanguage,Record<string,string>>;
 export type CheckoutKey=keyof typeof CHECKOUT_COPY.EN;
 /** Only map field validation for presentation. Server schema and availability remain authoritative. */
-export function checkoutError(message:string|undefined,language:SupportLanguage):string{const t=CHECKOUT_COPY[language];switch(message){case 'Name must be at least 3 characters':return t.nameInvalid;case 'Address must be at least 3 characters':return t.streetInvalid;case 'City must be at least 3 characters':return t.cityInvalid;case 'Postal code must be at least 3 characters':return t.postalInvalid;case 'Enter your country (a 2-letter code such as US, or the full name)':return t.countryInvalid;case 'Payment method is required':return t.requiredMethod;case 'Invalid payment method':return t.invalidMethod;default:return t.failed}}
+export function checkoutError(message:string|undefined,language:SupportLanguage):string{const t=CHECKOUT_COPY[language];switch(message){case 'Use an international phone number, starting with + and the country code':return t.phoneInvalid;case 'State or province is too long':return t.stateInvalid;case 'Name must be at least 3 characters':return t.nameInvalid;case 'Address must be at least 3 characters':return t.streetInvalid;case 'City must be at least 3 characters':return t.cityInvalid;case 'Postal code must be at least 3 characters':return t.postalInvalid;case 'Enter your country (a 2-letter code such as US, or the full name)':return t.countryInvalid;case 'Payment method is required':return t.requiredMethod;case 'Invalid payment method':return t.invalidMethod;default:return t.failed}}

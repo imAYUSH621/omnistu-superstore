@@ -1,4 +1,4 @@
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled} from '@/lib/retail/gate';
 import { auth } from '@/auth';
 import { getMyCart } from '@/lib/actions/cart.actions';
 import { getUserById } from '@/lib/actions/user.actions';
@@ -16,7 +16,7 @@ export async function generateMetadata():Promise<Metadata>{const l=supportLangua
 const ShippingAddressPage = async () => {
   const cart = await getMyCart();
 
-  if (!qualifiedRetailTestEnabled() && (!cart || cart.items.length === 0)) redirect('/cart');
+  if (!qualifiedSelectionEnabled() && (!cart || cart.items.length === 0)) redirect('/cart');
 
   const session = await auth();
 

@@ -71,12 +71,12 @@ describe('spend guard (D11)', () => {
     expect(assertDispatchSpendAllowed(ORDER).ok).toBe(true);
   });
 
-  it('dispatcher returns SPEND_BLOCKED without caps, before any supplier call', async () => {
+  it('master OFF switch precedes plan and spend checks, without any supplier call', async () => {
     delete process.env.FULFILLMENT_MAX_ORDER_TOTAL_USD;
     delete process.env.FULFILLMENT_MAX_ITEM_QTY;
     const summary = await dispatchOrderFulfillment(ORDER);
     expect(summary.success).toBe(false);
-    expect(summary.dispatches[0].status).toBe('SPEND_BLOCKED');
+    expect(summary.dispatches[0].status).toBe('OFF');
     expect(summary.dispatches[0].trackingNumber).toBeNull();
   });
 });

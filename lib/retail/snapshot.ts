@@ -9,6 +9,7 @@ const snapshotSchema=z.object({
  destinationCountry:z.string().regex(/^[A-Z]{2}$/),destinationPostal:z.string().min(1).max(20),quoteId:identity,quoteRevision:identity,
  retailUnitCents:cents.refine(v=>v>0),currency:z.literal('USD'),
  supplierUnitCents:cents,shippingQuoteCents:cents,freightQuotedQty:z.number().int().positive().safe(),shippingMethod:identity,
+ originCountry:z.string().regex(/^[A-Z]{2}$/).optional(),cjShippingMode:z.union([z.literal(1),z.literal(2)]).optional(),
  availableQty:z.number().int().positive().safe(),
  observedAt:z.string().datetime(),validUntil:z.string().datetime(),
  retailApprovalSource:identity,stockSource:identity,shippingSource:identity,
@@ -19,7 +20,7 @@ const fail=()=>{throw Error('Retail offer needs review')};
 /** Stable, unambiguous tuple encoding. IDs are not concatenated with delimiters. */
 function digest(values:unknown[]){return createHash('sha256').update(JSON.stringify(values)).digest('hex')}
 function lineKey(s:RetailSnapshot){return digest([s.version,s.productId,s.variantId,s.provider,s.providerProductId,s.providerVariantId,s.warehouseId,s.destinationCountry,s.destinationPostal,s.shippingMethod])}
-function snapshotId(s:RetailSnapshot){return digest([lineKey(s),s.quoteId,s.quoteRevision,s.retailUnitCents,s.currency,s.supplierUnitCents,s.shippingQuoteCents,s.freightQuotedQty,s.availableQty,s.observedAt,s.validUntil,s.retailApprovalSource,s.stockSource,s.shippingSource])}
+function snapshotId(s:RetailSnapshot){return digest([lineKey(s),s.quoteId,s.quoteRevision,s.retailUnitCents,s.currency,s.supplierUnitCents,s.shippingQuoteCents,s.freightQuotedQty,s.availableQty,s.observedAt,s.validUntil,s.retailApprovalSource,s.stockSource,s.shippingSource,...(s.originCountry!==undefined||s.cjShippingMode!==undefined?[s.originCountry,s.cjShippingMode]:[])])}
 function parse(raw:unknown,now:Date,maxAgeMs:number):RetailSnapshot{
  const r=snapshotSchema.safeParse(raw);if(!r.success||!Number.isFinite(now.getTime())||!Number.isSafeInteger(maxAgeMs)||maxAgeMs<=0)return fail();
  const s=r.data,t=Date.parse(s.observedAt),until=Date.parse(s.validUntil),n=now.getTime();

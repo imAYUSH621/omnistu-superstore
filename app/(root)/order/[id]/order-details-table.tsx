@@ -1,4 +1,10 @@
 'use client';
+import type{BoundPaymentRecovery}from'@/lib/bound-payment-recovery';
+import{BOUND_CHECKOUT_COPY}from'@/lib/bound-checkout-language';
+import{BOUND_RECOVERY_COPY}from'@/lib/bound-payment-recovery-copy';
+
+import {CHECKOUT_COPY} from '@/lib/checkout-language';
+import CancelUnpaidOrder,{CancelledUnpaidOrderNotice} from '@/components/shared/order/cancel-unpaid-order';
 import { Badge } from '@/components/ui/badge';
 import { shippingBadgeState } from '@/lib/tracking';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +23,7 @@ import { Order } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
+import { useState,useTransition } from 'react';
 import {
   PayPalButtons,
   PayPalScriptProvider,
@@ -44,11 +50,15 @@ const OrderDetailsTable = ({
   paypalClientId,
   isAdmin,
   stripeClientSecret,
+  cancellationOffered=false,
+  paymentRecovery,
 }: {
   order: Omit<Order, 'paymentResult'>;
   paypalClientId: string;
   isAdmin: boolean;
   stripeClientSecret: string | null;
+  cancellationOffered?:boolean;
+  paymentRecovery?:BoundPaymentRecovery;
 }) => {
   const {
     id,
@@ -72,6 +82,9 @@ const OrderDetailsTable = ({
   const language=useStoreLanguage();
   const copy=ORDER_DETAIL_COPY[language];
   const date=(value:Date|string)=>orderHistoryDate(value,language)+' UTC';
+  const[cancelAttempted,setCancelAttempted]=useState(false);
+  const[cancelledLocally,setCancelledLocally]=useState(false);
+  const cancelled=cancelledLocally||order.paymentNote?.includes('SUPPLIER_ORDER_CANCELLED')===true;
   const simulated = isSimulatedOrder(order);
   const qualifiedTest = Boolean(order.paymentNote?.startsWith('QUALIFIED TEST ONLY'));
   const { toast } = useToast();
@@ -202,7 +215,8 @@ const OrderDetailsTable = ({
   return (
     <div className='space-y-6'>
       {/* 4-Step Amazon Carrier Tracking Stepper */}
-      <OrderTrackingStepper
+      {(paymentRecovery==='PAYMENT_REVIEW'||paymentRecovery==='OFFER_REVIEW')&&<p role='alert' className='rounded-md border border-amber-300 p-4 text-sm'>{BOUND_RECOVERY_COPY[language][paymentRecovery==='PAYMENT_REVIEW'?'payment':'offer']}</p>}
+      {cancelled?<CancelledUnpaidOrderNotice/>:<OrderTrackingStepper
         orderId={id}
         simulated={simulated}
         isPaid={isPaid}
@@ -211,10 +225,10 @@ const OrderDetailsTable = ({
         trackingNumber={trackingNumber}
         trackingCarrier={trackingCarrier}
         dispatchedAt={dispatchedAt}
-      />
+      />}
 
-      <div className='grid md:grid-cols-3 md:gap-5'>
-        <div className='col-span-2 space-y-4 overflow-x-auto'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5'>
+        <div className='md:col-span-2 min-w-0 space-y-4 overflow-x-auto'>
           <Card>
             <CardContent className='p-4 gap-4'>
               <h2 className='text-xl pb-4 font-bold'><T k='paymentMethod' /></h2>
@@ -229,7 +243,7 @@ const OrderDetailsTable = ({
                   </div>
                 </>
               ) : (
-                <Badge variant='destructive'>{simulated ? copy.testUnpaid : <T k='notPaid' />}</Badge>
+                <Badge variant='destructive'>{paymentRecovery==='PAYMENT_REVIEW'?BOUND_RECOVERY_COPY[language].badge:simulated ? copy.testUnpaid : <T k='notPaid' />}</Badge>
               )}
             </CardContent>
           </Card>
@@ -239,8 +253,9 @@ const OrderDetailsTable = ({
               <p className='font-semibold'>{shippingAddress.fullName}</p>
               <p className='mb-2 text-muted-foreground'>
                 {shippingAddress.streetAddress}, {shippingAddress.city},{' '}
-                {shippingAddress.postalCode}, {shippingAddress.country}
+                {shippingAddress.state?shippingAddress.state+', ':''}{shippingAddress.postalCode}, {shippingAddress.country}
               </p>
+              {shippingAddress.phone&&<p className='mb-2 text-sm'>{CHECKOUT_COPY[language].phone}: {shippingAddress.phone}</p>}
               {simulated ? (<Badge variant='outline'>{isDelivered ? copy.testDelivered : copy.testShipping}</Badge>) : shippingBadgeState({ isDelivered, dispatchStatus, trackingNumber }) === 'delivered' ? (
                 <Badge variant='secondary' className='bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'>
                   {copy.deliveredAt} {date(deliveredAt!)}
@@ -269,7 +284,7 @@ const OrderDetailsTable = ({
                 </TableHeader>
                 <TableBody>
                   {orderitems.map((item) => (
-                    <TableRow key={`${item.slug}:${item.name}`}>
+                    <TableRow key={item.lineKey||`${item.slug}:${item.name}`}>
                       <TableCell>
                         <Link
                           href={`/product/${item.slug}`}
@@ -312,7 +327,7 @@ const OrderDetailsTable = ({
                 <span className='text-muted-foreground'>
                   {simulated
                     ? copy.testTax
-                    : copy.tax}
+                    : order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')?BOUND_CHECKOUT_COPY[language].tax:copy.tax}
                 </span>
                 <span>{formatCurrency(taxPrice)}</span>
               </div>
@@ -326,13 +341,14 @@ const OrderDetailsTable = ({
                   {Number(shippingPrice) === 0 ? copy.free : formatCurrency(shippingPrice)}
                 </span>
               </div>
-              <div className='flex justify-between text-base font-extrabold pt-2 border-t'>
+              <div className='flex flex-wrap justify-between gap-x-3 gap-y-1 text-base font-extrabold pt-2 border-t'>
                 <span><T k='totalLabel' /> (USD)</span>
                 <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>
 
+              {!cancelled&&paymentRecovery!=='PAYMENT_REVIEW'&&cancellationOffered&&<CancelUnpaidOrder orderId={id} onAttempt={()=>setCancelAttempted(true)} onCancelled={()=>setCancelledLocally(true)}/>}
               {/* PayPal Payment */}
-              {!simulated && !isPaid && paymentMethod === 'PayPal' && (
+              {(!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'PayPal' && (
                 <div className='pt-2'>
                   <PayPalScriptProvider options={{ clientId: paypalClientId }}>
                     <PrintLoadingState />
@@ -345,7 +361,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Stripe Payment */}
-              {!simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
+              {(!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
                 <div className='pt-2'>
                   <StripePayment
                     priceInCents={Number(order.totalPrice) * 100}
@@ -356,7 +372,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Cash On Delivery */}
-              {isAdmin && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
+              {isAdmin && (!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}

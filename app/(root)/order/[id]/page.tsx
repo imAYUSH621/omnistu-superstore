@@ -1,3 +1,5 @@
+import {prisma} from '@/db/prisma';
+import {inspectBoundPaymentRecoveryTx,type BoundPaymentRecovery} from '@/lib/bound-payment-recovery';
 import {orderDetailMetadata} from '@/lib/order-detail-metadata';
 import { getOrderById } from '@/lib/actions/order.actions';
 import { notFound, redirect } from 'next/navigation';
@@ -25,7 +27,9 @@ const OrderDetailsPage = async (props: {
     return redirect('/unauthorized');
   }
 
-  const client_secret = await stripeClientSecretForOrder(order.id);
+  let paymentRecovery:BoundPaymentRecovery|undefined;
+  if(order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){try{paymentRecovery=await prisma.$transaction(tx=>inspectBoundPaymentRecoveryTx(tx,{orderId:order.id,userId:order.userId,now:new Date(),maxAgeMs:600000}))}catch{paymentRecovery='PAYMENT_REVIEW'}}
+  const client_secret = !paymentRecovery||paymentRecovery==='READY'?await stripeClientSecretForOrder(order.id):null;
 
   return (
     <OrderDetailsTable
@@ -33,8 +37,10 @@ const OrderDetailsPage = async (props: {
         ...order,
         shippingAddress: order.shippingAddress as ShippingAddress,
       }}
+      paymentRecovery={paymentRecovery}
       stripeClientSecret={client_secret}
       paypalClientId={process.env.PAYPAL_CLIENT_ID || 'sb'}
+      cancellationOffered={!!order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')&&!order.paymentNote?.includes('SUPPLIER_ORDER_CANCELLED')&&!order.isPaid&&order.paymentResult===null}
       isAdmin={session?.user?.role === 'admin' || false}
     />
   );

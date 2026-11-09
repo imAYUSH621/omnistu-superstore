@@ -1,4 +1,4 @@
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled} from '@/lib/retail/gate';
 import {readQualifiedCart} from '@/lib/retail/store';
 import QualifiedCart from '@/components/shared/retail/qualified-cart';
 import {sampleCatalogAllowed}from '@/lib/test-fixture';
@@ -16,7 +16,7 @@ import {supportLanguage} from '@/lib/support-language';
 export async function generateMetadata():Promise<Metadata>{const lang=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);return{title:CART_COPY[lang].title,description:CART_COPY[lang].description}}
 
 export default async function CartPage() {
-  if(qualifiedRetailTestEnabled()) {const viewer=await auth();return viewer?.user?.id ? <QualifiedCart cart={await readQualifiedCart(viewer.user.id)}/> : <p className='p-8'><CT name='signInCart'/></p>;}
+  if(qualifiedSelectionEnabled()) {const viewer=await auth();return viewer?.user?.id ? <QualifiedCart cart={await readQualifiedCart(viewer.user.id)}/> : <p className='p-8'><CT name='signInCart'/></p>;}
   let cart;try{cart=await getMyCart()}catch{return <main className='mx-auto max-w-4xl p-8'><h1 className='text-2xl font-semibold'><CT name='title'/></h1><p role='alert'><CT name='unavailable'/></p></main>}
   const session = await auth();
   const sessionCartId = (await cookies()).get('sessionCartId')?.value;

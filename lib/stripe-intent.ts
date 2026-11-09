@@ -1,3 +1,4 @@
+import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/supplier-order-plan';
 import Stripe from 'stripe';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/db/prisma';
@@ -10,6 +11,7 @@ export async function stripeClientSecretForOrder(orderId: string): Promise<strin
   if (!isPaymentMethodAvailable('Stripe')) return null;
   const order = await prisma.order.findFirst({ where: { id: orderId } }).catch(() => null);
   if (!order || order.isPaid || order.paymentMethod !== 'Stripe' || needsPaymentReview(order.paymentNote)) return null;
+  if(requiresSupplierOrderPlan(order)){try{await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}))}catch{return null}}
   const amount = toMinorUnits(String(order.totalPrice));
   if (amount === null || amount <= 0) return null;
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

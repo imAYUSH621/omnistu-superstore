@@ -51,22 +51,28 @@ describe('fulfillment route access (D18)', () => {
 });
 
 describe('fulfillment route honesty (D18)', () => {
+  test('existing-order-only request stays OFF without provider contact',async()=>{
+    mockAuth.mockResolvedValueOnce({user:{id:'a1',role:'admin'}});delete process.env.FULFILLMENT_DISPATCH_ENABLED;
+    const spy=jest.spyOn(global,'fetch');const res=await POST(req({order_id:'00000000-0000-4000-8000-000000000001'}));
+    expect(res.status).toBe(409);expect((await res.json()).receipt.status).toBe('OFF');expect(spy).not.toHaveBeenCalled();
+  });
+
   test('rejects missing customer/address fields with 400 instead of fabricating', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'a1', role: 'admin' } });
     const spy = jest.spyOn(global, 'fetch');
     const res = await POST(req({ order_id: 'o-2', vendor: 'PRINTIFY' }));
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.missing).toEqual(expect.arrayContaining(['customer_name', 'customer_email', 'shipping_address', 'city', 'state_zip', 'phone']));
+    expect(json.message).toMatch(/mapping overrides/);
     expect(spy).not.toHaveBeenCalled();
   });
 
-  test('admin with complete fields but unconfigured supplier gets HELD_IN_QUEUE, no dispatch', async () => {
+  test('admin cannot override supplier mapping with a customer/address payload', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'a1', role: 'admin' } });
     const res = await POST(req(fullBody));
     const json = await res.json();
-    expect(res.status).toBe(200);
-    expect(json.receipt.status).toBe('HELD_IN_QUEUE');
+    expect(res.status).toBe(400);
+    expect(json.message).toMatch(/mapping overrides/);
   });
 
   test('Printify dispatch without product/variant ids is rejected, never defaulted', async () => {

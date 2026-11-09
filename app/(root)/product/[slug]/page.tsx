@@ -2,7 +2,7 @@ import{cookies}from 'next/headers';
 import{supportLanguage}from '@/lib/support-language';
 import{PRODUCT_COPY}from '@/lib/product-language';
 import{homeDepartment}from '@/lib/home-language';
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled,boundRetailCheckoutEnabled} from '@/lib/retail/gate';
 import {loadQualifiedOptions} from '@/lib/retail/store';
 import QualifiedBuyBox from '@/components/shared/retail/qualified-buy-box';
 import { getProductBySlug } from '@/lib/actions/product.actions';
@@ -122,7 +122,7 @@ const ProductDetailsPage = async (props: {
 
           {/* Authentic Buy Box Column (3 Cols) */}
           <div className='lg:col-span-3'>
-            {qualifiedRetailTestEnabled() ? <QualifiedBuyBox signedIn={!!userId} {...(userId ? await loadQualifiedOptions(userId,product.id) : {status:'available' as const,options:[]})}/> : <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />}
+            {qualifiedSelectionEnabled() ? <QualifiedBuyBox mode={boundRetailCheckoutEnabled()?'bound':'test'} signedIn={!!userId} {...(userId ? await loadQualifiedOptions(userId,product.id) : {status:'available' as const,options:[]})}/> : <BuyBox product={product} cart={cart} testMode={testCheckoutMode()} />}
           </div>
         </div>
       </section>

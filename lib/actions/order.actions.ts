@@ -1,7 +1,9 @@
 'use server';
+import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/supplier-order-plan';
+import {cancelUnattemptedSupplierOrderTx} from '@/lib/supplier-order-cancellation';
 import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled} from '@/lib/retail/gate';
 import {qualifiedOrderItems,payQualifiedTestOrder} from '@/lib/retail/store';
 import { assertCheckoutSnapshot } from '@/lib/cart-checkout-snapshot';
 import { cartLinesMatchCatalog, cartTotalsConsistent } from '@/lib/cart-line-integrity';
@@ -28,7 +30,7 @@ import { needsPaymentReview, PAYMENT_REVIEW_MESSAGE } from '../payment-review';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
-  if(qualifiedRetailTestEnabled())return{success:false,message:'Review the qualified cart before placing this test order.',redirectTo:'/cart'};
+  if(qualifiedSelectionEnabled())return{success:false,message:'Review the qualified cart before placing this test order.',redirectTo:'/cart'};
   let authenticatedUserId: string | undefined;
   try {
     const session = await auth();
@@ -271,9 +273,10 @@ export async function createPayPalOrder(orderId: string) {
       if (order.isPaid) throw new Error('Order is already paid');
       if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
       if (needsPaymentReview(order.paymentNote)) throw new Error(PAYMENT_REVIEW_MESSAGE);
+      if(requiresSupplierOrderPlan(order))await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}));
       const stored = order.paymentResult as PaymentResult | null;
       if (stored?.paypalEnv && stored.paypalEnv !== paypal.environment) throw new Error(PAYMENT_REVIEW_MESSAGE);
-      {
+      if(!requiresSupplierOrderPlan(order)){
         const lines = await prisma.orderItem.findMany({
           where: { orderId },
           select: { productId: true, qty: true, name: true },
@@ -342,6 +345,7 @@ export async function approvePayPalOrder(
 
     if (order.isPaid) throw new Error('Order is already paid');
     if (order.paymentMethod !== 'PayPal' || !isPaymentMethodAvailable('PayPal')) throw new Error('PayPal is not available for this order');
+    if(requiresSupplierOrderPlan(order))await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId,now:new Date(),maxAgeMs:600000}));
     const stored = order.paymentResult as PaymentResult | null;
     if (typeof data?.orderID !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(data.orderID) || !stored?.id || data.orderID !== stored.id) {
       throw new Error('Payment order does not match this order');
@@ -737,4 +741,13 @@ export async function deliverOrderTest(orderId: string) {
     if (isRedirectError(error)) throw error;
     return { success: false, message: formatError(error) };
   }
+}
+
+/** Owner cancellation of an internal, unpaid and never-attempted order only.
+ * The transaction independently checks every condition. No provider call. */
+export async function cancelMyUnattemptedSupplierOrder(orderId:string){
+ const session=await auth();
+ if(!session?.user?.id||typeof orderId!=='string'||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId))return{success:false as const};
+ try{await prisma.$transaction(tx=>cancelUnattemptedSupplierOrderTx(tx,{orderId,userId:session.user!.id!}));revalidatePath('/order/'+orderId);revalidatePath('/user/orders');return{success:true as const}}
+ catch{return{success:false as const}}
 }

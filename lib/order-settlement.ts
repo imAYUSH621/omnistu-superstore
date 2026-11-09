@@ -1,3 +1,4 @@
+import {requiresSupplierOrderPlan,consumeSupplierAllocationTx} from './supplier-order-plan';
 // Settles an order as paid. Deliberately NOT in a 'use server' file: server
 // actions are callable from the network, and this must only run from trusted
 // server code (payment capture, the Stripe webhook, admin COD confirmation).
@@ -86,10 +87,11 @@ export async function updateOrderToPaid({
     });
     if (claim.count !== 1) throw new SettlementError('ALREADY_PAID', 'Order is already paid');
 
+    if(requiresSupplierOrderPlan(order))await consumeSupplierAllocationTx(tx,{orderId,now:new Date(),maxAgeMs:600000});
     // A precheck cannot protect separate orders racing for the last unit. Lock products in a
     // stable order and decrement only when enough stock remains. Failure rolls back every earlier
     // decrement AND the paid claim. Never retry a provider capture here.
-    for (const item of [...order.orderitems].sort((a, b) => a.productId.localeCompare(b.productId))) {
+    for (const item of (requiresSupplierOrderPlan(order)?[]:[...order.orderitems]).sort((a, b) => a.productId.localeCompare(b.productId))) {
       if (!Number.isSafeInteger(item.qty) || item.qty <= 0) {
         throw new SettlementError('STOCK_UNAVAILABLE', 'Order stock could not be allocated');
       }

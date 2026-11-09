@@ -43,39 +43,39 @@ describe('validateDispatchAddress (D5)', () => {
 });
 
 describe('dispatchOrderFulfillment honesty (D3)', () => {
-  it('blocks dispatch on an incomplete address and ships nothing', async () => {
+  it('disabled legacy entry ignores caller address and ships nothing', async () => {
     const r = await dispatchOrderFulfillment({
       ...baseOrder,
       shippingAddress: { fullName: 'X' },
     });
     expect(r.success).toBe(false);
-    expect(r.dispatches[0].status).toBe('ADDRESS_INCOMPLETE');
+    expect(r.dispatches[0].status).toBe('OFF');
     expect(r.dispatches[0].trackingNumber).toBeNull();
-    expect(r.dispatches[0].message).toMatch(/streetAddress/);
+    expect(r.dispatches[0].supplier).toBe('UNRESOLVED');
   });
 
-  it('marks key-less dispatch as SIMULATED with no fabricated tracking or carrier', async () => {
+  it('marks disabled dispatch as OFF with no fabricated tracking or carrier', async () => {
     delete process.env.CJ_API_KEY;
     delete process.env.FULFILLMENT_API_KEY;
     const r = await dispatchOrderFulfillment(baseOrder);
     expect(r.dispatches).toHaveLength(1);
     const d = r.dispatches[0];
-    expect(d.status).toBe('SIMULATED');
+    expect(d.status).toBe('OFF');
     expect(d.trackingNumber).toBeNull();
     expect(d.carrier).toBeNull();
     expect(d.supplierOrderId).toBeNull();
-    expect(d.message).toMatch(/SIMULATED/);
+    expect(d.message).toMatch(/off/);
     expect(r.success).toBe(false);
   });
 
-  it('reports gourmet items as UNROUTED, never as dispatched', async () => {
+  it('does not infer a supplier from a gourmet slug', async () => {
     const r = await dispatchOrderFulfillment({
       ...baseOrder,
       orderitems: [{ name: 'Kashmiri Saffron', slug: 'royal-saffron', qty: 1, price: '24.99' }],
     });
     const d = r.dispatches[0];
-    expect(d.supplier).toBe('SPECIALTY_GOURMET');
-    expect(d.status).toBe('UNROUTED');
+    expect(d.supplier).toBe('UNRESOLVED');
+    expect(d.status).toBe('OFF');
     expect(d.trackingNumber).toBeNull();
     expect(r.success).toBe(false);
   });

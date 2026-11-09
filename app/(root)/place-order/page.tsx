@@ -1,4 +1,5 @@
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {CHECKOUT_COPY} from '@/lib/checkout-language';
+import {qualifiedSelectionEnabled,boundRetailCheckoutEnabled} from '@/lib/retail/gate';
 import {readQualifiedCart} from '@/lib/retail/store';
 import QualifiedCart from '@/components/shared/retail/qualified-cart';
 import { auth } from '@/auth';
@@ -31,7 +32,7 @@ import { testCheckoutMode } from '@/lib/payment-capabilities';
 export async function generateMetadata():Promise<Metadata>{const l=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);return{title:REVIEW_COPY[l].title}}
 
 const PlaceOrderPage = async () => {
-  if(qualifiedRetailTestEnabled()) {const viewer=await auth();if(!viewer?.user?.id)redirect('/sign-in');const user=await getUserById(viewer.user.id);if(!user.address)redirect('/shipping-address');if(user.paymentMethod!=='TestPayment')redirect('/payment-method');return <QualifiedCart checkout cart={await readQualifiedCart(viewer.user.id)}/>;}
+  if(qualifiedSelectionEnabled()) {const viewer=await auth();if(!viewer?.user?.id)redirect('/sign-in');const user=await getUserById(viewer.user.id);if(!user.address)redirect('/shipping-address');if(user.paymentMethod!==(boundRetailCheckoutEnabled()?'PayPal':'TestPayment'))redirect('/payment-method');return <QualifiedCart checkout cart={await readQualifiedCart(viewer.user.id)}/>;}
   const cart = await getMyCart();
   const session = await auth();
   const userId = session?.user?.id;
@@ -50,6 +51,7 @@ const PlaceOrderPage = async () => {
     testCheckoutMode() && user.paymentMethod === 'TestPayment';
 
   const userAddress = user.address as ShippingAddress;
+  const addressCopy=CHECKOUT_COPY[supportLanguage('',(await cookies()).get('omnistu_lang')?.value)];
 
   return (
     <>
@@ -64,8 +66,9 @@ const PlaceOrderPage = async () => {
               <p>{userAddress.fullName}</p>
               <p>
                 {userAddress.streetAddress}, {userAddress.city}{' '}
-                {userAddress.postalCode}, {userAddress.country}{' '}
+                {userAddress.state?userAddress.state+', ':''}{userAddress.postalCode}, {userAddress.country}{' '}
               </p>
+              {userAddress.phone&&<p className='text-sm'>{addressCopy.phone}: {userAddress.phone}</p>}
               <div className='mt-3'>
                 <Link href='/shipping-address'>
                   <Button variant='outline'><T k='editLabel' /></Button>

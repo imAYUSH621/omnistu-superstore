@@ -179,12 +179,19 @@ DELETE FROM "User" WHERE id = '${userId}';`);
     } finally { psql('DROP TRIGGER IF EXISTS pt_fail_review_trg ON "FulfillmentTask"'); psql('DROP FUNCTION IF EXISTS pt_fail_review()'); }
   });
 
-  it.each(['sandbox', 'live', 'unknown'] as const)('preserves stored %s environment through settlement', async (paypalEnv) => {
+  it.each(['sandbox', 'unknown'] as const)('preserves stored %s environment through settlement', async (paypalEnv) => {
     const { order } = await makeOrder();
     await prisma.order.update({ where: { id: order.id }, data: { paymentResult: { id: 'PP', paypalEnv } } });
     await updateOrderToPaid({ orderId: order.id, paymentResult: { ...pr('42.50'), paypalEnv: 'live' } });
     const paid = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(paid.paymentResult).toMatchObject({ paypalEnv });
+  });
+
+  it('unbound stored live order is held without mutating payment provenance or stock',async()=>{
+    const {order,product}=await makeOrder();
+    await prisma.order.update({where:{id:order.id},data:{paymentResult:{id:'PP',paypalEnv:'live'}}});
+    await expect(updateOrderToPaid({orderId:order.id,paymentResult:{...pr('42.50'),paypalEnv:'sandbox'}})).rejects.toThrow('Persisted supplier binding required');
+    const held=await prisma.order.findUniqueOrThrow({where:{id:order.id}});expect(held.isPaid).toBe(false);expect(held.paymentResult).toMatchObject({paypalEnv:'live'});expect(await stockOf(product.id)).toBe(10);expect(dispatch).not.toHaveBeenCalled();
   });
 
   it('legacy absence remains absent rather than adopting incoming or current environment', async () => {

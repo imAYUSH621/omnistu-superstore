@@ -33,7 +33,7 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
 
   const form = useForm<z.infer<typeof shippingAddressSchema>>({
     resolver: zodResolver(shippingAddressSchema),
-    defaultValues: address || shippingAddressDefaultValues,
+    defaultValues: {...shippingAddressDefaultValues,...address},
   });
 
   const [isPending, startTransition] = useTransition();
@@ -184,6 +184,18 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
                   </FormItem>
                 )}
               />
+            </div>
+            <div className='flex flex-col gap-5'>
+              <FormField control={form.control} name='state' render={({field})=>(
+                <FormItem className='w-full'><FormLabel>{t.state}</FormLabel><FormControl>
+                  <Input {...field} value={field.value||''} autoComplete='address-level1' placeholder={t.statePlaceholder}/>
+                </FormControl><CheckoutError/></FormItem>
+              )}/>
+              <FormField control={form.control} name='phone' render={({field})=>(
+                <FormItem className='w-full'><FormLabel>{t.phone}</FormLabel><FormControl>
+                  <Input {...field} value={field.value||''} type='tel' autoComplete='tel' inputMode='tel' placeholder={t.phonePlaceholder} aria-describedby='delivery-phone-note'/>
+                </FormControl><p id='delivery-phone-note' className='text-sm text-muted-foreground'>{t.deliveryPhoneNote}</p><CheckoutError/></FormItem>
+              )}/>
             </div>
             <div className='flex flex-wrap gap-2'>
               <Button type='submit' disabled={isPending}>

@@ -8,3 +8,13 @@ export function qualifiedRetailTestEnabled(env: NodeJS.ProcessEnv = process.env)
   }
   return env.VERCEL_ENV === 'preview' && !!env.QUALIFIED_RETAIL_TEST_PROJECT_ID && env.VERCEL_PROJECT_ID === env.QUALIFIED_RETAIL_TEST_PROJECT_ID;
 }
+
+/** Commercial route remains default-OFF, independent of the TESTONLY preview.
+ * Even enabled, missing independently reviewed offer/fee evidence blocks checkout.
+ * These configuration conditions do not prove owner or merchant authorization. */
+export function boundRetailCheckoutEnabled(env:NodeJS.ProcessEnv=process.env):boolean{
+ if(env.BOUND_RETAIL_CHECKOUT_ENABLED!=='true'||env.ORDERS_ENABLED!=='true'||env.TEST_CHECKOUT_MODE==='true')return false;
+ if(env.NODE_ENV!=='production'){try{return ['localhost','127.0.0.1'].includes(new URL(env.DATABASE_URL||'').hostname)}catch{return false}}
+ return !!env.QUALIFIED_RETAIL_RUNTIME_ROLE&&!!env.BOUND_RETAIL_PROJECT_ID&&env.VERCEL_PROJECT_ID===env.BOUND_RETAIL_PROJECT_ID;
+}
+export function qualifiedSelectionEnabled(env:NodeJS.ProcessEnv=process.env){return qualifiedRetailTestEnabled(env)||boundRetailCheckoutEnabled(env)}
