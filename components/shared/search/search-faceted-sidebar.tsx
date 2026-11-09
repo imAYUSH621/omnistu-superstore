@@ -1,4 +1,7 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{SEARCH_COPY}from '@/lib/search-language';
+import{homeDepartment}from '@/lib/home-language';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -28,6 +31,7 @@ export default function SearchFacetedSidebar({
   showIdeas = false,
   facetCounts,
 }: FacetedSidebarProps) {
+  const language=useStoreLanguage();const t=SEARCH_COPY[language];
   const router = useRouter();
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -68,10 +72,10 @@ export default function SearchFacetedSidebar({
     (currentRating && currentRating !== 'all');
 
   const priceBuckets = [
-    { label: 'Under $25', value: '0-25' },
-    { label: '$25 to $50', value: '25-50' },
-    { label: '$50 to $100', value: '50-100' },
-    { label: '$100 to $500', value: '100-500' },
+    { label: t.under25, value: '0-25' },
+    { label: t.range25, value: '25-50' },
+    { label: t.range50, value: '50-100' },
+    { label: t.range100, value: '100-500' },
   ];
 
   const ratingOptions = [4, 3, 2, 1];
@@ -82,7 +86,7 @@ export default function SearchFacetedSidebar({
       {isAnyFilterActive && (
         <div className='p-3 bg-neutral-100 dark:bg-neutral-800/60 rounded-lg flex items-center justify-between'>
           <span className='text-xs font-semibold text-neutral-600 dark:text-neutral-400'>
-            Filters active
+            {t.active}
           </span>
           <Button
             asChild
@@ -91,7 +95,7 @@ export default function SearchFacetedSidebar({
             className='h-7 text-xs text-primary hover:underline px-2'
           >
             <Link href='/search' className='flex items-center gap-1'>
-              <RotateCcw className='w-3 h-3' /> Clear all
+              <RotateCcw className='w-3 h-3' /> {t.clear}
             </Link>
           </Button>
         </div>
@@ -101,7 +105,7 @@ export default function SearchFacetedSidebar({
       {showIdeas && (<>
       <div className='space-y-2.5'>
         <h3 className='font-bold text-sm text-foreground uppercase tracking-wide text-xs'>
-          Popular Shopping Ideas
+          {t.ideas}
         </h3>
         <div className='flex flex-wrap gap-1.5'>
           {/* Each term verified to match at least one real catalog product;
@@ -125,7 +129,7 @@ export default function SearchFacetedSidebar({
 
       {/* 2. Department / Categories */}
       <div className='space-y-2'>
-        <h3 className='font-bold text-sm text-foreground'>Category</h3>
+        <h3 className='font-bold text-sm text-foreground'>{t.category}</h3>
         <ul className='space-y-1 text-xs'>
           <li>
             <Link
@@ -136,7 +140,7 @@ export default function SearchFacetedSidebar({
                   : 'hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              <span>All Categories</span>
+              <span>{t.allCategories}</span>
             </Link>
           </li>
           {categories.map((c) => {
@@ -151,7 +155,7 @@ export default function SearchFacetedSidebar({
                       : 'hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800'
                   }`}
                 >
-                  <span className='truncate'>{c.category}</span>
+                  <span className='truncate'>{homeDepartment(c.category,language)}</span>
                   <span className='text-[11px] text-muted-foreground ml-1'>
                     ({c._count})
                   </span>
@@ -166,7 +170,7 @@ export default function SearchFacetedSidebar({
 
       {/* 3. Customer Reviews */}
       <div className='space-y-2'>
-        <h3 className='font-bold text-sm text-foreground'>Customer Reviews</h3>
+        <h3 className='font-bold text-sm text-foreground'>{t.reviews}</h3>
         <ul className='space-y-1.5 text-xs'>
           {ratingOptions.map((r) => {
             const isSelected = currentRating === r.toString();
@@ -179,7 +183,7 @@ export default function SearchFacetedSidebar({
                       <Star key={i} className='w-3.5 h-3.5 text-neutral-300 dark:text-neutral-700' />
                     ))}
                   </div>
-                  <span className='text-xs'>& Up (0)</span>
+                  <span className='text-xs'>{t.andUp} (0)</span>
                 </li>
               );
             }
@@ -205,7 +209,7 @@ export default function SearchFacetedSidebar({
                       />
                     ))}
                   </div>
-                  <span className='text-xs'>& Up{rn !== undefined ? ` (${rn})` : ''}</span>
+                  <span className='text-xs'>{t.andUp}{rn !== undefined ? ` (${rn})` : ''}</span>
                 </Link>
               </li>
             );
@@ -217,9 +221,9 @@ export default function SearchFacetedSidebar({
 
       {/* 4. Price & Deals */}
       <div className='space-y-2.5'>
-        <h3 className='font-bold text-sm text-foreground'>Price</h3>
+        <h3 className='font-bold text-sm text-foreground'>{t.price}</h3>
         <p data-testid='price-filter-note' className='text-[11px] text-muted-foreground'>
-          Test fixtures are matched by supplier reference cost, not a retail price.
+          {t.referenceNote}
         </p>
         <ul className='space-y-1 text-xs'>
           <li>
@@ -231,7 +235,7 @@ export default function SearchFacetedSidebar({
                   : 'hover:text-primary hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              All Prices
+              {t.allPrices}
             </Link>
           </li>
           {priceBuckets.map((bucket) => {
@@ -267,7 +271,7 @@ export default function SearchFacetedSidebar({
             <span className='absolute left-2 top-2 text-xs text-muted-foreground'>$</span>
             <Input
               type='number'
-              placeholder='Min'
+              placeholder={t.min} aria-label={t.min}
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
               className='h-8 pl-5 text-xs'
@@ -279,7 +283,7 @@ export default function SearchFacetedSidebar({
             <span className='absolute left-2 top-2 text-xs text-muted-foreground'>$</span>
             <Input
               type='number'
-              placeholder='Max'
+              placeholder={t.max} aria-label={t.max}
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
               className='h-8 pl-5 text-xs'
@@ -292,7 +296,7 @@ export default function SearchFacetedSidebar({
             variant='outline'
             className='h-8 px-2.5 text-xs font-semibold'
           >
-            Go
+            {t.apply}
           </Button>
         </form>
       </div>

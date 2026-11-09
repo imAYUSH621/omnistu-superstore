@@ -1,10 +1,14 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{SEARCH_COPY}from '@/lib/search-language';
+import{homeDepartment}from '@/lib/home-language';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Sparkles, DollarSign, Star, Tag } from 'lucide-react';
 
 export default function SearchNarrowChips({ categories = [], facetCounts }: { facetCounts?: { price: Record<string, number>; rating: Record<string, number> }; categories?: { category: string; _count?: number | { _all?: number } }[] }) {
+  const language=useStoreLanguage();const t=SEARCH_COPY[language];
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get('category') || 'all';
   const currentPrice = searchParams.get('price') || 'all';
@@ -26,27 +30,27 @@ export default function SearchNarrowChips({ categories = [], facetCounts }: { fa
 
   const chips = [
     {
-      label: 'All Products',
+      label: t.allProducts,
       icon: Sparkles,
       active: currentCategory === 'all' && currentPrice === 'all' && currentRating === 'all',
       href: '/search',
     },
     {
-      label: 'Under $25',
+      label: t.under25,
       count: facetCounts?.price['0-25'],
       icon: DollarSign,
       active: currentPrice === '0-25',
       href: makeChipUrl({ price: currentPrice === '0-25' ? 'all' : '0-25' }),
     },
     {
-      label: '$25 to $50',
+      label: t.range25,
       count: facetCounts?.price['25-50'],
       icon: Tag,
       active: currentPrice === '25-50',
       href: makeChipUrl({ price: currentPrice === '25-50' ? 'all' : '25-50' }),
     },
     {
-      label: '4★ & Above',
+      label: '4★ '+t.andUp,
       count: facetCounts?.rating['4'],
       icon: Star,
       active: currentRating === '4',
@@ -55,7 +59,7 @@ export default function SearchNarrowChips({ categories = [], facetCounts }: { fa
     // Category chips come from the categories that actually exist in the
     // current catalog, so a chip can never point at an empty category name.
     ...categories.slice(0, 6).map((c) => ({
-      label: c.category,
+      label: homeDepartment(c.category,language),
       icon: Tag,
       active: currentCategory === c.category,
       href: makeChipUrl({ category: currentCategory === c.category ? 'all' : c.category }),
@@ -64,11 +68,11 @@ export default function SearchNarrowChips({ categories = [], facetCounts }: { fa
 
   return (
     <div className='my-3 pb-2'>
-      <div className='flex items-center gap-2 mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider'>
+      <div className='flex flex-wrap items-center gap-2 mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider'>
         <Sparkles className='w-3.5 h-3.5 text-amber-500' />
-        <span>Narrow your search</span>
+        <span>{t.narrow}</span>
         <span data-testid='chip-price-note' className='normal-case font-normal tracking-normal'>
-          (price chips use reference cost for test fixtures)
+          {t.referenceNote}
         </span>
       </div>
 

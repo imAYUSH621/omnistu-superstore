@@ -1,0 +1,5 @@
+# Existing search discovery language
+
+The actual search result header/empty state, mobile filter toggle, narrow chips and faceted sidebar use the six existing language preferences. Known department display labels reuse the homepage map; category query values stay canonical. Search terms and unknown category names remain original and escaped. Sort/filter/page values and zero-count disabling remain unchanged. Sort value newest now says Newest rather than Featured. Stored USD filter ranges say USD; reference-cost disclosures remain explicit and do not imply retail approval or converted settlement.
+
+Sort and custom-price inputs have localized accessible labels. Search server metadata uses the same language and retains the original query. No inventory is fabricated, no product is published and no supplier price or stock is changed. Component/browser fixtures mock navigation and out-of-scope product-card children. Hosted public empty-catalog proof and any existing isolated positive-catalog proof must be reported separately. Current empty production results cannot prove a populated catalog or sale readiness.
