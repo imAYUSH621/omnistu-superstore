@@ -1,3 +1,4 @@
+jest.mock('@/components/shared/order/supplier-payment-review',()=>({__esModule:true,default:()=>null}));
 jest.mock('@/lib/actions/supplier-funding.actions',()=>({prepareSupplierFundingReviewAction:jest.fn()}));
 import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 let mockLang:'EN'|'HI'|'ES'|'FR'|'DE'|'JA'='EN';jest.mock('@/hooks/use-store-language',()=>({useStoreLanguage:()=>mockLang}));

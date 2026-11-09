@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {prisma} from '@/db/prisma';
 import {localDatabaseTestEnabled} from './helpers/local-database';
@@ -11,7 +12,13 @@ suite('new supplier payment review on disposable real PostgreSQL; no live provid
  const shipping={fullName:'Synthetic only',streetAddress:'Fixture only',city:'Fixture city',state:'NY',postalCode:'10001',country:'US',phone:'+12025550100'};
  let userId:string,productId:string;
  const previous={CJ_PAYMENT_RECONCILIATION_ENABLED:process.env.CJ_PAYMENT_RECONCILIATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};
- beforeAll(async()=>{userId=(await prisma.user.create({data:{email:`payment-review-${randomUUID()}@example.invalid`,name:'Synthetic only',password:'not-a-login'}})).id;const p=await prisma.product.create({data:{name:'Synthetic only',slug:randomUUID(),category:'test',description:'No merchant offer',images:[],stock:1,price:10}});productId=p.id;});
+ beforeAll(async()=>{
+  await prisma.$executeRawUnsafe(`DO $$BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app')THEN CREATE ROLE omnistu_app NOLOGIN NOSUPERUSER NOBYPASSRLS;END IF;END$$`);
+  // CI creates the runtime role after migrate deploy. Apply the exact new
+  // migration's scoped grants now, without changing any legacy table rights.
+  const migration=readFileSync('prisma/migrations/20261109160000_supplier_payment_observation/migration.sql','utf8');
+  await prisma.$executeRawUnsafe(migration.slice(migration.indexOf('DO $$'),migration.indexOf('CREATE FUNCTION')));
+  userId=(await prisma.user.create({data:{email:`payment-review-${randomUUID()}@example.invalid`,name:'Synthetic only',password:'not-a-login'}})).id;const p=await prisma.product.create({data:{name:'Synthetic only',slug:randomUUID(),category:'test',description:'No merchant offer',images:[],stock:1,price:10}});productId=p.id;});
  afterAll(async()=>{for(const[k,v]of Object.entries(previous)){if(v===undefined)delete process.env[k];else process.env[k]=v}await prisma.$disconnect()});
  afterEach(()=>jest.restoreAllMocks());
  async function fixture(state='PARENT_UNKNOWN'){
