@@ -23,6 +23,8 @@ export function startTraffic(host:TrafficHost,config:TrafficConfig,consent:Traff
  const view=publicTrafficView(pathname);if(consent!=='granted'||!view){stopTraffic(host,config);return false}
  host['ga-disable-'+config.measurementId]=false;
  host.dataLayer=host.dataLayer??[];
+ // Google's documented command queue uses an Arguments object, not a dataLayer object event.
+ // eslint-disable-next-line prefer-rest-params
  host.gtag=host.gtag??function(){host.dataLayer!.push(arguments)};
  if(host['omnistu-traffic-initialized']!==config.measurementId){
   host.gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
