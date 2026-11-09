@@ -5,7 +5,7 @@ name: CI
 # anywhere from this repository.
 on:
   push:
-    branches: [main]
+    branches: [main, test/local-shared-billing-read-20261109]
   pull_request:
 
 jobs:
@@ -49,3 +49,9 @@ jobs:
         env:
           # D13/D14: build must pass with zero secrets configured.
           NODE_ENV: production
+
+      - name: Compiled Store local billing HTTP boundary gate (synthetic upstream only)
+        run: node scripts/verify-local-billing-built.mjs
+        env:
+          OMNISTU_LOCAL_DB_TEST: 'true'
+          DATABASE_URL: postgresql://postgres:disposable_local_ci_only@localhost:5432/omnistu_test_ci?schema=public
