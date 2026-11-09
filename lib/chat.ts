@@ -37,6 +37,8 @@ export function limited(ip: string): boolean {
 // opens a real product page and the price matches it. Only name, category,
 // brand and description are searched and quoted: ratings, review counts and
 // badges are never used to rank or describe a product (they are unverified).
+type CatalogMatch={name:string;slug:string;price:string|number;stock?:number};
+function formatProductMatches(rows:CatalogMatch[]):string{return rows.map(p=>`- ${p.name} | price: $${Number(p.price).toFixed(2)}${typeof p.stock==='number'&&p.stock<=0?' | currently out of stock':''} | link: /product/${p.slug}`).join('\n')}
 export type ProductLookupState={status:'available'|'unavailable';products:string};
 export async function findProductsState(query:string):Promise<ProductLookupState>{
   type Row = { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number };
@@ -52,32 +54,16 @@ export async function findProductsState(query:string):Promise<ProductLookupState
       // Fixture rows (fxt-/cjstg-) stay out of answers in production, same
       // as the public storefront queries.
       try {
-        const [{ prisma }, { fixtureExclusion }] = await Promise.all([
-          import('@/db/prisma'),
-          import('@/lib/test-fixture'),
+        const [{ prisma }, { hiddenSlugPrefixes },{rankedProductQuery}] = await Promise.all([
+          import('@/db/prisma'),import('@/lib/test-fixture'),import('@/lib/catalog-rank-query'),
         ]);
-        const rows = await prisma.product.findMany({
-          where: {
-            AND: [
-              {
-                OR: words.flatMap((w) => [
-                  { name: { contains: w, mode: 'insensitive' as const } },
-                  { description: { contains: w, mode: 'insensitive' as const } },
-                  { category: { contains: w, mode: 'insensitive' as const } },
-                  { brand: { contains: w, mode: 'insensitive' as const } },
-                ]),
-              },
-              fixtureExclusion(),
-            ],
-          },
-          select: { name: true, slug: true, price: true, category: true, brand: true, description: true, stock: true },
-          take: 25,
-        });
-        list = rows as unknown as Row[];
+        const rows=await prisma.$queryRaw<Row[]>(rankedProductQuery(words,hiddenSlugPrefixes()));
+        // SQL has ranked the full matching relation before limiting; do not
+        // re-rank a truncated candidate pool or translate stored product facts.
+        return {status:'available',products:formatProductMatches(rows)};
       } catch {
         return {status:'unavailable',products:''};
       }
-      if (!list.length) return {status:'available',products:''};
     } else {
       // No database: the same demo sample catalog the storefront pages show.
       const {sampleCatalogAllowed}=await import('@/lib/test-fixture');
@@ -97,12 +83,7 @@ export async function findProductsState(query:string):Promise<ProductLookupState
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    const products=scored
-      .map(({ p }) => {
-        const stockNote = typeof p.stock === 'number' && p.stock <= 0 ? ' | currently out of stock' : '';
-        return `- ${p.name} | price: $${Number(p.price).toFixed(2)}${stockNote} | link: /product/${p.slug}`;
-      })
-      .join('\n');
+    const products=formatProductMatches(scored.map(x=>x.p));
     return {status:'available',products};
   } catch {
     return {status:'unavailable',products:''};

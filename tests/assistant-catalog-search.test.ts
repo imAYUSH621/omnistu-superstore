@@ -1,7 +1,7 @@
 const mockFindMany = jest.fn();
 
 jest.mock('@/db/prisma', () => ({
-  prisma: { product: { findMany: (...a: unknown[]) => mockFindMany(...a) } },
+  prisma: { $queryRaw: (...a: unknown[]) => mockFindMany(...a) },
 }));
 jest.mock('@/lib/utils', () => ({ isDatabaseAvailable: () => true }));
 
@@ -20,15 +20,15 @@ const dbRow = {
 describe('findProducts database path', () => {
   beforeEach(() => mockFindMany.mockReset());
 
-  test('queries the DB with per-word OR filters and returns links and prices', async () => {
+  test('ranks the full DB relation before limiting and returns links and prices', async () => {
     mockFindMany.mockResolvedValue([dbRow]);
     const out = await findProducts('saffron threads');
     expect(out).toContain('/product/royal-kashmiri-mongra-saffron');
     expect(out).toContain('$24.99');
-    const where = mockFindMany.mock.calls[0][0].where;
-    expect(Array.isArray(where.AND)).toBe(true);
-    expect(where.AND[0].OR.length).toBe(8); // 2 words x 4 fields
-    expect(mockFindMany.mock.calls[0][0].take).toBe(25);
+    const query=mockFindMany.mock.calls[0][0];
+    expect(query.text).toContain('ORDER BY relevance DESC,name ASC,slug ASC LIMIT 5');
+    expect(query.values).toContain('saffron');expect(query.values).toContain('threads');
+    expect(query.text).not.toContain('LIMIT 25');
   });
 
   test('excludes test fixtures in a production runtime', async () => {
@@ -37,8 +37,7 @@ describe('findProducts database path', () => {
     mockFindMany.mockResolvedValue([dbRow]);
     try {
       await findProducts('saffron');
-      const where = mockFindMany.mock.calls[0][0].where;
-      const exclusion = JSON.stringify(where.AND[1]);
+      const exclusion = JSON.stringify(mockFindMany.mock.calls[0][0].values);
       expect(exclusion).toContain('fxt-');
       expect(exclusion).toContain('cjstg-');
     } finally {
