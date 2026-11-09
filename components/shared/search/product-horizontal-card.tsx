@@ -1,4 +1,7 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{PRODUCT_COPY,productText}from '@/lib/product-language';
+import{homeDepartment}from '@/lib/home-language';
 
 import { useState, useTransition } from 'react';
 import { isTestFixtureSlug } from '@/lib/test-fixture';
@@ -8,7 +11,7 @@ import { ProductImage } from '@/components/shared/product/product-image';
 import { Product } from '@/types';
 import Rating from '@/components/shared/product/rating';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, Heart, Loader2 } from 'lucide-react';
+import { ShoppingCart, Check, Loader2 } from 'lucide-react';
 import { addItemToCart } from '@/lib/actions/cart.actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,8 +21,8 @@ interface ProductHorizontalCardProps {
 
 export default function ProductHorizontalCard({ product }: ProductHorizontalCardProps) {
   const { toast } = useToast();
+  const language=useStoreLanguage();const t=PRODUCT_COPY[language];
   const [isPending, startTransition] = useTransition();
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [added, setAdded] = useState(false);
 
   const isFixture = isTestFixtureSlug(product.slug);
@@ -75,34 +78,12 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
         <div className='absolute top-2 left-2 z-10 flex flex-col gap-1'>
           {product.isFeatured && (
             <span className='bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded shadow-sm'>
-              Featured
+              {t.featured}
             </span>
           )}
         </div>
 
-        {/* Wishlist Button */}
-        <button
-          type='button'
-          onClick={(e) => {
-            e.preventDefault();
-            setIsWishlisted(!isWishlisted);
-            toast({
-              description: isWishlisted
-                ? 'Removed from your Wishlist'
-                : 'Saved to your Wishlist!',
-            });
-          }}
-          className='absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/90 dark:bg-neutral-800/90 shadow-sm flex items-center justify-center text-neutral-500 hover:text-red-500 transition'
-          aria-label='Save to Wishlist'
-        >
-          <Heart
-            className={`w-3.5 h-3.5 ${
-              isWishlisted ? 'text-red-500 fill-red-500' : ''
-            }`}
-          />
-        </button>
-
-        <Link href={`/product/${product.slug}`} className='relative w-full h-full block'>
+<Link href={`/product/${product.slug}`} className='relative w-full h-full block'>
           <ProductImage
             src={product.images[0] || '/images/products/placeholder.svg'}
             alt={product.name}
@@ -111,7 +92,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           />
           {isFixture && (
             <span className='absolute bottom-0 left-0 right-0 bg-red-700/95 px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-white' data-testid='placeholder-image-label'>
-              Placeholder image - not a photo of this product
+              {t.placeholder}
             </span>
           )}
         </Link>
@@ -128,8 +109,8 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
                 <span>•</span>
               </>
             ) : null}
-            <span>{product.category}</span>
-            {isTestFixtureSlug(product.slug) && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>TEST FIXTURE - not for sale</span>}
+            <span>{homeDepartment(product.category,language)}</span>
+            {isTestFixtureSlug(product.slug) && <span className='rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-800' data-testid='test-fixture-badge'>{t.fixture}</span>}
           </div>
 
           {/* Product Title */}
@@ -154,15 +135,15 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
               </span>
             </div>
           ) : (
-            <p className='text-xs text-muted-foreground mt-1.5'>No reviews yet</p>
+            <p className='text-xs text-muted-foreground mt-1.5'>{t.noReviews}</p>
           )}
 
           {isFixture ? (
             <p className='mt-2.5 text-xs text-red-900' data-testid='fixture-card-cost'>
-              <span className='font-bold'>Reference only</span> - supplier cost ${priceNum.toFixed(2)}, not a sale price
+              {productText(language,'reference',{cost:priceNum.toFixed(2)})}
               {Number((product as { variantCount?: number }).variantCount) > 1 && (
                 <span data-testid='fixture-variant-count'>
-                  {' '}| {(product as { variantCount?: number }).variantCount} supplier options{(product as { variantCostFrom?: string | null }).variantCostFrom ? `, lowest reference cost $${(product as { variantCostFrom?: string | null }).variantCostFrom}` : ''}
+                  {' '}| {productText(language,'supplierOptions',{count:Number((product as {variantCount?:number}).variantCount)})}{(product as { variantCostFrom?: string | null }).variantCostFrom ? ', '+productText(language,'lowestReference',{cost:String((product as {variantCostFrom?:string}).variantCostFrom)}) : ''}
                 </span>
               )}
             </p>
@@ -186,11 +167,11 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
           {/* Stock status - honest states only, no urgency copy */}
           {isFixture ? null : product.stock === 0 ? (
             <p className='text-xs text-muted-foreground mt-1'>
-              Currently unavailable - supplier stock not yet verified
+              {t.unavailable}
             </p>
           ) : (
             <p className='text-xs text-muted-foreground mt-1'>
-              Demo catalog item - test mode, no real fulfillment
+              {t.demoStock}
             </p>
           )}
         </div>
@@ -201,7 +182,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
 
         <div className='space-y-2 pt-2'>
           {isFixture ? (
-            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>Test fixture - not for sale</p>
+            <p className='rounded-md border border-red-300 bg-red-50 px-2 py-1.5 text-center text-xs font-bold text-red-900' data-testid='fixture-card-note'>{t.fixture}</p>
           ) : (
           <Button
             type='button'
@@ -214,12 +195,12 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
             ) : added ? (
               <>
                 <Check className='w-4 h-4 text-emerald-700' />
-                <span>Added to Cart</span>
+                <span>{t.addedCart}</span>
               </>
             ) : (
               <>
                 <ShoppingCart className='w-3.5 h-3.5' />
-                <span>Add to cart</span>
+                <span>{t.addCart}</span>
               </>
             )}
           </Button>
@@ -230,7 +211,7 @@ export default function ProductHorizontalCard({ product }: ProductHorizontalCard
             variant='outline'
             className='w-full text-xs h-9 rounded-full border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800'
           >
-            <Link href={`/product/${product.slug}`}>{isFixture ? 'View details' : 'See options'}</Link>
+            <Link href={`/product/${product.slug}`}>{isFixture ? t.viewDetails : t.seeOptions}</Link>
           </Button>
         </div>
       </div>

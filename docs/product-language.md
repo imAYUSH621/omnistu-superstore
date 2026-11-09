@@ -1,0 +1,9 @@
+# Existing product presentation language and truthful affordances
+
+Actual grid/list cards, ordinary detail copy, buy-box state and review loading/error/empty/sign-in now use the existing six Store language preferences. Product names, brand, description and review content remain the original escaped content, not invented translations. Known category display labels reuse the home map without changing canonical links. Existing stock, sample/fixture/test-catalog gates, add-to-cart calls, quantity math and backend authorization remain unchanged.
+
+Removed the three wishlist buttons whose only implementation was a component boolean and success toast: no wishlist was ever saved or shared between views. No storage, account feature, new table or wishlist promise is added. Removed the accompanying unsupported buyer-protection badge. Review heading no longer claims verification because current review persistence does not verify purchases. Review loading/error is separate from confirmed empty, with cancellation protection on product changes. No review mutation or customer communication is exercised by read-only hosted proof.
+
+Reference costs are explicitly USD, not retail prices. Fixture checkout stays unavailable. Test-mode payment text stays simulation-only. Outside test mode, payment methods are confirmed at checkout, not declared secure or ready by this card. Unverified original supplier/product content is retained and remains subject to catalog qualification.
+
+Local component browser fixtures mock router, server actions, image boundary and review form. Those prove copy, state and layout, not hosted product retrieval or checkout. Hosted existing-isolated zero-stock product detail and card retrieval are qualified separately from empty public catalog and public hidden-item guards.

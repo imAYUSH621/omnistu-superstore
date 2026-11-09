@@ -1,3 +1,7 @@
+import{cookies}from 'next/headers';
+import{supportLanguage}from '@/lib/support-language';
+import{PRODUCT_COPY}from '@/lib/product-language';
+import{homeDepartment}from '@/lib/home-language';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
 import {listQualifiedOptions} from '@/lib/retail/store';
 import QualifiedBuyBox from '@/components/shared/retail/qualified-buy-box';
@@ -19,6 +23,7 @@ const ProductDetailsPage = async (props: {
   params: Promise<{ slug: string }>;
 }) => {
   const { slug } = await props.params;
+  const language=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);const t=PRODUCT_COPY[language];
 
   const product = await getProductBySlug(slug);
   if (!product) notFound();
@@ -40,7 +45,7 @@ const ProductDetailsPage = async (props: {
           href={`/search?category=${encodeURIComponent(product.category)}`}
           className='hover:text-foreground transition font-medium'
         >
-          {product.category}
+          {homeDepartment(product.category,language)}
         </Link>
         <ChevronRight className='w-3.5 h-3.5' />
         <span className='truncate max-w-[200px] text-foreground font-semibold'>
@@ -62,11 +67,11 @@ const ProductDetailsPage = async (props: {
             <div className='flex items-center gap-2'>
               {product.isFeatured && (
                 <span className='inline-flex items-center gap-1 text-[11px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-sm shadow-xs'>
-                  <Award className='w-3.5 h-3.5' /> Featured
+                  <Award className='w-3.5 h-3.5' /> {t.featured}
                 </span>
               )}
               <span className='text-xs text-muted-foreground'>
-                {product.category}
+                {homeDepartment(product.category,language)}
               </span>
             </div>
 
@@ -100,7 +105,7 @@ const ProductDetailsPage = async (props: {
               </div>
             ) : (
               <p className='border-b border-neutral-200 dark:border-neutral-800 pb-4 text-xs text-muted-foreground' data-testid='no-reviews-yet'>
-                No reviews yet
+                {t.noReviews}
               </p>
             )}
 
@@ -125,7 +130,7 @@ const ProductDetailsPage = async (props: {
       {/* Customer Reviews Section */}
       <section className='pt-8 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1a202c] p-6 rounded-sm shadow-xs'>
         <h2 className='text-xl font-bold mb-6 text-foreground flex items-center gap-2'>
-          Customer Reviews & Verified Feedback
+          {t.customerReviews}
         </h2>
         <ReviewList
           userId={userId || ''}

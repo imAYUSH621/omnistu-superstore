@@ -1,4 +1,6 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{PRODUCT_COPY}from '@/lib/product-language';
 
 import { useEffect } from 'react';
 import { Review } from '@/types';
@@ -26,26 +28,26 @@ const ReviewList = ({
   productId: string;
   productSlug: string;
 }) => {
+  const language=useStoreLanguage();const t=PRODUCT_COPY[language];
+  const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
   const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
-    const loadReviews = async () => {
-      const res = await getReviews({ productId });
-      setReviews(res.data);
-    };
-
-    loadReviews();
+    let active=true;
+    setState('loading');setReviews([]);
+    getReviews({productId}).then(res=>{if(active){setReviews(res.data);setState('ready')}}).catch(()=>{if(active)setState('error')});
+    return()=>{active=false};
   }, [productId]);
-
-  // Reload reviews after created or updated
   const reload = async () => {
-    const res = await getReviews({ productId });
-    setReviews([...res.data]);
+    setState('loading');
+    try{const res=await getReviews({productId});setReviews([...res.data]);setState('ready')}catch{setState('error')}
   };
 
   return (
     <div className='space-y-4'>
-      {reviews.length === 0 && <div>No reviews yet</div>}
+      {state==='loading'&&<p role='status'>{t.reviewLoading}</p>}
+      {state==='error'&&<p role='alert'>{t.reviewUnavailable}</p>}
+      {state==='ready'&&reviews.length===0&&<div>{t.noReviews}</div>}
       {userId ? (
         <ReviewForm
           userId={userId}
@@ -54,14 +56,7 @@ const ReviewList = ({
         />
       ) : (
         <div>
-          Please
-          <Link
-            className='text-blue-700 px-2'
-            href={`/sign-in?callbackUrl=/product/${productSlug}`}
-          >
-            sign in
-          </Link>
-          to write a review
+          <Link className='text-blue-700 underline' href={`/sign-in?callbackUrl=${encodeURIComponent('/product/'+productSlug)}`}>{t.reviewSignin}</Link>
         </div>
       )}
       <div className='flex flex-col gap-3'>
@@ -78,7 +73,7 @@ const ReviewList = ({
                 <Rating value={review.rating} />
                 <div className='flex items-center'>
                   <User className='mr-1 h-3 w-3' />
-                  {review.user ? review.user.name : 'User'}
+                  {review.user ? review.user.name : t.reviewUser}
                 </div>
                 <div className='flex items-center'>
                   <Calendar className='mr-1 h-3 w-3' />

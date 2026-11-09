@@ -32,7 +32,8 @@ describe('payment and security claims stay honest (source check, not a rendered 
 
   it('buy box drops the Secure SSL payment note in test mode', () => {
     const s = read('components/shared/product/buy-box.tsx');
-    expect(s).toMatch(/Simulated payment \(test mode\) - no card is charged/);
+    expect(s).toContain('testMode ? t.simulated : t.paymentOff');
+    expect(read('lib/product-language.ts')).toContain('Simulated payment (test mode) - no card is charged.');
     expect(s).toMatch(/testMode \?/);
   });
 });
