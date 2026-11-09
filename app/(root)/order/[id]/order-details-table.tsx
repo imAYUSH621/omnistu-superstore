@@ -1,4 +1,5 @@
 'use client';
+import SupplierFundingReview,{type SupplierFundingView} from '@/components/shared/order/supplier-funding-review';
 import type{BoundPaymentRecovery}from'@/lib/bound-payment-recovery';
 import{BOUND_CHECKOUT_COPY}from'@/lib/bound-checkout-language';
 import{BOUND_RECOVERY_COPY}from'@/lib/bound-payment-recovery-copy';
@@ -52,6 +53,8 @@ const OrderDetailsTable = ({
   stripeClientSecret,
   cancellationOffered=false,
   paymentRecovery,
+  supplierFundingEnabled=false,
+  supplierFundingInitial=null,
 }: {
   order: Omit<Order, 'paymentResult'>;
   paypalClientId: string;
@@ -59,6 +62,8 @@ const OrderDetailsTable = ({
   stripeClientSecret: string | null;
   cancellationOffered?:boolean;
   paymentRecovery?:BoundPaymentRecovery;
+  supplierFundingEnabled?:boolean;
+  supplierFundingInitial?:SupplierFundingView;
 }) => {
   const {
     id,
@@ -188,7 +193,7 @@ const OrderDetailsTable = ({
     );
   };
 
-  // Button to mark order as delivered
+  // Button to verify provider/carrier delivery, never set it manually
   const MarkAsDeliveredButton = () => {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
@@ -376,6 +381,7 @@ const OrderDetailsTable = ({
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}
+              {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierFundingReview orderId={id} enabled={supplierFundingEnabled} initial={supplierFundingInitial}/>}
 
               {/* Simulated test checkout */}
               {simulated && (

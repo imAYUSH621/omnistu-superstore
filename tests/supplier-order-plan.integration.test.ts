@@ -363,5 +363,64 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
    const methods=fetcher.mock.calls.map(c=>String(c[0]));expect(methods.some(u=>u.includes('payBalance')||u.includes('createOrder')||u.includes('confirmOrder'))).toBe(false);
   }finally{fetcher.mockRestore();for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
  });
+ async function fundingFixture(){
+  const {supplierPlanDigest}=await import('@/lib/supplier-order-plan');
+  const source=await prisma.$transaction(tx=>loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now:new Date(),maxAgeMs,purpose:'READ_ONLY_LIFECYCLE'}));
+  const o=await prisma.order.create({data:{userId,isPaid:true,shippingAddress:shipping,paymentMethod:'PayPal',itemsPrice:10,shippingPrice:0,taxPrice:0,totalPrice:10,orderitems:{create:{lineKey:line.lineKey,productId:line.snapshot.productId,qty:1,price:10,name:'Synthetic funding only',slug:'synthetic-funding-only',image:''}}}});
+  const p={...source,orderId:o.id};const supplierId='SYNTHETIC_CJ_'+o.id;
+  await prisma.$executeRaw`INSERT INTO "OrderSupplierPlan"("orderId",digest,plan) VALUES(${o.id}::uuid,${supplierPlanDigest(p)},${JSON.stringify(p)}::jsonb)`;
+  await prisma.$executeRaw`INSERT INTO "OrderSupplierAllocation"("orderId","lineKey",qty,state) VALUES(${o.id}::uuid,${line.lineKey},1,'CONSUMED')`;
+  await prisma.$executeRaw`INSERT INTO "OrderSupplierAttempt"("orderId",state,"supplierOrderId") VALUES(${o.id}::uuid,'ACCEPTED',${supplierId})`;
+  return {id:o.id,supplierId};
+ }
+ function fundingFetcher(supplierId:string,failAt?:string,postal=shipping.postalCode){
+  return jest.spyOn(global,'fetch').mockImplementation(async(url,init)=>{
+   const u=String(url);
+   if(failAt&&u.endsWith('/'+failAt))throw Error('Synthetic lost response');
+   let data:unknown;
+   if(u.includes('getAccessToken'))data={accessToken:'LOCAL_SYNTHETIC'};
+   else if(u.includes('getOrderDetail'))data={orderId:supplierId,orderNum:'CJ_PROVIDER_NAME',shippingZip:postal,shippingCountryCode:'US',shippingProvince:shipping.state,shippingCity:shipping.city,shippingPhone:shipping.phone,shippingAddress:shipping.streetAddress,shippingCustomerName:shipping.fullName,fromCountryCode:'CN',logisticName:line.snapshot.shippingMethod,storageId:line.snapshot.warehouseId,isSandbox:0,orderStatus:'CREATED',currency:'USD',orderAmount:'3.00',paymentDate:null,trackNumber:null,trackingProvider:null,productList:[{vid:line.snapshot.providerVariantId,quantity:1,storeLineItemId:line.lineKey}]};
+   else if(u.endsWith('/addCart')){expect(JSON.parse(String(init?.body))).toEqual({cjOrderIdList:[supplierId]});data={successCount:1,addSuccessOrders:[supplierId],unInterceptAddressCount:0,interceptOrders:[]};}
+   else if(u.endsWith('/addCartConfirm')){expect(JSON.parse(String(init?.body))).toEqual({cjOrderIdList:[supplierId]});data={successCount:1,submitSuccess:true,shipmentsId:'SYNTHETIC_SHIPMENT',result:0,interceptOrders:[]};}
+   else if(u.endsWith('/saveGenerateParentOrder')){expect(JSON.parse(String(init?.body))).toEqual({shipmentOrderId:'SYNTHETIC_SHIPMENT'});data=(await import('./helpers/cj-funding-fixture')).syntheticFundingParent(supplierId);}
+   else throw Error('Unexpected provider endpoint: '+u);
+   return new Response(JSON.stringify({success:true,result:true,data}));
+  });
+ }
+ it('admin source action prepares exact supplier cart/confirmation/final quote once, without funding or fresh quote resurrection',async()=>{
+  const {prepareSupplierFundingReviewAction}=await import('@/lib/actions/supplier-funding.actions');const f=await fundingFixture();
+  const env={CJ_FUNDING_PREPARATION_ENABLED:process.env.CJ_FUNDING_PREPARATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};const fetcher=fundingFetcher(f.supplierId);
+  try{
+   mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});delete process.env.CJ_FUNDING_PREPARATION_ENABLED;
+   expect(await prepareSupplierFundingReviewAction(f.id)).toMatchObject({success:false,message:'Supplier funding preparation is OFF'});expect(fetcher).not.toHaveBeenCalled();
+   process.env.CJ_FUNDING_PREPARATION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';
+   const result=await prepareSupplierFundingReviewAction(f.id);expect(result).toMatchObject({success:true,quote:{reviewOnly:true,expiryTimezoneVerified:false,supplierOrderId:f.supplierId,paymentInformation:{payableAmount:'3.00',freight:'2.00'}}});
+   expect(fetcher).toHaveBeenCalledTimes(5);fetcher.mockClear();expect(await prepareSupplierFundingReviewAction(f.id)).toEqual(result);expect(fetcher).not.toHaveBeenCalled();
+   const row=await prisma.$queryRaw<{state:string}[]>`SELECT state FROM "SupplierFundingPreparation" WHERE "orderId"=${f.id}::uuid`;expect(row).toEqual([{state:'REVIEW_ONLY'}]);
+   await expect(prisma.$executeRaw`UPDATE "SupplierFundingPreparation" SET state='CONFIRM_UNKNOWN' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow('no retry');
+   await expect(prisma.$executeRaw`DELETE FROM "SupplierFundingPreparation" WHERE "orderId"=${f.id}::uuid`).rejects.toThrow('cannot be erased');
+   expect((await prisma.order.findUniqueOrThrow({where:{id:f.id}}))).toMatchObject({isDelivered:false,trackingNumber:null});
+  }finally{fetcher.mockRestore();for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
+ it('lost cart, confirmation or parent response is durable UNKNOWN and a second invocation makes no provider call',async()=>{
+  const {prepareSupplierFundingReviewAction}=await import('@/lib/actions/supplier-funding.actions');const env={CJ_FUNDING_PREPARATION_ENABLED:process.env.CJ_FUNDING_PREPARATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};
+  try{
+   process.env.CJ_FUNDING_PREPARATION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});
+   for(const [phase,state] of [['addCart','CART_UNKNOWN'],['addCartConfirm','CONFIRM_UNKNOWN'],['saveGenerateParentOrder','PARENT_UNKNOWN']]){
+    const f=await fundingFixture(),fetcher=fundingFetcher(f.supplierId,phase);
+    try{expect((await prepareSupplierFundingReviewAction(f.id)).success).toBe(false);expect(await prisma.$queryRaw`SELECT state FROM "SupplierFundingPreparation" WHERE "orderId"=${f.id}::uuid`).toEqual([{state}]);fetcher.mockClear();const r=await prepareSupplierFundingReviewAction(f.id);expect(r).toMatchObject({success:false});expect(r.message).toContain('no automatic retry');expect(fetcher).not.toHaveBeenCalled();}finally{fetcher.mockRestore()}
+   }
+  }finally{for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
+ it('missing destination evidence refuses before any supplier account mutation',async()=>{
+  const {prepareSupplierFundingReviewAction}=await import('@/lib/actions/supplier-funding.actions');const f=await fundingFixture(),fetcher=fundingFetcher(f.supplierId,undefined,'');const env={CJ_FUNDING_PREPARATION_ENABLED:process.env.CJ_FUNDING_PREPARATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};
+  try{process.env.CJ_FUNDING_PREPARATION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});const r=await prepareSupplierFundingReviewAction(f.id);expect(r.success).toBe(false);expect(r.message).toContain('destination');expect(fetcher).toHaveBeenCalledTimes(2);expect(await prisma.$queryRaw`SELECT state FROM "SupplierFundingPreparation" WHERE "orderId"=${f.id}::uuid`).toEqual([]);}finally{fetcher.mockRestore();for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
+
+ it('concurrent preparation cannot duplicate supplier account mutations',async()=>{
+  const {prepareSupplierFundingReviewAction}=await import('@/lib/actions/supplier-funding.actions');const f=await fundingFixture(),fetcher=fundingFetcher(f.supplierId);const env={CJ_FUNDING_PREPARATION_ENABLED:process.env.CJ_FUNDING_PREPARATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};
+  try{process.env.CJ_FUNDING_PREPARATION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});const results=await Promise.all([prepareSupplierFundingReviewAction(f.id),prepareSupplierFundingReviewAction(f.id)]);expect(results.some(r=>r.success)).toBe(true);for(const endpoint of['addCart','addCartConfirm','saveGenerateParentOrder'])expect(fetcher.mock.calls.filter(c=>String(c[0]).endsWith('/'+endpoint))).toHaveLength(1);expect(fetcher.mock.calls.some(c=>/payBalance|createOrder|deleteOrder|cancel/i.test(String(c[0])))).toBe(false);
+  }finally{fetcher.mockRestore();for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
 
 });

@@ -663,9 +663,8 @@ export async function deliverOrder(orderId: string) {
 
     if(order.paymentMethod==='TestPayment')throw Error('No real shipment exists for a simulated order');
     const evidence=await reconcileSupplierLifecycle(orderId);
-    if(evidence.state!=='DELIVERED')throw Error('Supplier delivery not confirmed; current shipment state was reconciled');
-
     revalidatePath(`/order/${orderId}`);
+    if(evidence.state!=='DELIVERED')throw Error('Supplier delivery not confirmed; current shipment state was reconciled');
 
     return {
       success: true,
