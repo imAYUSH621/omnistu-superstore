@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { translate } from '@/lib/i18n';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{HEADER_COPY}from '@/lib/header-language';
 
 export default function SearchInput() {
+  const c=HEADER_COPY[useStoreLanguage()];
   const [placeholder, setPlaceholder] = useState(() => translate('EN', 'searchPlaceholder'));
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function SearchInput() {
       name='q'
       type='text'
       placeholder={placeholder}
+      aria-label={c.search}
       className='flex-1 border-0 h-10 text-[14px] text-[#0f172a] placeholder:text-[#767676] focus-visible:ring-0 bg-white px-3 font-sans'
     />
   );

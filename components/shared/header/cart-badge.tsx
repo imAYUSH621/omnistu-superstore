@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import T from '@/components/shared/i18n-text';
 import { isCartToastEventDetail } from '@/lib/cart-event';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{HEADER_COPY,headerItemCount}from '@/lib/header-language';
 
 export default function CartBadge({ initialCount = 0 }: { initialCount?: number }) {
   // Server provides the real cart count; a cookie-based seed was never
   // written anywhere, so the badge silently reset to 0 on navigation.
+  const language=useStoreLanguage(),c=HEADER_COPY[language];
   const [count, setCount] = useState<number>(initialCount);
 
   // Re-sync when the server renders a new count (e.g. after an order empties the cart).
@@ -35,7 +38,7 @@ export default function CartBadge({ initialCount = 0 }: { initialCount?: number 
       href='/cart'
       id='nav-cart'
       className='flex items-end gap-1 px-2 py-1 border border-transparent hover:border-white rounded-xs text-white relative transition-colors cursor-pointer group'
-      aria-label={`${count} items in shopping cart`}
+      aria-label={`${headerItemCount(count,language)} - ${c.cart}`}
     >
       <div className='relative flex items-center justify-center w-9 h-7'>
         <ShoppingCart className='w-7 h-7 text-white group-hover:scale-105 transition-transform' />

@@ -11,8 +11,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, SunMoon, Briefcase } from 'lucide-react';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{HEADER_COPY}from '@/lib/header-language';
 
 const ModeToggle = () => {
+  const c=HEADER_COPY[useStoreLanguage()];
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -29,6 +32,7 @@ const ModeToggle = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant='ghost'
+          aria-label={c.appearance}
           className='focus-visible:ring-0 focus-visible:ring-offset-0'
         >
           {theme === 'system' ? (
@@ -43,32 +47,32 @@ const ModeToggle = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+        <DropdownMenuLabel>{c.appearance}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem
           checked={theme === 'system'}
           onClick={() => setTheme('system')}
         >
-          System
+          {c.system}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'dark'}
           onClick={() => setTheme('dark')}
         >
-          Dark
+          {c.dark}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'professional'}
           onClick={() => setTheme('professional')}
-          aria-label='Professional theme'
+
         >
-          Professional
+          {c.professional}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={theme === 'light'}
           onClick={() => setTheme('light')}
         >
-          Light
+          {c.light}
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>

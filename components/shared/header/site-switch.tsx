@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{HEADER_COPY}from '@/lib/header-language';
 
 /** True when the current path belongs to the Services side of Omnistu. */
 export const isServicesPath = (pathname: string | null) =>
@@ -14,10 +16,11 @@ export const isServicesPath = (pathname: string | null) =>
  */
 export default function SiteSwitch({ className }: { className?: string }) {
   const services = isServicesPath(usePathname());
+  const c=HEADER_COPY[useStoreLanguage()];
   return (
     <div
       role='navigation'
-      aria-label='Omnistu sections'
+      aria-label={c.sections}
       className={cn(
         'relative inline-grid grid-cols-2 rounded-full border border-white/25 bg-white/10 p-0.5 text-[13px] font-semibold',
         className
@@ -35,14 +38,14 @@ export default function SiteSwitch({ className }: { className?: string }) {
         aria-current={services ? undefined : 'page'}
         className={cn('relative z-10 px-3 py-1 text-center transition-colors', services ? 'text-white' : 'text-[#1e293b]')}
       >
-        Products
+        {c.products}
       </Link>
       <Link
         href='/services'
         aria-current={services ? 'page' : undefined}
         className={cn('relative z-10 px-3 py-1 text-center transition-colors', services ? 'text-[#1e293b]' : 'text-white')}
       >
-        Services
+        {c.services}
       </Link>
     </div>
   );

@@ -33,7 +33,7 @@ describe('exchange rate labelling', () => {
     // wording contract is locked by tests/rates-disclosure.test.ts.
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
     expect(src).toContain('omnistu_currency');
-    expect(src).toContain('disclosure.ratesClause');
+    expect(src).toContain('headerDisclosure(selectedLang,disclosure.live)');
     expect(src).toContain('ratesDisclosure(null)'); // honest default before the feed answers
     const disc = fs.readFileSync('lib/rates-disclosure.ts', 'utf8');
     expect(disc).toContain('checkout charges USD');
@@ -64,7 +64,11 @@ describe('exchange rate labelling', () => {
   });
   it('selector says what is translated and keeps readable footer text (source check)', () => {
     const src = fs.readFileSync('components/shared/header/global-selector.tsx', 'utf8');
-    expect(src).toContain('Only menus and checkout labels are translated');
+    expect(src).toContain('headerDisclosure(selectedLang,disclosure.live)');
+    const localized=fs.readFileSync('lib/header-language.ts','utf8');
+    expect(localized).toContain('Language coverage varies by page.');
+    expect(localized).toContain('live?c.rateLive:c.rateReference');
+    expect(localized).toContain('Checkout charges USD.');
     expect(src).not.toMatch(/text-\[10px\] text-neutral-400/);
   });
 });

@@ -5,6 +5,8 @@ import { ChevronDown, Globe, Check, Banknote } from 'lucide-react';
 import { SUPPORTED_LANGUAGES, CURRENCY_METADATA, type SupportedLang } from '@/lib/i18n';
 import { SUPPORTED_CURRENCY_CODES, loadRatesInfo, type DisplayCurrency } from '@/components/shared/localized-price';
 import { ratesDisclosure, type RatesDisclosure } from '@/lib/rates-disclosure';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{HEADER_COPY,headerDisclosure}from '@/lib/header-language';
 
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
@@ -12,7 +14,7 @@ function readCookie(name: string): string | null {
 }
 
 export default function GlobalSelector() {
-  const [selectedLang, setSelectedLang] = useState<SupportedLang>('EN');
+  const selectedLang=useStoreLanguage(),copy=HEADER_COPY[selectedLang];
   const [selectedCurrency, setSelectedCurrency] = useState<DisplayCurrency>('USD');
   const [isOpen, setIsOpen] = useState(false);
   // Honest default until the live feed answers: reference, not hourly.
@@ -22,10 +24,8 @@ export default function GlobalSelector() {
   useEffect(() => {
     // Preference source of truth: cookie (seeded by automatic first-visit
     // detection), with localStorage as legacy fallback.
-    const savedLang = (readCookie('omnistu_lang') || localStorage.getItem('omnistu_lang') || '') as SupportedLang;
-    if (['EN', 'HI', 'ES', 'FR', 'DE', 'JA'].includes(savedLang)) {
-      setSelectedLang(savedLang);
-    }
+
+    // Language comes from the existing shared hook, including other selectors.
     const savedCur = (readCookie('omnistu_currency') || localStorage.getItem('omnistu_currency') || '').toUpperCase();
     if ((SUPPORTED_CURRENCY_CODES as readonly string[]).includes(savedCur)) {
       setSelectedCurrency(savedCur as DisplayCurrency);
@@ -40,12 +40,13 @@ export default function GlobalSelector() {
         setIsOpen(false);
       }
     };
+    const onCurrency=(event:Event)=>{const code=(event as CustomEvent<{currency?:string}>).detail?.currency;if(code&&(SUPPORTED_CURRENCY_CODES as readonly string[]).includes(code))setSelectedCurrency(code as DisplayCurrency)};
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('omnistu:currency-change',onCurrency);
+    return () => {document.removeEventListener('mousedown', handleClickOutside);window.removeEventListener('omnistu:currency-change',onCurrency)};
   }, []);
 
   const handleLangChange = (lang: SupportedLang) => {
-    setSelectedLang(lang);
     localStorage.setItem('omnistu_lang', lang);
     document.cookie = `omnistu_lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
     window.dispatchEvent(new CustomEvent('omnistu:lang-change', { detail: { lang } }));
@@ -66,7 +67,7 @@ export default function GlobalSelector() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className='flex items-center gap-1 px-2 py-1.5 border border-transparent hover:border-white rounded-xs cursor-pointer text-white text-[13px] font-bold transition-colors select-none'
-        aria-label='Select language and currency'
+        aria-label={copy.localeChoose}
         aria-expanded={isOpen}
       >
         <span className='text-sm leading-none'>{currentFlag}</span>
@@ -83,7 +84,7 @@ export default function GlobalSelector() {
           <div className='border-b border-neutral-200 dark:border-neutral-700 pb-2.5 mb-2.5'>
             <div className='flex items-center gap-1.5 mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
               <Globe className='w-3.5 h-3.5' />
-              <span>Language Setting</span>
+              <span>{copy.languageSettings}</span>
             </div>
             <div className='space-y-1'>
               {SUPPORTED_LANGUAGES.map((lang) => (
@@ -110,7 +111,7 @@ export default function GlobalSelector() {
           <div>
             <div className='flex items-center gap-1.5 mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
               <Banknote className='w-3.5 h-3.5' />
-              <span>Currency Display</span>
+              <span>{copy.currencyDisplay}</span>
             </div>
             <div className='grid grid-cols-2 gap-1'>
               {SUPPORTED_CURRENCY_CODES.map((code) => (
@@ -131,9 +132,7 @@ export default function GlobalSelector() {
               ))}
             </div>
             <p className='mt-2 text-[11px] leading-snug text-neutral-700 dark:text-neutral-200'>
-              Only menus and checkout labels are translated. Product details and policy pages stay in
-              English. Currency converts for reference at {disclosure.ratesClause} - checkout charges
-              USD.
+              {headerDisclosure(selectedLang,disclosure.live)}
             </p>
           </div>
         </div>
