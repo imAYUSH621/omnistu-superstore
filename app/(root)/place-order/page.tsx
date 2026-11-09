@@ -1,5 +1,5 @@
 import {CHECKOUT_COPY} from '@/lib/checkout-language';
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled,boundRetailCheckoutEnabled} from '@/lib/retail/gate';
 import {readQualifiedCart} from '@/lib/retail/store';
 import QualifiedCart from '@/components/shared/retail/qualified-cart';
 import { auth } from '@/auth';
@@ -32,7 +32,7 @@ import { testCheckoutMode } from '@/lib/payment-capabilities';
 export async function generateMetadata():Promise<Metadata>{const l=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);return{title:REVIEW_COPY[l].title}}
 
 const PlaceOrderPage = async () => {
-  if(qualifiedRetailTestEnabled()) {const viewer=await auth();if(!viewer?.user?.id)redirect('/sign-in');const user=await getUserById(viewer.user.id);if(!user.address)redirect('/shipping-address');if(user.paymentMethod!=='TestPayment')redirect('/payment-method');return <QualifiedCart checkout cart={await readQualifiedCart(viewer.user.id)}/>;}
+  if(qualifiedSelectionEnabled()) {const viewer=await auth();if(!viewer?.user?.id)redirect('/sign-in');const user=await getUserById(viewer.user.id);if(!user.address)redirect('/shipping-address');if(user.paymentMethod!==(boundRetailCheckoutEnabled()?'PayPal':'TestPayment'))redirect('/payment-method');return <QualifiedCart checkout cart={await readQualifiedCart(viewer.user.id)}/>;}
   const cart = await getMyCart();
   const session = await auth();
   const userId = session?.user?.id;

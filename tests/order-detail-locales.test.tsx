@@ -20,3 +20,9 @@ it('two variants of one parent render distinct names/prices and exact order amou
  for(const text of ['Synthetic product - Red','Synthetic product - Blue','10.00','15.00','2.75','1.25','29.00'])expect(html).toContain(text);
  if(process.env.MULTI_VISUAL_OUTPUT_DIR)require('fs').writeFileSync(process.env.MULTI_VISUAL_OUTPUT_DIR+'/multi-EN.html','<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/address.css"></head><body><main class="max-w-5xl mx-auto p-4"><h1 class="text-2xl font-bold mb-6">Synthetic two-option order</h1>'+html+'</main></body></html>');
 });
+it.each(['PAYMENT_REVIEW','OFFER_REVIEW']as const)('actual bound receipt holds repayment controls for %s',paymentRecovery=>{
+ const order={...base,isPaid:false,isDelivered:false,paymentMethod:'PayPal',paymentNote:'SUPPLIER_BOUND_PREPARATION | CAPTURE_UNCONFIRMED'};
+ const html=renderToStaticMarkup(<Detail order={order as never} paymentRecovery={paymentRecovery} isAdmin={false} stripeClientSecret='never-use' paypalClientId='never-use'/>);
+ expect(html).toContain('role="alert"');expect(html).not.toContain('Loading PayPal');expect(html).not.toContain('Cancel unpaid order');
+ if(process.env.ORDINARY_VISUAL_OUTPUT_DIR&&paymentRecovery==='PAYMENT_REVIEW')require('fs').writeFileSync(process.env.ORDINARY_VISUAL_OUTPUT_DIR+'/recovery-EN.html','<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/address.css"></head><body><main class="max-w-5xl mx-auto p-4"><h1 class="text-2xl font-bold mb-6">Synthetic payment-review fixture</h1>'+html+'</main></body></html>');
+});

@@ -3,7 +3,7 @@ import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/sup
 import {cancelUnattemptedSupplierOrderTx} from '@/lib/supplier-order-cancellation';
 import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled} from '@/lib/retail/gate';
 import {qualifiedOrderItems,payQualifiedTestOrder} from '@/lib/retail/store';
 import { assertCheckoutSnapshot } from '@/lib/cart-checkout-snapshot';
 import { cartLinesMatchCatalog, cartTotalsConsistent } from '@/lib/cart-line-integrity';
@@ -30,7 +30,7 @@ import { needsPaymentReview, PAYMENT_REVIEW_MESSAGE } from '../payment-review';
 
 // Create order and create the order items
 export async function createOrder(idempotencyKey?: string) {
-  if(qualifiedRetailTestEnabled())return{success:false,message:'Review the qualified cart before placing this test order.',redirectTo:'/cart'};
+  if(qualifiedSelectionEnabled())return{success:false,message:'Review the qualified cart before placing this test order.',redirectTo:'/cart'};
   let authenticatedUserId: string | undefined;
   try {
     const session = await auth();

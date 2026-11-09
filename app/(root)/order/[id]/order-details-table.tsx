@@ -1,4 +1,8 @@
 'use client';
+import type{BoundPaymentRecovery}from'@/lib/bound-payment-recovery';
+import{BOUND_CHECKOUT_COPY}from'@/lib/bound-checkout-language';
+import{BOUND_RECOVERY_COPY}from'@/lib/bound-payment-recovery-copy';
+
 import {CHECKOUT_COPY} from '@/lib/checkout-language';
 import CancelUnpaidOrder,{CancelledUnpaidOrderNotice} from '@/components/shared/order/cancel-unpaid-order';
 import { Badge } from '@/components/ui/badge';
@@ -47,12 +51,14 @@ const OrderDetailsTable = ({
   isAdmin,
   stripeClientSecret,
   cancellationOffered=false,
+  paymentRecovery,
 }: {
   order: Omit<Order, 'paymentResult'>;
   paypalClientId: string;
   isAdmin: boolean;
   stripeClientSecret: string | null;
   cancellationOffered?:boolean;
+  paymentRecovery?:BoundPaymentRecovery;
 }) => {
   const {
     id,
@@ -209,6 +215,7 @@ const OrderDetailsTable = ({
   return (
     <div className='space-y-6'>
       {/* 4-Step Amazon Carrier Tracking Stepper */}
+      {(paymentRecovery==='PAYMENT_REVIEW'||paymentRecovery==='OFFER_REVIEW')&&<p role='alert' className='rounded-md border border-amber-300 p-4 text-sm'>{BOUND_RECOVERY_COPY[language][paymentRecovery==='PAYMENT_REVIEW'?'payment':'offer']}</p>}
       {cancelled?<CancelledUnpaidOrderNotice/>:<OrderTrackingStepper
         orderId={id}
         simulated={simulated}
@@ -236,7 +243,7 @@ const OrderDetailsTable = ({
                   </div>
                 </>
               ) : (
-                <Badge variant='destructive'>{simulated ? copy.testUnpaid : <T k='notPaid' />}</Badge>
+                <Badge variant='destructive'>{paymentRecovery==='PAYMENT_REVIEW'?BOUND_RECOVERY_COPY[language].badge:simulated ? copy.testUnpaid : <T k='notPaid' />}</Badge>
               )}
             </CardContent>
           </Card>
@@ -320,7 +327,7 @@ const OrderDetailsTable = ({
                 <span className='text-muted-foreground'>
                   {simulated
                     ? copy.testTax
-                    : copy.tax}
+                    : order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')?BOUND_CHECKOUT_COPY[language].tax:copy.tax}
                 </span>
                 <span>{formatCurrency(taxPrice)}</span>
               </div>
@@ -339,9 +346,9 @@ const OrderDetailsTable = ({
                 <span className='text-emerald-600'>{formatCurrency(totalPrice)} USD</span>
               </div>
 
-              {!cancelled&&cancellationOffered&&<CancelUnpaidOrder orderId={id} onAttempt={()=>setCancelAttempted(true)} onCancelled={()=>setCancelledLocally(true)}/>}
+              {!cancelled&&paymentRecovery!=='PAYMENT_REVIEW'&&cancellationOffered&&<CancelUnpaidOrder orderId={id} onAttempt={()=>setCancelAttempted(true)} onCancelled={()=>setCancelledLocally(true)}/>}
               {/* PayPal Payment */}
-              {!cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'PayPal' && (
+              {(!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'PayPal' && (
                 <div className='pt-2'>
                   <PayPalScriptProvider options={{ clientId: paypalClientId }}>
                     <PrintLoadingState />
@@ -354,7 +361,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Stripe Payment */}
-              {!cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
+              {(!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'Stripe' && stripeClientSecret && (
                 <div className='pt-2'>
                   <StripePayment
                     priceInCents={Number(order.totalPrice) * 100}
@@ -365,7 +372,7 @@ const OrderDetailsTable = ({
               )}
 
               {/* Cash On Delivery */}
-              {isAdmin && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
+              {isAdmin && (!paymentRecovery||paymentRecovery==='READY') && !cancelAttempted && !cancelled && !simulated && !isPaid && paymentMethod === 'CashOnDelivery' && (
                 <MarkAsPaidButton />
               )}
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}

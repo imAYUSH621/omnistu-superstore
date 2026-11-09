@@ -1,7 +1,10 @@
+import {supplierPlanDigest,type SupplierOrderPlan} from '@/lib/supplier-order-plan';
+import {loadReviewedCheckoutTermsTx} from './reviewed-checkout';
+import {prepareSupplierBoundOrderTx} from '@/lib/supplier-checkout-preparation';
 import {createHash} from 'node:crypto';
 import { prisma } from '@/db/prisma';
 import type { Prisma } from '@prisma/client';
-import { qualifiedRetailTestEnabled } from './gate';
+import { qualifiedRetailTestEnabled,boundRetailCheckoutEnabled,qualifiedSelectionEnabled } from './gate';
 import { bindRetailLine, assertRetailLineCurrent, type BoundRetailLine } from './snapshot';
 import { addStoredRetailCartLineTx, createRetailSimulationOrderTx, retailCartReviewToken } from './transactions';
 
@@ -10,7 +13,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type CartRow = { id: string; createdAt:Date; lines: BoundRetailLine[]; destinationCountry: string; destinationPostal: string };
 type SafeLine = { productId: string; variantId: string; lineKey: string; snapshotId: string; name: string; variantLabel: string; slug: string; image: string; qty: number; price: string; status: 'current' | 'review' };
 async function requireEnabled(userId: string) {
-  if (!qualifiedRetailTestEnabled() || !uuid.test(userId)) throw Error('Qualified test checkout is unavailable');
+  if (!qualifiedSelectionEnabled() || !uuid.test(userId)) throw Error('Qualified test checkout is unavailable');
   if(process.env.NODE_ENV==='production') {
     const expected=process.env.QUALIFIED_RETAIL_RUNTIME_ROLE;
     if(!expected)throw Error('Qualified runtime configuration required');
@@ -25,6 +28,7 @@ async function requireEnabled(userId: string) {
         OR has_column_privilege(r.oid,to_regclass('"RetailOffer"'),'snapshot','UPDATE')
         OR has_column_privilege(r.oid,to_regclass('"RetailOffer"'),'snapshotId','UPDATE')
         OR has_column_privilege(r.oid,to_regclass('"RetailOffer"'),'published','UPDATE')
+        OR has_table_privilege(r.oid,to_regclass('"ReviewedCheckoutTerms"'),'INSERT,UPDATE,DELETE')
         OR EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname NOT IN('pg_catalog','information_schema') AND p.prosecdef AND has_function_privilege(r.oid,p.oid,'EXECUTE'))
        ) unsafe,
        has_table_privilege(r.oid,to_regclass('"RetailQuote"'),'SELECT') "readQuote",
@@ -37,7 +41,7 @@ class DestinationRequiredError extends Error {}
 function destination(address: unknown) {
   const a = address as { country?: unknown; postalCode?: unknown; fullName?:unknown;streetAddress?:unknown;city?:unknown;state?:unknown } | null;
   if (!a || typeof a.country !== 'string' || !/^[A-Z]{2}$/.test(a.country) || typeof a.postalCode !== 'string' || !a.postalCode.trim()) throw new DestinationRequiredError('Save a two-letter country code and postal code before choosing an offer');
-  const addressBinding=createHash('sha256').update(JSON.stringify([a.fullName,a.streetAddress,a.city,a.state,a.country,a.postalCode])).digest('hex');
+  const addressBinding=createHash('sha256').update(JSON.stringify([a.fullName,a.streetAddress,a.city,a.state,(a as {phone?:unknown}).phone,a.country,a.postalCode])).digest('hex');
   return { country: a.country, postal: a.postalCode.trim(),addressBinding };
 }
 async function ownerDestination(userId: string) {
@@ -89,7 +93,9 @@ async function readQualifiedCartWithClient(db: Pick<typeof prisma, '$queryRaw'>,
     lines.push({ productId: line.snapshot.productId, variantId: line.snapshot.variantId, lineKey: line.lineKey, snapshotId: line.snapshotId, name: rows[0]?.name || 'Product needs review', variantLabel: rows[0]?.label || 'Option needs review', slug: rows[0]?.slug || '', image: rows[0]?.images[0] || '/images/placeholder.svg', qty: line.qty, price: current ? (line.snapshot.retailUnitCents / 100).toFixed(2) : '', status: current ? 'current' : 'review' });
   }
   const totalCents = cart.lines.reduce((n, l) => n + l.snapshot.retailUnitCents * l.qty, 0);
-  return { id: cart.id,createdAt:cart.createdAt, lines, reviewToken: createHash('sha256').update(JSON.stringify({binding:retailCartReviewToken(cart),display:lines,addressBinding:d.addressBinding})).digest('hex'), total: lines.every(l => l.status === 'current') && Number.isSafeInteger(totalCents) ? (totalCents / 100).toFixed(2) : null, country: d.country, postal: d.postal };
+  const reviewToken=createHash('sha256').update(JSON.stringify({binding:retailCartReviewToken(cart),display:lines,addressBinding:d.addressBinding})).digest('hex');
+  const reviewedTerms=boundRetailCheckoutEnabled()&&lines.every(l=>l.status==='current')?await loadReviewedCheckoutTermsTx(db,{userId,cartId:cart.id,reviewToken,cartToken:retailCartReviewToken(cart),itemsCents:totalCents,now:new Date()}):null;
+  return { id: cart.id,mode:boundRetailCheckoutEnabled()?'bound' as const:'test' as const,terms:reviewedTerms?{id:reviewedTerms.id,shipping:(reviewedTerms.shippingCents/100).toFixed(2),tax:(reviewedTerms.taxCents/100).toFixed(2),total:(reviewedTerms.totalCents/100).toFixed(2)}:null,createdAt:cart.createdAt, lines, reviewToken, total: lines.every(l => l.status === 'current') && Number.isSafeInteger(totalCents) ? (totalCents / 100).toFixed(2) : null, country: d.country, postal: d.postal };
 }
 export async function removeQualifiedItem(userId: string, input: { cartId: string; lineKey: string; snapshotId: string }) {
   await requireEnabled(userId);
@@ -104,6 +110,7 @@ export async function removeQualifiedItem(userId: string, input: { cartId: strin
 }
 export async function createQualifiedTestOrder(userId: string, input: { cartId: string; reviewToken: string; idempotencyKey: string }) {
   await requireEnabled(userId);
+  if(!qualifiedRetailTestEnabled())throw Error('Simulated checkout is not enabled');
   if (!uuid.test(input.cartId) || !uuid.test(input.idempotencyKey) || !/^[a-f0-9]{64}$/.test(input.reviewToken)) throw Error('Current checkout review is required');
   return prisma.$transaction(async tx => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`retail-cart:${userId}`}))`;
@@ -125,6 +132,7 @@ export async function createQualifiedTestOrder(userId: string, input: { cartId: 
  * settlement, mail, supplier routing or delivery code. */
 export async function payQualifiedTestOrder(userId: string, orderId: string) {
   await requireEnabled(userId);
+  if(!qualifiedRetailTestEnabled())throw Error('Simulated checkout is not enabled');
   return prisma.$transaction(async tx => {
     const orders = await tx.$queryRaw<{ userId: string; isPaid: boolean; paymentMethod: string; totalPrice: string }[]>`SELECT "userId","isPaid","paymentMethod","totalPrice"::text FROM "Order" WHERE id=${orderId}::uuid FOR UPDATE`;
     const order = orders[0];
@@ -154,4 +162,20 @@ export async function qualifiedOrderItems(orderId: string) {
   const rows = await prisma.$queryRaw<{displayLines:SafeLine[]}[]>`SELECT "displayLines" FROM "RetailCheckout" WHERE "orderId"=${orderId}::uuid`;
   if (rows.length !== 1 || !Array.isArray(rows[0].displayLines)) throw Error('Qualified receipt unavailable');
   return rows[0].displayLines.map(line => ({ lineKey:line.lineKey, productId: line.productId, orderId, supplierLineKey:null,supplierSnapshotId:null,supplierSnapshot:null, name: `${line.name} (${line.variantLabel})`, slug: line.slug, image: line.image, qty: line.qty, price: line.price }));
+}
+
+/** Real-order placement only, not payment. No caller-supplied fee/price/source. */
+export async function createBoundReviewedOrder(userId:string,input:{cartId:string;reviewToken:string;termsId:string;idempotencyKey:string}){
+ await requireEnabled(userId);if(!boundRetailCheckoutEnabled()||!uuid.test(input.cartId)||!uuid.test(input.termsId)||!uuid.test(input.idempotencyKey)||!/^[a-f0-9]{64}$/.test(input.reviewToken))throw Error('Current reviewed checkout required');
+ return prisma.$transaction(async tx=>{
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`retail-cart:${userId}`}))`;
+  const prior=await tx.order.findUnique({where:{idempotencyKey:input.idempotencyKey}});if(prior){if(prior.userId!==userId)throw Error('Checkout unavailable');const saved=await tx.$queryRaw<{plan:SupplierOrderPlan;digest:string}[]>`SELECT plan,digest FROM "OrderSupplierPlan" WHERE "orderId"=${prior.id}::uuid`;if(saved.length!==1||supplierPlanDigest(saved[0].plan)!==saved[0].digest)throw Error('Checkout unavailable');const source=JSON.parse(saved[0].plan.commercialTermsSource);if(source.cartId!==input.cartId||source.fullReviewToken!==input.reviewToken||source.reviewedTermsId!==input.termsId)throw Error('Checkout request changed');return prior.id}
+  const user=await tx.user.findUnique({where:{id:userId},select:{address:true,paymentMethod:true}});if(user?.paymentMethod!=='PayPal')throw Error('Reviewed payment method required');
+  const d=destination(user.address),review=await readQualifiedCartWithClient(tx,userId,d);
+  if(!review||review.id!==input.cartId||review.reviewToken!==input.reviewToken||review.total===null||review.terms?.id!==input.termsId)throw Error('Checkout terms changed or unavailable');
+  const carts=await tx.$queryRaw<CartRow[]>`SELECT * FROM "RetailCart" WHERE id=${input.cartId}::uuid AND "userId"=${userId}::uuid FOR UPDATE`;
+  if(carts.length!==1)throw Error('Current selected cart required');
+  const terms=await loadReviewedCheckoutTermsTx(tx,{userId,cartId:input.cartId,reviewToken:input.reviewToken,cartToken:retailCartReviewToken(carts[0]),itemsCents:carts[0].lines.reduce((n,l)=>n+l.qty*l.snapshot.retailUnitCents,0),termsId:input.termsId,now:new Date()});if(!terms)throw Error('Independent terms review required');
+  return prepareSupplierBoundOrderTx(tx,{userId,cartId:input.cartId,reviewToken:retailCartReviewToken(carts[0]),idempotencyKey:input.idempotencyKey,now:new Date(),maxAgeMs:MAX_AGE_MS,approvedShippingCents:terms.shippingCents,approvedTaxCents:terms.taxCents,commercialTermsSource:JSON.stringify({cartId:input.cartId,fullReviewToken:input.reviewToken,reviewedTermsId:terms.id,approvalSource:terms.approvalSource,policySource:terms.policySource})});
+ });
 }

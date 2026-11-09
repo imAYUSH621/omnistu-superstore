@@ -1,5 +1,5 @@
 'use server';
-import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
+import {qualifiedSelectionEnabled} from '@/lib/retail/gate';
 import {readQualifiedCart} from '@/lib/retail/store';
 
 import { containsRetailIdentity } from '@/lib/retail-line-boundary';
@@ -173,10 +173,10 @@ async function readMyCart(db: Pick<typeof prisma, 'cart'> = prisma) {
 }
 
 export async function getMyCart() {
-  if(qualifiedRetailTestEnabled()) {
+  if(qualifiedSelectionEnabled()) {
     const viewer=await auth();if(!viewer?.user?.id)return undefined;
     const cart=await readQualifiedCart(viewer.user.id);if(!cart)return undefined;
-    return {id:cart.id,createdAt:cart.createdAt,userId:viewer.user.id,sessionCartId:'qualified-authenticated',items:cart.lines.map(l=>({productId:l.productId,name:`${l.name} (${l.variantLabel})`,slug:l.slug,image:l.image,qty:l.qty,price:l.price||'0.00',lineKey:l.lineKey,variantId:l.variantId,snapshotId:l.snapshotId})),itemsPrice:cart.total||'0.00',totalPrice:cart.total||'0.00',shippingPrice:'0.00',taxPrice:'0.00'};
+    return {id:cart.id,createdAt:cart.createdAt,userId:viewer.user.id,sessionCartId:'qualified-authenticated',items:cart.lines.map(l=>({productId:l.productId,name:`${l.name} (${l.variantLabel})`,slug:l.slug,image:l.image,qty:l.qty,price:l.price||'0.00',lineKey:l.lineKey,variantId:l.variantId,snapshotId:l.snapshotId})),itemsPrice:cart.total||'0.00',totalPrice:cart.mode==='bound'?(cart.terms?.total||''):cart.total||'0.00',shippingPrice:cart.mode==='bound'?(cart.terms?.shipping||''):'0.00',taxPrice:cart.mode==='bound'?(cart.terms?.tax||''):'0.00'};
   }
   return readMyCart();
 }
@@ -246,12 +246,12 @@ async function withCartLock<T>(operation: (tx: CartTx) => Promise<T>) {
   }, { maxWait: 15000, timeout: 15000 });
 }
 export async function addItemToCart(data: CartItem) {
-  if(qualifiedRetailTestEnabled())return{success:false,message:'Choose and review the exact option on its product page.'};
+  if(qualifiedSelectionEnabled())return{success:false,message:'Choose and review the exact option on its product page.'};
   try { return await withCartLock(tx => addItemLocked(data, tx)); }
   catch (error) { return { success: false, message: formatError(error) }; }
 }
 export async function removeItemFromCart(productId: string) {
-  if(qualifiedRetailTestEnabled())return{success:false,message:'Remove the exact option from the qualified cart.'};
+  if(qualifiedSelectionEnabled())return{success:false,message:'Remove the exact option from the qualified cart.'};
   try { return await withCartLock(tx => removeItemLocked(productId, tx)); }
   catch (error) { return { success: false, message: formatError(error) }; }
 }

@@ -1,4 +1,4 @@
-const user=jest.fn(),raw=jest.fn(),gate=jest.fn();jest.mock('@/db/prisma',()=>({prisma:{user:{findUnique:(...args:unknown[])=>user(...args)},$queryRaw:(...args:unknown[])=>raw(...args)}}));jest.mock('@/lib/retail/gate',()=>({qualifiedRetailTestEnabled:()=>gate()}));
+const user=jest.fn(),raw=jest.fn(),gate=jest.fn();jest.mock('@/db/prisma',()=>({prisma:{user:{findUnique:(...args:unknown[])=>user(...args)},$queryRaw:(...args:unknown[])=>raw(...args)}}));jest.mock('@/lib/retail/gate',()=>({qualifiedRetailTestEnabled:()=>gate(),qualifiedSelectionEnabled:()=>gate(),boundRetailCheckoutEnabled:()=>false}));
 import{loadQualifiedOptions}from '@/lib/retail/store';
 const id='11111111-1111-4111-8111-111111111111',pid='22222222-2222-4222-8222-222222222222';
 beforeEach(()=>{jest.clearAllMocks();gate.mockReturnValue(true);user.mockResolvedValue({address:{country:'US',postalCode:'10001'}});raw.mockResolvedValue([])});
