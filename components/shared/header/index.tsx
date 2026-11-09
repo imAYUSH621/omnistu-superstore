@@ -34,10 +34,10 @@ const Header = () => {
 
         </div>
 
-        <SiteSwitch className='hidden xl:inline-grid shrink-0' />
+        <SiteSwitch className='hidden 2xl:inline-grid shrink-0' />
 
         {/* Center: 3-Piece Rectangular Amazon Search Bar */}
-        <div className='hidden xl:flex flex-1 min-w-0 justify-center max-w-3xl mx-2'>
+        <div className='hidden 2xl:flex flex-1 min-w-0 justify-center max-w-3xl mx-2'>
           <Search />
         </div>
 
@@ -48,8 +48,8 @@ const Header = () => {
       </div>
 
       {/* Mobile Search Bar Row */}
-      <div className='xl:hidden px-3 pb-2 pt-1 bg-[#1e293b] space-y-2'>
-        <SiteSwitch className='grid w-full' />
+      <div className='2xl:hidden px-3 pb-2 pt-1 bg-[#1e293b] space-y-2 xl:space-y-0 xl:flex xl:items-center xl:justify-center xl:gap-4'>
+        <SiteSwitch className='grid w-full xl:w-[290px] xl:shrink-0' />
         <Search />
       </div>
 

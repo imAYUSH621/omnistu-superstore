@@ -37,7 +37,7 @@ const Menu = async () => {
         {/* 3. Returns & Orders */}
         <Link
           href='/user/orders'
-          className='hidden lg:flex flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
+          className='hidden lg:flex max-w-[180px] whitespace-normal flex-col text-left px-2 py-1 border border-transparent hover:border-white rounded-xs text-white leading-tight transition-colors'
         >
           <T k='returnsOrders' className='text-[13px] font-bold text-white leading-tight' />
         </Link>
