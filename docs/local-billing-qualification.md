@@ -80,3 +80,11 @@ Sources:
 - https://shiro.apache.org/security-reports.html
 - https://github.com/FasterXML/jackson-databind/security/advisories/GHSA-j3rv-43j4-c7qm
 - https://logback.qos.ch/news.html
+
+### Bounded upstream authorization check
+
+With the local synthetic core's root role replaced by a non-mutating test role, seven direct upstream checks passed: existing account retrieval, exact external-key/balance retrieval, invoice component retrieval, denied account creation, denied draft charge, denied account update, and unchanged fingerprints across six account/financial tables. The three denied operations return 401 with an explicit missing-permission response, not 403. No new record or invoice was created by this check. The local config was restored and the owned core/database stopped afterward.
+
+These are seven direct core checks, separate from the thirteen compiled Store HTTP checks. They do not prove all endpoints deny writes. The upstream API has no account-read/invoice-read enum boundaries that enforce end-customer ownership; the Store's UUID-only lookup and tenant authentication are still necessary. Do not expose tenant credentials or forward browser cookies to the core. Production must use a verified restricted service principal, not the upstream demo root user.
+
+Source inspection at upstream tag `killbill-0.24.22`, commit `4f3fa45dbb044ed5d65cccebb0beadbc5d1b2899`, found that `KillBillSessionStorageEvaluator` creates new sessions only through `/security/permissions` and accepts existing sessions elsewhere. The Store adapter does not call that endpoint or forward cookies. This narrows session-advisory reachability for this adapter; it does not establish that the engine's other endpoints or a shared deployment are safe.
