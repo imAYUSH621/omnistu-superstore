@@ -8,25 +8,30 @@ const mockFindUniqueOrThrow = jest.fn();
 const mockFindMany = jest.fn();
 const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
+const mockUpdateMany = jest.fn();
+const mockQuery = jest.fn();
 
 jest.mock('@/db/prisma', () => ({
   prisma: {
+    $queryRawUnsafe: (...a: unknown[]) => mockQuery(...a),
+    $transaction: (fn: (tx: unknown) => unknown) => fn({$queryRawUnsafe: (...a: unknown[]) => mockQuery(...a), fulfillmentTask: {findFirst: (...a: unknown[]) => mockFindFirst(...a),create: (...a: unknown[]) => mockCreate(...a)}}),
     fulfillmentTask: {
       findFirst: (...a: unknown[]) => mockFindFirst(...a),
       findUniqueOrThrow: (...a: unknown[]) => mockFindUniqueOrThrow(...a),
       findMany: (...a: unknown[]) => mockFindMany(...a),
       create: (...a: unknown[]) => mockCreate(...a),
       update: (...a: unknown[]) => mockUpdate(...a),
+      updateMany: (...a: unknown[]) => mockUpdateMany(...a),
     },
   },
 }));
 
 import {
   enqueueFulfillmentTask, recordTaskFailure, recordTaskSuccess,
-  processDueFulfillmentTasks, backoffMs, FULFILLMENT_QUEUE_AUTONOMY,
+  processDueFulfillmentTasks, dueFulfillmentTasks, backoffMs, FULFILLMENT_QUEUE_AUTONOMY,
 } from '@/lib/fulfillment-queue';
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {jest.clearAllMocks();mockUpdateMany.mockResolvedValue({count:1});});
 
 describe('backoff math', () => {
   it('grows exponentially and caps at one hour', () => {
@@ -103,4 +108,11 @@ describe('no provider calls (source scan)', () => {
     expect(src).not.toMatch(/fetch\(/);
     expect(src).not.toMatch(/printify|cjdropshipping|blanka|brandsgateway/i);
   });
+});
+
+
+describe('manual claim boundaries',()=>{
+ it('does not run a row when another drain already claimed it',async()=>{mockFindMany.mockResolvedValueOnce([{id:'t-claimed'}]);mockUpdateMany.mockResolvedValueOnce({count:0});const runner=jest.fn();expect(await processDueFulfillmentTasks(runner,{allowRun:true,limit:1})).toMatchObject({processed:0,failed:0});expect(runner).not.toHaveBeenCalled();expect(mockUpdate).not.toHaveBeenCalled()});
+ it.each([0,-1,1.5,101,NaN,Infinity])('rejects unsafe due-row limit %s before a query',async limit=>{await expect(dueFulfillmentTasks(new Date(),limit)).rejects.toThrow('INVALID_QUEUE_BOUNDS');expect(mockFindMany).not.toHaveBeenCalled()});
+ it('rejects invalid due time before a query',async()=>{await expect(dueFulfillmentTasks(new Date(NaN),1)).rejects.toThrow('INVALID_QUEUE_BOUNDS');expect(mockFindMany).not.toHaveBeenCalled()});
 });
