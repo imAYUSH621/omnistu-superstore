@@ -1,5 +1,6 @@
 'use server';
 import {requiresSupplierOrderPlan,validateSupplierPaymentPlanTx} from '@/lib/supplier-order-plan';
+import {reconcileSupplierLifecycle} from '@/lib/supplier-lifecycle';
 import {cancelUnattemptedSupplierOrderTx} from '@/lib/supplier-order-cancellation';
 import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
@@ -660,13 +661,9 @@ export async function deliverOrder(orderId: string) {
     if (order.paymentNote?.startsWith('QUALIFIED TEST ONLY')) throw new Error('No shipment exists for qualified test checkout');
     if (!order.isPaid) throw new Error('Order is not paid');
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        isDelivered: true,
-        deliveredAt: new Date(),
-      },
-    });
+    if(order.paymentMethod==='TestPayment')throw Error('No real shipment exists for a simulated order');
+    const evidence=await reconcileSupplierLifecycle(orderId);
+    if(evidence.state!=='DELIVERED')throw Error('Supplier delivery not confirmed; current shipment state was reconciled');
 
     revalidatePath(`/order/${orderId}`);
 

@@ -327,4 +327,41 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   })).rejects.toThrow(rollback);
  });
 
+ it('historical binding enables real DB supplier lifecycle observation without reviving stale spend or manual delivery',async()=>{
+  const {reconcileSupplierLifecycle,persistSupplierLifecycleTx}=await import('@/lib/supplier-lifecycle');
+  const {supplierPlanDigest}=await import('@/lib/supplier-order-plan');
+  const env={CJ_LIFECYCLE_RECONCILIATION_ENABLED:process.env.CJ_LIFECYCLE_RECONCILIATION_ENABLED,CJ_API_KEY:process.env.CJ_API_KEY};
+  const later=new Date(now.getTime()+7*86400000);
+  await expect(prisma.$transaction(tx=>loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now:later,maxAgeMs}))).rejects.toThrow('Retail offer');
+  const plan=await prisma.$transaction(tx=>loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now:later,maxAgeMs,purpose:'READ_ONLY_LIFECYCLE'}));
+  await prisma.$executeRaw`INSERT INTO "OrderSupplierAttempt"("orderId",state,"supplierOrderId") VALUES(${orderId}::uuid,'ACCEPTED','lifecycle-local-cj')`;
+  delete process.env.CJ_LIFECYCLE_RECONCILIATION_ENABLED;
+  const fetcher=jest.spyOn(global,'fetch');await expect(reconcileSupplierLifecycle(orderId)).rejects.toThrow('verification is OFF');expect(fetcher).not.toHaveBeenCalled();
+  const recent=new Date();const stamp=(offset:number)=>new Date(recent.getTime()-offset).toISOString();
+  let providerStatus='UNPAID';let wrongVariant=false;
+  fetcher.mockImplementation(async url=>{const u=String(url);if(u.includes('getAccessToken'))return new Response(JSON.stringify({result:true,data:{accessToken:'LOCAL_SYNTHETIC'}}));
+   if(u.includes('trackInfo'))return new Response(JSON.stringify({result:true,data:[{trackingNumber:'LOCAL_TRACK',trackingFrom:'CN',trackingTo:'US',trackingStatus:'Delivered',deliveryTime:stamp(1000)}]}));
+   expect(u).toContain('/getOrderDetail?orderId=lifecycle-local-cj');return new Response(JSON.stringify({result:true,data:{orderId:'lifecycle-local-cj',orderNum:'cj-provider-name',shippingZip:shipping.postalCode,shippingCountryCode:'US',shippingProvince:shipping.state,shippingCity:shipping.city,shippingPhone:shipping.phone,shippingAddress:shipping.streetAddress,shippingCustomerName:shipping.fullName,fromCountryCode:'CN',logisticName:line.snapshot.shippingMethod,storageId:line.snapshot.warehouseId,isSandbox:0,orderStatus:providerStatus,currency:'USD',orderAmount:'3.00',paymentDate:providerStatus==='UNPAID'?null:stamp(3000),outWarehouseTime:providerStatus==='DELIVERED'||providerStatus==='SHIPPED'?stamp(2000):null,trackNumber:providerStatus==='DELIVERED'||providerStatus==='SHIPPED'?'LOCAL_TRACK':null,trackingProvider:'LOCAL_CARRIER',productList:[{vid:wrongVariant?'WRONG':line.snapshot.providerVariantId,quantity:line.qty,storeLineItemId:line.lineKey}]}}));
+  });
+  try{
+   process.env.CJ_LIFECYCLE_RECONCILIATION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';
+   expect((await reconcileSupplierLifecycle(orderId)).state).toBe('AWAITING_FUNDING_REVIEW');expect((await prisma.order.findUniqueOrThrow({where:{id:orderId}})).isDelivered).toBe(false);
+   providerStatus='SHIPPED';expect((await reconcileSupplierLifecycle(orderId)).state).toBe('SHIPPED');expect((await prisma.order.findUniqueOrThrow({where:{id:orderId}})).trackingNumber).toBe('LOCAL_TRACK');
+   providerStatus='DELIVERED';expect((await reconcileSupplierLifecycle(orderId)).state).toBe('DELIVERED');expect((await prisma.order.findUniqueOrThrow({where:{id:orderId}})).isDelivered).toBe(true);
+   wrongVariant=true;await expect(reconcileSupplierLifecycle(orderId)).rejects.toThrow('Supplier product lines');expect((await prisma.order.findUniqueOrThrow({where:{id:orderId}})).isDelivered).toBe(true);wrongVariant=false;
+   providerStatus='UNPAID';await expect(reconcileSupplierLifecycle(orderId)).rejects.toThrow('Out-of-order');
+   const rows=await prisma.$queryRaw<{evidence:import('@/lib/cj-lifecycle-evidence').CJLifecycleEvidence}[]>`SELECT evidence FROM "SupplierLifecycleObservation" WHERE "orderId"=${orderId}::uuid ORDER BY "observedAt" DESC`;
+   expect(rows).toHaveLength(3);expect(rows[0].evidence.state).toBe('DELIVERED');
+   await expect(prisma.$executeRaw`DELETE FROM "SupplierLifecycleObservation" WHERE "orderId"=${orderId}::uuid`).rejects.toThrow('append-only');
+   await prisma.$transaction(async tx=>{
+    await tx.$executeRawUnsafe(`DO $$BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app')THEN CREATE ROLE omnistu_app NOLOGIN NOSUPERUSER NOBYPASSRLS;END IF;END$$`);
+    await tx.$executeRawUnsafe('GRANT SELECT,INSERT ON "SupplierLifecycleObservation" TO omnistu_app');
+    const acl=await tx.$queryRaw`SELECT has_table_privilege('omnistu_app','"SupplierLifecycleObservation"','SELECT') canread,has_table_privilege('omnistu_app','"SupplierLifecycleObservation"','INSERT') canappend,has_table_privilege('omnistu_app','"SupplierLifecycleObservation"','UPDATE,DELETE') canrewrite`;
+    expect(acl).toEqual([{canread:true,canappend:true,canrewrite:false}]);
+   });
+   await expect(prisma.$transaction(tx=>persistSupplierLifecycleTx(tx,{orderId,planDigest:supplierPlanDigest(plan),supplierOrderId:'WRONG',observedAt:new Date(),evidence:rows[0].evidence,responseDigest:'bad'}))).rejects.toThrow('binding changed');
+   const methods=fetcher.mock.calls.map(c=>String(c[0]));expect(methods.some(u=>u.includes('payBalance')||u.includes('createOrder')||u.includes('confirmOrder'))).toBe(false);
+  }finally{fetcher.mockRestore();for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
+
 });
