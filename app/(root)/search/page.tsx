@@ -1,3 +1,7 @@
+import{cookies}from 'next/headers';
+import{supportLanguage}from '@/lib/support-language';
+import{SEARCH_COPY}from '@/lib/search-language';
+import{homeDepartment}from '@/lib/home-language';
 import { searchPage, searchPrice, searchRating, searchSort } from '@/lib/search-input';
 import {
   getAllProducts,
@@ -21,6 +25,7 @@ export async function generateMetadata(props: {
     rating?: string;
   }>;
 }) {
+  const language=supportLanguage('',(await cookies()).get('omnistu_lang')?.value);const t=SEARCH_COPY[language];
   const {
     q = 'all',
     category = 'all',
@@ -37,15 +42,15 @@ export async function generateMetadata(props: {
 
   if (isQuerySet || isCategorySet || isPriceSet || isRatingSet) {
     return {
-      title: `Search ${isQuerySet ? q : ''} ${
-        isCategorySet ? `: Category ${category}` : ''
-      } ${isPriceSet ? `: Price ${price}` : ''} ${
-        isRatingSet ? `: Rating ${rating}` : ''
+      title: `${t.title} ${isQuerySet ? q : ''} ${
+        isCategorySet ? `: ${t.category} ${homeDepartment(category,language)}` : ''
+      } ${isPriceSet ? `: ${t.price} ${price}` : ''} ${
+        isRatingSet ? `: ${t.reviews} ${rating}` : ''
       } | Omnistu Superstore`,
     };
   } else {
     return {
-      title: 'Search Products | Omnistu Superstore',
+      title: t.title+' | Omnistu Superstore',
     };
   }
 }

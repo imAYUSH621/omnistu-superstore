@@ -135,7 +135,7 @@ describe('Search discovery honesty (labels and quick-search terms)', () => {
   const sidebarSrc = readFileSync('components/shared/search/search-faceted-sidebar.tsx', 'utf8');
 
   test('narrow chips take category names from the live category list, never hard-coded', () => {
-    expect(chipsSrc).toContain('label: c.category');
+    expect(chipsSrc).toContain('label: homeDepartment(c.category,language)');
     for (const hardcoded of ['Electronics & Gadgets', 'Apparel & Merch', 'Home & Kitchen', 'Toys & Games', 'Sensory & Toys']) {
       expect(chipsSrc).not.toContain(hardcoded);
     }

@@ -1,4 +1,6 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{SEARCH_COPY}from '@/lib/search-language';
 
 import { useState } from 'react';
 import { Product } from '@/types';
@@ -35,6 +37,7 @@ export default function SearchResultsClient({
   currentRating,
   currentSort,
 }: SearchResultsClientProps) {
+  const language=useStoreLanguage();const t=SEARCH_COPY[language];
   // Image-led browsing by default; list remains an explicit user choice.
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -57,13 +60,13 @@ export default function SearchResultsClient({
       {/* No Products Found State */}
       {products.length === 0 ? (
         <div className='text-center py-16 px-4 border border-dashed rounded-xl border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-900/50 space-y-3'>
-          <h2 className='text-lg font-bold text-foreground'>No products found</h2>
+          <h2 className='text-lg font-bold text-foreground'>{t.emptyTitle}</h2>
           <p className='text-sm text-muted-foreground max-w-md mx-auto'>
-            We couldn&apos;t find any items matching your selected filters. Try broadening your search or resetting filters.
+            {t.emptyBody}
           </p>
-          <Button asChild variant='outline' className='rounded-full text-xs'>
+          <Button asChild variant='outline' className='h-auto min-h-8 whitespace-normal rounded-full text-xs'>
             <Link href='/search' className='flex items-center gap-1.5'>
-              <RotateCcw className='w-3.5 h-3.5' /> Reset All Filters
+              <RotateCcw className='w-3.5 h-3.5' /> {t.reset}
             </Link>
           </Button>
         </div>

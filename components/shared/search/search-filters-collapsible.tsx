@@ -1,4 +1,6 @@
 'use client';
+import{useStoreLanguage}from '@/hooks/use-store-language';
+import{SEARCH_COPY}from '@/lib/search-language';
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
@@ -11,6 +13,7 @@ export default function SearchFiltersCollapsible({
 }: {
   children: React.ReactNode;
 }) {
+  const language=useStoreLanguage();const t=SEARCH_COPY[language];
   const [open, setOpen] = useState(false);
   return (
     <div className='w-full md:w-60 lg:w-64 flex-shrink-0 md:sticky md:top-20'>
@@ -23,7 +26,7 @@ export default function SearchFiltersCollapsible({
       >
         <span className='flex items-center gap-2'>
           <SlidersHorizontal className='w-4 h-4' />
-          Filters
+          {t.filters}
         </span>
         {open ? <ChevronUp className='w-4 h-4' /> : <ChevronDown className='w-4 h-4' />}
       </button>
