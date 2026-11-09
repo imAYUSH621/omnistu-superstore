@@ -62,3 +62,21 @@ Actual compiled Store plus upstream core, not a mock server:
 ## Not implemented or authorized by this branch
 
 Hosted persistent core, production credentials and access control, real customer enrolment, commercial invoice issuance, tax, credits/refunds, paid subscriptions, service entitlements/provisioning, customer notifications and money movement. Test page is English only. No production deployment is part of this change. Hosting and operating the Java core require a separate persistent service; a successful Next build does not provide one.
+
+## Dependency audit checkpoint
+
+The downloaded 0.24.22 WAR contained 194 Maven package/version records. An OSV batch lookup matched 17 packages to 62 unique advisory IDs. This is a version match, not proof that all affected features are reachable or that 62 vulnerabilities can be exploited in this integration.
+
+Examples from the actual WAR:
+
+- `org.apache.shiro:shiro-core` 1.13.0 and `shiro-web` 1.13.0. Apache's security page describes affected-version session fixation and conditional LDAP DN injection. LDAP risk requires `DefaultLdapRealm`; local tests did not configure LDAP. Basic-auth local success does not qualify all Shiro sessions or configurations.
+- `com.fasterxml.jackson.core:jackson-databind` 2.13.4.2. The cited polymorphic type-validator bypass requires polymorphic typing and attacker-controlled type identifiers. Reachability in the billing API still needs source/configuration analysis.
+- `ch.qos.logback:logback-core` 1.3.14. The Janino evaluator issue requires an attacker-controlled configuration file or environment variable, not merely an arbitrary network request. This still needs a compatible upstream fix and configuration review before shared use.
+
+Keep the core loopback-only and do not activate it in a shared or production environment on the strength of these local tests. Do not replace individual JARs blindly: upstream binary compatibility and full regressions must be checked. There is no deployed billing incident established by this audit.
+
+Sources:
+- https://google.github.io/osv.dev/post-v1-querybatch/
+- https://shiro.apache.org/security-reports.html
+- https://github.com/FasterXML/jackson-databind/security/advisories/GHSA-j3rv-43j4-c7qm
+- https://logback.qos.ch/news.html
