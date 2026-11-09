@@ -1,9 +1,10 @@
 import Link from 'next/link';
-/** Only fixed store paths and generated product slugs become links. External/unknown paths stay text. */
-export default function SupportMessage({ text }: { text: string }) {
-  return text.split(/(\/(?:product\/[a-zA-Z0-9-]+|user\/orders|contact|search)\b)/g).map((part, i) =>
-    /^\/(?:product\/[a-zA-Z0-9-]+|user\/orders|contact|search)$/.test(part)
-      ? <Link key={i} href={part} className="underline underline-offset-2 break-words">{part}</Link>
-      : part
-  );
+const INTERNAL=/^\/(?:product\/[a-zA-Z0-9-]+|user\/(?:orders|enquiries)|contact|search|cart|shipping-address|payment-method|place-order|sign-in|sign-up|forgot-password)$/;
+/** Only complete allowlisted store paths become links. External URLs and
+ * unknown paths (including queries/fragments/extra suffixes) remain text. */
+export default function SupportMessage({text}:{text:string}){
+ return text.split(/(https?:\/\/[^\s<>"()[\]{}]+|\/[^\s<>"()[\]{}]+)/g).map((part,i)=>{
+  const path=part.replace(/[.,;!?:।。]+$/u,'');
+  return INTERNAL.test(path)?<span key={i}><Link href={path} className='underline underline-offset-2 break-words'>{path}</Link>{part.slice(path.length)}</span>:part;
+ });
 }
