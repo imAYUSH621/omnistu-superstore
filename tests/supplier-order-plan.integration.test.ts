@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 const mockAuth=jest.fn();const mockCreatePayPal=jest.fn();const mockCapturePayPal=jest.fn();
 jest.mock('@/auth',()=>({auth:(...a:unknown[])=>mockAuth(...a)}));
 jest.mock('@/lib/payment-capabilities',()=>({isPaymentMethodAvailable:()=>true,testCheckoutMode:()=>false}));
@@ -67,6 +68,35 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
   expect(p.lines[0].snapshot.providerVariantId).toBe('exact-variant');
   await expect(updateOrderToPaid({orderId})).rejects.toMatchObject({settlementCode:'ALREADY_PAID'});
   expect((await prisma.order.findUniqueOrThrow({where:{id:orderId}})).isPaid).toBe(true);
+ });
+
+ it('actual non-owner backend role can prepare/settle exact stock but cannot publish offers or rewrite plans',async()=>{
+  await prisma.user.update({where:{id:userId},data:{address:shipping,paymentMethod:'PayPal'}});
+  const rolledBack=Error('runtime-fixture-rollback');
+  await expect(prisma.$transaction(async tx=>{
+   const roles=await tx.$queryRaw<{exists:boolean}[]>`SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app')`;
+   if(!roles[0].exists)await tx.$executeRawUnsafe('CREATE ROLE omnistu_app NOLOGIN NOSUPERUSER NOBYPASSRLS');
+   await tx.$executeRawUnsafe(readFileSync('prisma/migrations/20261109112000_supplier_backend_runtime/migration.sql','utf8'));
+   // Reproduce only the pre-existing backend privileges needed on core tables.
+   await tx.$executeRawUnsafe('GRANT SELECT ON "User","Product","ProductVariant" TO omnistu_app');
+   await tx.$executeRawUnsafe('GRANT UPDATE(address) ON "User" TO omnistu_app');
+   await tx.$executeRawUnsafe('GRANT SELECT,INSERT,UPDATE ON "Order" TO omnistu_app');
+   await tx.$executeRawUnsafe('GRANT SELECT,INSERT ON "OrderItem" TO omnistu_app');
+   const carts=await tx.$queryRaw<{id:string}[]>`INSERT INTO "RetailCart"("userId",lines,"destinationCountry","destinationPostal") VALUES(${userId}::uuid,${JSON.stringify([line])}::jsonb,'US','10001') RETURNING id`;
+   await tx.$executeRawUnsafe('SET LOCAL ROLE omnistu_app');
+   const role=await tx.$queryRaw<{current_user:string;rolbypassrls:boolean;rolsuper:boolean}[]>`SELECT current_user,rolbypassrls,rolsuper FROM pg_roles WHERE rolname=current_user`;
+   expect(role).toEqual([{current_user:'omnistu_app',rolbypassrls:false,rolsuper:false}]);
+   const id=await prepareSupplierBoundOrderTx(tx,{userId,cartId:carts[0].id,reviewToken:retailCartReviewToken({lines:[line],destinationCountry:'US',destinationPostal:'10001'}),idempotencyKey:randomUUID(),now,maxAgeMs,approvedShippingCents:0,approvedTaxCents:0,commercialTermsSource:'LOCAL ROLE FIXTURE ONLY'});
+   await validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs});
+   const {consumeSupplierAllocationTx}=await import('@/lib/supplier-order-plan');await consumeSupplierAllocationTx(tx,{orderId:id,now,maxAgeMs});
+   await tx.order.update({where:{id},data:{isPaid:true}});
+   expect((await loadSupplierOrderPlanTx(tx,{orderId:id,requirePaid:true,now,maxAgeMs})).lines[0].snapshotId).toBe(line.snapshotId);
+   await tx.$executeRaw`INSERT INTO "OrderSupplierAttempt"("orderId",state) VALUES(${id}::uuid,'REQUESTED')`;
+   await tx.$executeRaw`UPDATE "OrderSupplierAttempt" SET state='UNKNOWN' WHERE "orderId"=${id}::uuid`;
+   const permissions=await tx.$queryRaw`SELECT has_table_privilege(current_user,'"RetailQuote"','INSERT') AS quote_insert,has_column_privilege(current_user,'"RetailOffer"','published','UPDATE') AS publish,has_table_privilege(current_user,'"OrderSupplierPlan"','UPDATE') AS rewrite_plan,has_table_privilege(current_user,'"OrderSupplierAttempt"','DELETE') AS erase_attempt`;
+   expect(permissions).toEqual([{quote_insert:false,publish:false,rewrite_plan:false,erase_attempt:false}]);
+   throw rolledBack;
+  })).rejects.toBe(rolledBack);
  });
 
  it('atomically binds a customer-selected cart, reserves the exact option and replays one order',async()=>{
