@@ -1,0 +1,13 @@
+import {localDatabaseTestEnabled}from './helpers/local-database';
+import {prisma}from '@/db/prisma';
+const mockAuth=jest.fn();jest.mock('@/auth',()=>({auth:()=>mockAuth()}));
+import{getMyOrders}from '@/lib/actions/order.actions';
+const db=localDatabaseTestEnabled()?it:it.skip;let own='',other='';
+beforeAll(async()=>{if(!localDatabaseTestEnabled())return;own=(await prisma.user.create({data:{name:'Synthetic own history',email:'history-own-20261109@example.invalid'}})).id;other=(await prisma.user.create({data:{name:'Synthetic other history',email:'history-other-20261109@example.invalid'}})).id;
+ const row={shippingAddress:{fullName:'Synthetic only'},paymentMethod:'CashOnDelivery',itemsPrice:10,shippingPrice:0,taxPrice:0,totalPrice:10,paymentNote:'QUALIFIED TEST ONLY - synthetic history pagination',createdAt:new Date('2026-11-01T00:00:00Z')};await prisma.order.createMany({data:[...Array.from({length:117},()=>({...row,userId:own})),{...row,userId:other}]});});
+afterAll(async()=>{if(!localDatabaseTestEnabled())return;await prisma.user.deleteMany({where:{id:{in:[own,other]}}});expect(await prisma.order.count({where:{userId:{in:[own,other]}}})).toBe(0);await prisma.$disconnect()});
+describe('actual disposable database canonical self order history',()=>{
+ db('equal-date117 records reachable exactly once with bounded pages and exact self scope',async()=>{mockAuth.mockResolvedValue({user:{id:own}});const ids:string[]=[];for(let page=1;page<=5;page++){const r=await getMyOrders({page,limit:25});expect(r.totalPages).toBe(5);expect(r.data.length).toBe(page===5?17:25);expect(r.data.every(x=>x.userId===own)).toBe(true);ids.push(...r.data.map(x=>x.id))}expect(ids.length).toBe(117);expect(new Set(ids).size).toBe(117);expect(ids).toEqual([...ids].sort().reverse())});
+ db('second session cannot select first history and malformed direct arguments do not widen the read',async()=>{mockAuth.mockResolvedValue({user:{id:other}});const r=await getMyOrders({page:-3,limit:Infinity});expect(r.data).toHaveLength(1);expect(r.data[0].userId).toBe(other);expect(r.totalPages).toBe(1);mockAuth.mockResolvedValue(null);await expect(getMyOrders({page:1,limit:100})).rejects.toThrow('User is not authorized')});
+ db('read path preserves every persisted field including simulation markers and no new rows',async()=>{const before=await prisma.order.findMany({where:{userId:{in:[own,other]}},orderBy:{id:'asc'}});mockAuth.mockResolvedValue({user:{id:own}});await getMyOrders({page:1,limit:100});expect(JSON.stringify(await prisma.order.findMany({where:{userId:{in:[own,other]}},orderBy:{id:'asc'}}))).toBe(JSON.stringify(before))});
+});

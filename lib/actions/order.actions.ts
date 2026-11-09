@@ -1,4 +1,5 @@
 'use server';
+import {orderHistoryQuery} from '@/lib/order-history-query';
 import { realPaidOrderWhere, realPaidOrderSql } from '@/lib/real-sales';
 import {qualifiedRetailTestEnabled} from '@/lib/retail/gate';
 import {qualifiedOrderItems,payQualifiedTestOrder} from '@/lib/retail/store';
@@ -471,11 +472,12 @@ export async function getMyOrders({
   const session = await auth();
   if (!session?.user?.id) throw new Error('User is not authorized');
 
+  const bounds=orderHistoryQuery(page,limit,PAGE_SIZE);
   const data = await prisma.order.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    skip: (page - 1) * limit,
+    orderBy: [{createdAt:'desc'},{id:'desc'}],
+    take: bounds.take,
+    skip: bounds.skip,
   });
 
   const dataCount = await prisma.order.count({
@@ -484,7 +486,7 @@ export async function getMyOrders({
 
   return {
     data,
-    totalPages: Math.ceil(dataCount / limit),
+    totalPages: Math.ceil(dataCount / bounds.take),
   };
 }
 

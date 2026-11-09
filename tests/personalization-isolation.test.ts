@@ -60,4 +60,7 @@ describe('personalization cross-user isolation', () => {
     await expect(getMyOrders({ limit: 3, page: 1 })).rejects.toThrow('User is not authorized');
     expect(mockOrderFindMany).not.toHaveBeenCalled();
   });
+  it.each([{page:-1,limit:-5},{page:NaN,limit:Infinity},{page:1.5,limit:0},{page:10001,limit:999999}])('bounds direct callable arguments %p before database use',async args=>{mockAuth.mockResolvedValue({user:{id:'self'}});await getMyOrders(args);expect(mockOrderFindMany).toHaveBeenCalledWith({where:{userId:'self'},orderBy:[{createdAt:'desc'},{id:'desc'}],take:12,skip:0})});
+  it('retains bounded home limit and deterministic equal-date ordering',async()=>{mockAuth.mockResolvedValue({user:{id:'self'}});await getMyOrders({page:2,limit:3});expect(mockOrderFindMany).toHaveBeenCalledWith({where:{userId:'self'},orderBy:[{createdAt:'desc'},{id:'desc'}],take:3,skip:3})});
+
 });
