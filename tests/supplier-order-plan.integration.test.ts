@@ -274,6 +274,42 @@ suite('persisted supplier order binding on disposable real Postgres; no provider
 
   }finally{for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
  });
+ it('CJ-managed mode2 ordinary action binds approved origin without invented warehouse and holds missing confirmation',async()=>{
+  const env={BOUND_RETAIL_CHECKOUT_ENABLED:process.env.BOUND_RETAIL_CHECKOUT_ENABLED,ORDERS_ENABLED:process.env.ORDERS_ENABLED,TEST_CHECKOUT_MODE:process.env.TEST_CHECKOUT_MODE,CJ_MANAGED_ORIGIN_CHECKOUT_ENABLED:process.env.CJ_MANAGED_ORIGIN_CHECKOUT_ENABLED};
+  Object.assign(process.env,{BOUND_RETAIL_CHECKOUT_ENABLED:'true',ORDERS_ENABLED:'true',TEST_CHECKOUT_MODE:'false',CJ_MANAGED_ORIGIN_CHECKOUT_ENABLED:'true'});
+  try{
+   const uid=(await prisma.user.create({data:{email:`ordinary-${randomUUID()}@example.invalid`,name:'Synthetic ordinary customer',address:shipping,paymentMethod:'PayPal'}})).id;mockAuth.mockResolvedValue({user:{id:uid,role:'user'}});
+   const product=await prisma.product.create({data:{name:'Synthetic ordinary options',slug:`bound-ordinary-${randomUUID()}`,category:'test',description:'Local fixture',images:[],stock:0,price:10}});
+   const lines:ReturnType<typeof bindRetailLine>[]=[];
+   for(const label of ['Red','Blue']){const v=await prisma.productVariant.create({data:{productId:product.id,name:label,sku:randomUUID()}});const snapshot={...line.snapshot,version:2 as const,warehouseId:undefined,cjShippingMode:2 as const,managedOrigin:{kind:'CJ_MANAGED_ORIGIN' as const,assignment:'CJ_SELECTS_WAREHOUSE_WITHIN_APPROVED_ORIGIN' as const,availabilityConfirmationRef:'LOCAL MANUAL SUPPLIER AVAILABILITY FIXTURE NOT REAL ACCEPTANCE',confirmedAvailableQty:5,handlingMaxDays:4,stockEvidenceRef:'LOCAL EXACT OPTION STOCK FIXTURE',freightEvidenceRef:'LOCAL EXACT MODE2 FREIGHT FIXTURE',fulfillmentTermsRef:'LOCAL SOURCING/RETURNS TERMS FIXTURE',observedAt:now.toISOString(),validUntil:new Date(now.getTime()+maxAgeMs).toISOString()},productId:product.id,variantId:v.id,providerVariantId:'ordinary-'+label,quoteId:randomUUID(),availableQty:5};const l=bindRetailLine(snapshot,1,now,maxAgeMs);lines.push(l);
+    await prisma.$executeRaw`INSERT INTO "RetailQuote"("lineKey","snapshotId",snapshot,"productId","variantId") VALUES(${l.lineKey},${l.snapshotId},${JSON.stringify(snapshot)}::jsonb,${product.id}::uuid,${v.id}::uuid)`;
+    await prisma.$executeRaw`INSERT INTO "RetailOffer"("lineKey","snapshotId",snapshot,"productId","variantId","availableQty",published) VALUES(${l.lineKey},${l.snapshotId},${JSON.stringify(snapshot)}::jsonb,${product.id}::uuid,${v.id}::uuid,5,true)`;
+    expect((await addQualifiedCartAction({lineKey:l.lineKey,snapshotId:l.snapshotId,qty:1})).success).toBe(true);
+   }
+   const review=await readQualifiedCart(uid);expect(review?.mode).toBe('bound');expect(review?.terms).toBeNull();expect(review?.lines).toHaveLength(2);const input={cartId:review!.id,reviewToken:review!.reviewToken,termsId:randomUUID() as string,idempotencyKey:randomUUID()};
+   expect((await createBoundOrderAction(input)).success).toBe(false);expect((await createBoundOrderAction({...input,shippingCents:0,totalCents:1,approvalSource:'client claim'})).success).toBe(false);
+   const storedCart=await prisma.$queryRaw<{lines:typeof lines;destinationCountry:string;destinationPostal:string}[]>`SELECT lines,"destinationCountry","destinationPostal" FROM "RetailCart" WHERE id=${review!.id}::uuid`;
+   const terms=await prisma.$queryRaw<{id:string}[]>`INSERT INTO "ReviewedCheckoutTerms"("cartId","userId","reviewToken","cartToken","itemsCents","shippingCents","taxCents","totalCents","approvalSource","policySource","observedAt","validUntil") VALUES(${review!.id}::uuid,${uid}::uuid,${review!.reviewToken},${retailCartReviewToken(storedCart[0])},2000,300,100,2400,'LOCAL EXPLICIT TERMS FIXTURE','LOCAL POLICY FIXTURE',${now},${new Date(now.getTime()+maxAgeMs)}) RETURNING id`;
+   input.termsId=terms[0].id;await expect(prisma.$executeRaw`UPDATE "ReviewedCheckoutTerms" SET "shippingCents"=0 WHERE id=${input.termsId}::uuid`).rejects.toThrow();
+   expect(await loadReviewedCheckoutTermsTx(prisma,{userId:uid,cartId:review!.id,reviewToken:review!.reviewToken,cartToken:retailCartReviewToken(storedCart[0]),itemsCents:2000,termsId:input.termsId,now:new Date(now.getTime()+maxAgeMs)})).toBeNull();expect((await readQualifiedCart(uid))?.terms).toMatchObject({id:input.termsId,shipping:'3.00',tax:'1.00',total:'24.00'});
+   await prisma.user.update({where:{id:uid},data:{address:{...shipping,phone:'+12025550101'}}});expect((await readQualifiedCart(uid))?.terms).toBeNull();expect((await createBoundOrderAction(input)).success).toBe(false);
+   await prisma.user.update({where:{id:uid},data:{address:shipping}});
+   mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});expect((await createBoundOrderAction(input)).success).toBe(false);
+   mockAuth.mockResolvedValue({user:{id:uid,role:'user'}});const result=await createBoundOrderAction(input);expect(result.success).toBe(true);expect(await createBoundOrderAction(input)).toEqual(result);expect((await createBoundOrderAction({...input,reviewToken:'b'.repeat(64)})).success).toBe(false);
+   if(!result.success)throw Error('fixture placement failed');const id=result.redirectTo.split('/').pop()!;const order=await prisma.order.findUniqueOrThrow({where:{id},include:{orderitems:true}});expect(order.orderitems).toHaveLength(2);expect(order).toMatchObject({itemsPrice:'20',shippingPrice:'3',taxPrice:'1',totalPrice:'24',isPaid:false,paymentMethod:'PayPal'});
+   const plan=await prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs}));expect(plan.commercialTermsSource).toContain(input.termsId);expect(plan.amountCents).toBe(2400);const payload=cjPayloadFromSupplierPlan(plan);expect(payload.shopLogisticsType).toBe(2);expect(payload).not.toHaveProperty('storageId');expect(payload.products).toHaveLength(2);expect(payload.payType).toBe(3);delete process.env.CJ_MANAGED_ORIGIN_CHECKOUT_ENABLED;await expect(prisma.$transaction(tx=>validateSupplierPaymentPlanTx(tx,{orderId:id,now,maxAgeMs}))).rejects.toThrow('OFF');process.env.CJ_MANAGED_ORIGIN_CHECKOUT_ENABLED='true';
+   expect((await readQualifiedCart(uid))?.lines).toHaveLength(0);mockCreatePayPal.mockClear();mockCreatePayPal.mockResolvedValue({id:'PP_ORDINARY_INERT'});expect((await createPayPalOrder(id)).success).toBe(true);expect(mockCreatePayPal).toHaveBeenCalledWith(24);
+   const before=await prisma.order.findUniqueOrThrow({where:{id}}),stockBefore=await prisma.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "productId"=${product.id}::uuid ORDER BY "lineKey"`;
+   expect(await prisma.$transaction(tx=>inspectBoundPaymentRecoveryTx(tx,{orderId:id,userId:uid,now,maxAgeMs}))).toBe('READY');
+   expect(await prisma.$transaction(tx=>inspectBoundPaymentRecoveryTx(tx,{orderId:id,userId:uid,now:new Date(now.getTime()+maxAgeMs),maxAgeMs}))).toBe('PAYMENT_REVIEW');
+   await prisma.order.update({where:{id},data:{paymentNote:before.paymentNote+' | CAPTURE_UNCONFIRMED'}});
+   expect(await prisma.$transaction(tx=>inspectBoundPaymentRecoveryTx(tx,{orderId:id,userId:uid,now,maxAgeMs}))).toBe('PAYMENT_REVIEW');
+   const held=await prisma.order.findUniqueOrThrow({where:{id}});expect(held.isPaid).toBe(false);expect(held.paymentResult).toEqual(before.paymentResult);expect(held.paymentNote).toContain('CAPTURE_UNCONFIRMED');
+   expect(await prisma.$queryRaw`SELECT "availableQty" FROM "RetailOffer" WHERE "productId"=${product.id}::uuid ORDER BY "lineKey"`).toEqual(stockBefore);
+   await expect(prisma.$transaction(tx=>inspectBoundPaymentRecoveryTx(tx,{orderId:id,userId:userId,now,maxAgeMs}))).rejects.toThrow('Order unavailable');
+
+  }finally{for(const[k,v]of Object.entries(env)){if(v===undefined)delete process.env[k];else process.env[k]=v}}
+ });
 
  it('hosted inherited defaults cannot grant review writing, publication or attempt erasure after scoped hardening',async()=>{
   const rollback=Error('acl-fixture-rollback');await expect(prisma.$transaction(async tx=>{
