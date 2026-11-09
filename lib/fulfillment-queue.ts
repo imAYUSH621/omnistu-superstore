@@ -10,6 +10,10 @@ import { prisma } from '@/db/prisma';
  * - NO PROVIDER CALLS: this module never imports the dispatcher or any
  *   supplier client and never performs network I/O. The caller supplies the
  *   runner that executes a task; test-mode runners must not call providers.
+ * - PROCESSING claims are not automatically reclaimed after crashes or failed
+ *   acknowledgements. An operator must reconcile the uncertain outcome first.
+ * - This is not an exactly-once external-effects guarantee. A future runner must
+ *   use the task ID as an idempotency key and verify provider outcomes.
  * - Exceptions are captured, never lost: after maxAttempts the task becomes
  *   FAILED_EXCEPTION with lastError, visible for manual resolution.
  */
@@ -22,30 +26,31 @@ export function backoffMs(attempts: number): number {
   return Math.min(BASE_BACKOFF_MS * 2 ** Math.max(0, attempts), MAX_BACKOFF_MS);
 }
 
+type TaskTransaction = Pick<typeof prisma, 'fulfillmentTask' | '$queryRawUnsafe'>;
+
 export async function enqueueFulfillmentTask(input: {
   orderId: string;
   supplier: string;
   payload: Record<string, unknown>;
   maxAttempts?: number;
   /** Optional transaction client: lets a caller record the task in the SAME transaction as another write. */
-  tx?: Pick<typeof prisma, 'fulfillmentTask'>;
+  tx?: TaskTransaction;
 }): Promise<{ id: string; deduplicated: boolean }> {
-  const db = input.tx ?? prisma;
-  // One active task per order+supplier: a duplicate enqueue returns the
-  // existing task instead of double-dispatching later.
-  const existing = await db.fulfillmentTask.findFirst({
-    where: { orderId: input.orderId, supplier: input.supplier, status: { in: ['PENDING', 'RETRYING'] } },
-  });
-  if (existing) return { id: existing.id, deduplicated: true };
-  const task = await db.fulfillmentTask.create({
-    data: {
-      orderId: input.orderId,
-      supplier: input.supplier,
-      payload: input.payload,
-      maxAttempts: input.maxAttempts ?? 5,
-    },
-  });
-  return { id: task.id, deduplicated: false };
+  const enqueue = async (db: TaskTransaction) => {
+    // Serialize same-order enqueues, including callers inside the paid transaction.
+    // Lock the existing parent row, not an advisory lock or a new schema object.
+    await db.$queryRawUnsafe('SELECT id FROM "Order" WHERE id=$1::uuid FOR UPDATE', input.orderId);
+    const existing = await db.fulfillmentTask.findFirst({
+      where: { orderId: input.orderId, supplier: input.supplier, status: { in: ['PENDING', 'RETRYING', 'PROCESSING'] } },
+    });
+    if (existing) return { id: existing.id, deduplicated: true };
+    const task = await db.fulfillmentTask.create({
+      data: { orderId: input.orderId, supplier: input.supplier, payload: input.payload, maxAttempts: input.maxAttempts ?? 5 },
+    });
+    return { id: task.id, deduplicated: false };
+  };
+  return input.tx ? enqueue(input.tx) : prisma.$transaction(enqueue);
+
 }
 
 export async function recordTaskSuccess(taskId: string): Promise<void> {
@@ -77,6 +82,7 @@ export async function recordTaskFailure(
 }
 
 export async function dueFulfillmentTasks(now = new Date(), limit = 20) {
+  if (!Number.isFinite(now.getTime()) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw Error('INVALID_QUEUE_BOUNDS');
   return prisma.fulfillmentTask.findMany({
     where: { status: { in: ['PENDING', 'RETRYING'] }, nextAttemptAt: { lte: now } },
     orderBy: { nextAttemptAt: 'asc' },
@@ -110,14 +116,22 @@ export async function processDueFulfillmentTasks(
   let processed = 0;
   let failed = 0;
   for (const task of due) {
+    const claim = await prisma.fulfillmentTask.updateMany({
+      where: { id: task.id, status: { in: ['PENDING', 'RETRYING'] }, nextAttemptAt: { lte: new Date() } },
+      data: { status: 'PROCESSING' },
+    });
+    if (claim.count !== 1) continue;
     try {
       await runner(task);
-      await recordTaskSuccess(task.id);
-      processed += 1;
     } catch (err) {
       failed += 1;
       await recordTaskFailure(task.id, err instanceof Error ? err.message : String(err));
+      continue;
     }
+    // An acknowledgement failure must not schedule a second runner call. Leave
+    // PROCESSING visible for manual reconciliation of an uncertain outcome.
+    await recordTaskSuccess(task.id);
+    processed += 1;
   }
   return { skipped: false, processed, failed };
 }
