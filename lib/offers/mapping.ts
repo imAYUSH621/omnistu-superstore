@@ -26,7 +26,7 @@ export function validateMapping(m: VariantMapping): string[] {
   if (!Array.isArray(m.members) || m.members.length < 2) errors.push('at least two members required');
   const seen = new Set<string>();
   for (const mem of m.members ?? []) {
-    if (!mem.provider || !mem.providerProductId || !mem.providerVariantId) {
+    if (!mem.provider || !mem.providerProductId || !mem.providerVariantId || [mem.provider,mem.providerProductId,mem.providerVariantId].some(v=>v.includes('|')||v.trim()!==v)) {
       errors.push('member needs provider, providerProductId and providerVariantId');
       continue;
     }
@@ -41,12 +41,18 @@ export function validateMapping(m: VariantMapping): string[] {
 
 export function applyMapping(offers: Offer[], mappings: VariantMapping[]): Offer[] {
   const byKey = new Map<string, string>();
-  for (const m of mappings) {
-    if (validateMapping(m).length) continue; // invalid mappings are ignored, never guessed
+  const valid=mappings.filter(m=>validateMapping(m).length===0);
+  for (const m of valid) {
     for (const mem of m.members) {
-      byKey.set(`${mem.provider}|${mem.providerProductId}|${mem.providerVariantId}`, m.canonicalVariantKey);
+      const key=`${mem.provider}|${mem.providerProductId}|${mem.providerVariantId}`;
+      const previous=byKey.get(key);
+      if(previous&&previous!==m.canonicalVariantKey)throw Error('AMBIGUOUS_VARIANT_MAPPING');
+      byKey.set(key,m.canonicalVariantKey);
     }
   }
+  // A canonical name cannot silently absorb an unrelated unmapped provider row.
+  const canonical=new Set(valid.map(m=>m.canonicalVariantKey));
+  if(offers.some(o=>canonical.has(o.variantKey)&&!byKey.has(o.variantKey)))throw Error('CANONICAL_PROVIDER_IDENTITY_COLLISION');
   return offers.map((o) => {
     // offer.variantKey is `${provider}|${pid}|${vid}` by adapter convention
     const canonical = byKey.get(o.variantKey);

@@ -52,11 +52,12 @@ describe('cached freight evidence attaches only on exact context match', () => {
     expect(applyFreightEvidence(offers, [future], ctx, NOW, { maxAgeMs: 86_400_000 })[0].shippingCents).toBeUndefined();
   });
 
-  test('with matching freight, the selector ranks by comparable total', () => {
+  test('matching freight does not permit selecting between different variant identities', () => {
     const out = applyFreightEvidence(offers, [ev({}), ev({ vid: 'V2', shippingCents: 900 })], ctx, NOW, { maxAgeMs: 86_400_000 });
     const d = selectOffer(out, NOW, { maxAgeMs: 3600_000 });
     // V1: 2790+500=3290, V2: 2650+900=3550 -> V1 wins despite higher item price
-    expect(d.selected?.variantKey).toBe('cj|P1|V1');
+    expect(d.selected).toBeNull();
+    expect(d.considered.every(c=>c.reasons.includes('explicit single variant required'))).toBe(true);
     expect(d.notes.join(' ')).toMatch(/not landed cost/i);
   });
 });
