@@ -37,11 +37,12 @@ export function limited(ip: string): boolean {
 // opens a real product page and the price matches it. Only name, category,
 // brand and description are searched and quoted: ratings, review counts and
 // badges are never used to rank or describe a product (they are unverified).
-export async function findProducts(query: string): Promise<string> {
+export type ProductLookupState={status:'available'|'unavailable';products:string};
+export async function findProductsState(query:string):Promise<ProductLookupState>{
   type Row = { name: string; slug: string; price: string | number; category?: string; brand?: string; description?: string; stock?: number };
   try {
     const words = catalogSearchTerms(query);
-    if (!words.length) return '';
+    if (!words.length) return {status:'available',products:''};
 
     let list: Row[] = [];
     const { isDatabaseAvailable } = await import('@/lib/utils');
@@ -74,11 +75,13 @@ export async function findProducts(query: string): Promise<string> {
         });
         list = rows as unknown as Row[];
       } catch {
-        return '';
+        return {status:'unavailable',products:''};
       }
-      if (!list.length) return '';
+      if (!list.length) return {status:'available',products:''};
     } else {
       // No database: the same demo sample catalog the storefront pages show.
+      const {sampleCatalogAllowed}=await import('@/lib/test-fixture');
+      if(!sampleCatalogAllowed())return {status:'unavailable',products:''};
       const { getAllProducts } = await import('@/lib/actions/product.actions');
       const { data } = await getAllProducts({ query: 'all', limit: 200, page: 1 });
       list = (data ?? []) as Row[];
@@ -94,16 +97,20 @@ export async function findProducts(query: string): Promise<string> {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    return scored
+    const products=scored
       .map(({ p }) => {
         const stockNote = typeof p.stock === 'number' && p.stock <= 0 ? ' | currently out of stock' : '';
         return `- ${p.name} | price: $${Number(p.price).toFixed(2)}${stockNote} | link: /product/${p.slug}`;
       })
       .join('\n');
+    return {status:'available',products};
   } catch {
-    return '';
+    return {status:'unavailable',products:''};
   }
 }
+
+/** Compatibility for existing model/test consumers. Public help uses the structured state. */
+export async function findProducts(query:string):Promise<string>{return (await findProductsState(query)).products}
 
 // ---- Order lookup: FAIL CLOSED -------------------------------------------
 // Order help is self-serve by default: the signed-in order page is the source
