@@ -8,11 +8,15 @@ function utc(s:string|null|undefined){if(!s)return null;const iso=/^\d{4}-\d{2}-
 export type CJLifecycleEvidence={state:'UNPAID'|'AWAITING_FUNDING_REVIEW'|'FUNDED_AWAITING_SHIPMENT'|'SHIPPED'|'DELIVERED'|'CANCELLED';supplierOrderId:string;trackingNumber:string|null;carrier:string|null;deliveredAt:string|null;dispatchedAt:string|null;providerAmountUsd:string;providerStatus:string};
 /** A response is evidence only when read from the authenticated provider by the
  * server adapter. Pure validation cannot authenticate supplied JSON. No spend. */
-export function assessCJLifecycle(plan:SupplierOrderPlan,supplierOrderId:string,raw:unknown,tracking:unknown,now:Date):CJLifecycleEvidence{
+export function inspectCJOrderIdentity(plan:SupplierOrderPlan,supplierOrderId:string,raw:unknown,now:Date){
  const s=detailSchema.parse(raw),a=plan.address,first=plan.lines[0]?.snapshot;
  if(!first||!Number.isFinite(now.getTime())||!([1,2]as unknown[]).includes(first.cjShippingMode)||plan.lines.some(l=>l.snapshot.provider!=='CJ'||l.snapshot.originCountry!==first.originCountry||l.snapshot.shippingMethod!==first.shippingMethod||l.snapshot.warehouseId!==first.warehouseId)||s.orderId!==supplierOrderId||s.shippingCountryCode!==a.country||s.shippingProvince!==a.state||s.shippingCity!==a.city||s.shippingPhone!==a.phone||s.shippingAddress!==a.streetAddress||s.shippingCustomerName!==a.fullName||s.fromCountryCode!==first.originCountry||s.logisticName!==first.shippingMethod||(first.cjShippingMode===1&&s.storageId!==first.warehouseId))throw Error('Supplier order identity requires review');
  if(s.productList.length!==plan.lines.length||new Set(s.productList.map(l=>l.storeLineItemId)).size!==s.productList.length||s.productList.some(p=>!plan.lines.some(l=>l.lineKey===p.storeLineItemId&&l.snapshot.providerVariantId===p.vid&&l.qty===p.quantity)))throw Error('Supplier product lines require review');
  const amount=String(s.orderAmount);if(!/^\d+(\.\d{1,2})?$/.test(amount)||!Number.isSafeInteger(Math.round(Number(amount)*100)))throw Error('Supplier amount requires review');
+ return s;
+}
+export function assessCJLifecycle(plan:SupplierOrderPlan,supplierOrderId:string,raw:unknown,tracking:unknown,now:Date):CJLifecycleEvidence{
+ const s=inspectCJOrderIdentity(plan,supplierOrderId,raw,now),a=plan.address,amount=String(s.orderAmount);
  const out:CJLifecycleEvidence={state:'UNPAID',supplierOrderId:s.orderId,trackingNumber:null,carrier:null,deliveredAt:null,dispatchedAt:null,providerAmountUsd:amount,providerStatus:s.orderStatus};
  if(s.orderStatus==='CANCELLED')return {...out,state:'CANCELLED'};
  if(['CREATED','IN_CART','UNPAID'].includes(s.orderStatus)){if(s.paymentDate)throw Error('Conflicting supplier payment evidence');return {...out,state:s.orderStatus==='CREATED'?'UNPAID':'AWAITING_FUNDING_REVIEW'};}

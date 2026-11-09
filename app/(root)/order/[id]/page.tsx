@@ -1,3 +1,4 @@
+import type {SupplierPaymentObservation} from '@/lib/supplier-payment-reconciliation';
 import type {SupplierFundingView} from '@/components/shared/order/supplier-funding-review';
 import {prisma} from '@/db/prisma';
 import {inspectBoundPaymentRecoveryTx,type BoundPaymentRecovery} from '@/lib/bound-payment-recovery';
@@ -37,6 +38,10 @@ const OrderDetailsPage = async (props: {
     try{const records=await prisma.$queryRaw<NonNullable<SupplierFundingView>[]>`SELECT state,quote FROM "SupplierFundingPreparation" WHERE "orderId"=${order.id}::uuid`;supplierFundingInitial=records[0]??((order.isDelivered||order.dispatchStatus==='DISPATCHED')?{state:'SUPPLIER_PROGRESSED',quote:null}:null);}
     catch{supplierFundingInitial={state:'UNAVAILABLE',quote:null};}
   }
+  let supplierPaymentInitial:SupplierPaymentObservation|null=null;
+  if(session?.user?.role==='admin'&&order.isPaid&&order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){
+    try{const rows=await prisma.$queryRaw<{evidence:SupplierPaymentObservation}[]>`SELECT evidence FROM "SupplierPaymentObservation" WHERE "orderId"=${order.id}::uuid ORDER BY "observedAt" DESC LIMIT 1`;supplierPaymentInitial=rows[0]?.evidence??null;}catch{/* Optional read-review schema may not be released yet; never infer payment. */}
+  }
   return (
     <OrderDetailsTable
       order={{
@@ -44,6 +49,8 @@ const OrderDetailsPage = async (props: {
         shippingAddress: order.shippingAddress as ShippingAddress,
       }}
       paymentRecovery={paymentRecovery}
+      supplierPaymentInitial={supplierPaymentInitial}
+      supplierPaymentEnabled={process.env.CJ_PAYMENT_RECONCILIATION_ENABLED==='true'}
       supplierFundingInitial={supplierFundingInitial}
       supplierFundingEnabled={process.env.CJ_FUNDING_PREPARATION_ENABLED==='true'}
       stripeClientSecret={client_secret}
