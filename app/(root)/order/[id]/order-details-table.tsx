@@ -2,7 +2,7 @@
 import SupplierCreationRecovery from '@/components/shared/order/supplier-creation-recovery';
 import SupplierPaymentReview from '@/components/shared/order/supplier-payment-review';
 import type {SupplierPaymentObservation} from '@/lib/supplier-payment-reconciliation';
-import SupplierFundingReview,{type SupplierFundingView} from '@/components/shared/order/supplier-funding-review';
+import SupplierFundingReview,{type SupplierFundingView,type SupplierFundingExecutionView,type SupplierFundingApprovalView} from '@/components/shared/order/supplier-funding-review';
 import type{BoundPaymentRecovery}from'@/lib/bound-payment-recovery';
 import{BOUND_CHECKOUT_COPY}from'@/lib/bound-checkout-language';
 import{BOUND_RECOVERY_COPY}from'@/lib/bound-payment-recovery-copy';
@@ -62,6 +62,9 @@ const OrderDetailsTable = ({
   supplierPaymentInitial=null,
   supplierFundingEnabled=false,
   supplierFundingInitial=null,
+  supplierFundingExecutionEnabled=false,
+  supplierFundingExecutionInitial=null,
+  supplierFundingApprovalInitial=null,
 }: {
   order: Omit<Order, 'paymentResult'>;
   paypalClientId: string;
@@ -75,6 +78,9 @@ const OrderDetailsTable = ({
   supplierPaymentInitial?:SupplierPaymentObservation|null;
   supplierFundingEnabled?:boolean;
   supplierFundingInitial?:SupplierFundingView;
+  supplierFundingExecutionEnabled?:boolean;
+  supplierFundingExecutionInitial?:SupplierFundingExecutionView;
+  supplierFundingApprovalInitial?:SupplierFundingApprovalView;
 }) => {
   const {
     id,
@@ -394,7 +400,7 @@ const OrderDetailsTable = ({
               {isAdmin && isPaid && !isDelivered && !simulated && <MarkAsDeliveredButton />}
               {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierCreationRecovery orderId={id} enabled={supplierCreationEnabled} initialState={supplierCreationState}/>}
               {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierPaymentReview orderId={id} enabled={supplierPaymentEnabled} initial={supplierPaymentInitial}/>}
-              {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierFundingReview orderId={id} enabled={supplierFundingEnabled} initial={supplierFundingInitial}/>}
+              {isAdmin && isPaid && !simulated && order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION') && <SupplierFundingReview orderId={id} enabled={supplierFundingEnabled} initial={supplierFundingInitial} executionEnabled={supplierFundingExecutionEnabled} executionInitial={supplierFundingExecutionInitial} approvalInitial={supplierFundingApprovalInitial}/>}
 
               {/* Simulated test checkout */}
               {simulated && (
