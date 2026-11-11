@@ -13,9 +13,11 @@
  *
  * * CJ_FUNDING_EXECUTION_ENABLED=true DATABASE_URL=<operator-role url> npx ts-node scripts/record-supplier-funding-approval.ts <orderId> <evidenceRef> <operatorId>
  *
- * In production DATABASE_URL must authenticate as the omnistu_funding_operator
- * role: the app runtime role (omnistu_app) has no INSERT grant on the journal,
- * so an app-side caller cannot write approvals even if it reaches this code.
+ * In production DATABASE_URL must use the existing owner-only operator
+ * access (the database owner principal): the app runtime role (omnistu_app)
+ * has no INSERT grant on the journal, so an app-side caller cannot write
+ * approvals even if it reaches this code. No new database role, membership
+ * or login is created for this path.
  */
 import { recordSupplierFundingApproval } from '../lib/supplier-funding-execution';
 import { prisma } from '../db/prisma';

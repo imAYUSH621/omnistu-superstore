@@ -201,12 +201,10 @@ suite('supplier funding execution on disposable real PostgreSQL; mocked provider
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "consumedAt"=now() WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/exactly once/);
   await expect(prisma.$executeRaw`DELETE FROM "SupplierFundingApproval" WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/erased/);
   // The app runtime role can read and consume approvals but can never insert
-  // one; only the separate operator role holds INSERT (self-minting is denied
-  // at the database, not just by code-path discipline).
+  // one; INSERT stays with the existing database owner principal alone, so
+  // self-minting is denied at the database, not just by code-path discipline.
   const acl=await prisma.$queryRaw`SELECT has_table_privilege('omnistu_app','"SupplierFundingApproval"','SELECT') canread,has_table_privilege('omnistu_app','"SupplierFundingApproval"','UPDATE') canconsume,has_table_privilege('omnistu_app','"SupplierFundingApproval"','INSERT') canappend,has_table_privilege('omnistu_app','"SupplierFundingApproval"','DELETE') canrewrite`;
   expect(acl).toEqual([{canread:true,canconsume:true,canappend:false,canrewrite:false}]);
-  const opacl=await prisma.$queryRaw`SELECT has_table_privilege('omnistu_funding_operator','"SupplierFundingApproval"','SELECT') canread,has_table_privilege('omnistu_funding_operator','"SupplierFundingApproval"','INSERT') canappend,has_table_privilege('omnistu_funding_operator','"SupplierFundingApproval"','UPDATE') canrewrite,has_table_privilege('omnistu_funding_operator','"SupplierFundingApproval"','DELETE') candelete`;
-  expect(opacl).toEqual([{canread:true,canappend:true,canrewrite:false,candelete:false}]);
   await prisma.$executeRaw`INSERT INTO "SupplierFundingExecution"("orderId","planDigest","supplierOrderId","shipmentOrderId","payId","approvedAmountUsd","approvalEvidenceRef","approvedBy","quoteDigest",state,attempts) VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','PAY_LOCAL_1','3.00','wamid.SYNTHETIC_GUARD','LOCAL_ADMIN','LOCAL','PAY_REQUESTED',1)`;
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET "payId"='OTHER' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET "approvalEvidenceRef"='wamid.SYNTHETIC_REWRITE' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);

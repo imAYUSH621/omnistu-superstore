@@ -64,8 +64,8 @@ export function quoteMatchesReviewedApproval(reviewed:SupplierFundingQuote,fresh
 export type FundingExecutionResult={state:'PAID'|'PAY_UNKNOWN'|'HOLD_REVIEW';message:string;shipmentOrderId:string;payId:string;attempts:number};
 export type FundingApprovalRecord={quoteDigest:string;approvedAmountUsd:string;evidenceRef:string;createdAt:string};
 
-async function coreBindingTx(tx:RetailRawTx,orderId:string,opts?:{skipOrderLock?:boolean}){
- const plan=await loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now:new Date(),maxAgeMs:600000,purpose:'READ_ONLY_LIFECYCLE',skipOrderLock:opts?.skipOrderLock});
+async function coreBindingTx(tx:RetailRawTx,orderId:string){
+ const plan=await loadSupplierOrderPlanTx(tx,{orderId,requirePaid:true,now:new Date(),maxAgeMs:600000,purpose:'READ_ONLY_LIFECYCLE'});
  const digest=supplierPlanDigest(plan);
  const attempts=await tx.$queryRaw<{state:string;supplierOrderId:string|null}[]>`SELECT state,"supplierOrderId" FROM "OrderSupplierAttempt" WHERE "orderId"=${orderId}::uuid`;
  if(attempts.length!==1||attempts[0].state!=='ACCEPTED'||!attempts[0].supplierOrderId)throw Error('Supplier outcome uncertain; no payment attempt');
@@ -75,8 +75,8 @@ async function coreBindingTx(tx:RetailRawTx,orderId:string,opts?:{skipOrderLock?
  if(recent.some(r=>!['UNPAID','AWAITING_FUNDING_REVIEW'].includes(r.state)))throw Error('Supplier already progressed; funding recovery review required');
  return{plan,digest,supplierOrderId:attempts[0].supplierOrderId};
 }
-async function reviewedQuoteTx(tx:RetailRawTx,orderId:string,opts?:{skipOrderLock?:boolean}){
- const b=await coreBindingTx(tx,orderId,opts);
+async function reviewedQuoteTx(tx:RetailRawTx,orderId:string){
+ const b=await coreBindingTx(tx,orderId);
  const prep=await tx.$queryRaw<{state:string;planDigest:string;supplierOrderId:string;quote:SupplierFundingQuote|null}[]>`SELECT state,"planDigest","supplierOrderId",quote FROM "SupplierFundingPreparation" WHERE "orderId"=${orderId}::uuid`;
  if(prep.length!==1||prep[0].state!=='REVIEW_ONLY'||!prep[0].quote||prep[0].planDigest!==b.digest||prep[0].supplierOrderId!==b.supplierOrderId)throw Error('A reviewed supplier funding quote is required before execution');
  return{...b,quote:prep[0].quote as SupplierFundingQuote,quoteDigest:quoteApprovalDigest(prep[0].quote as SupplierFundingQuote)};
@@ -97,10 +97,7 @@ export async function recordSupplierFundingApproval(orderId:string,evidenceRef:s
  const evidence=z.string().trim().min(8).max(200).parse(evidenceRef);
  const admin=z.string().trim().min(1).max(100).parse(recordedBy);
  return prisma.$transaction(async tx=>{
-  // Read-only binding derivation: the operator role holds no UPDATE grant,
-  // so no row lock is taken here. Execution re-derives with the lock and
-  // requires digest equality, so a stale write-time read fails closed there.
-  const b=await reviewedQuoteTx(tx,orderId,{skipOrderLock:true});
+  const b=await reviewedQuoteTx(tx,orderId);
   const dup=await tx.$queryRaw<{evidenceRef:string}[]>`SELECT "evidenceRef" FROM "SupplierFundingApproval" WHERE "orderId"=${orderId}::uuid AND "quoteDigest"=${b.quoteDigest} AND "consumedAt" IS NULL`;
   if(dup.length)throw Error('An unconsumed approval already exists for this exact quote; stacking approvals is not allowed');
   const running=await tx.$queryRaw<{state:string}[]>`SELECT state FROM "SupplierFundingExecution" WHERE "orderId"=${orderId}::uuid`;

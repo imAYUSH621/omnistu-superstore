@@ -36,13 +36,8 @@ export async function persistSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:s
 }
 /** The same persisted record is the source for payment review and both dispatch entry
  * points. Historical unbound orders remain untouched and require review, never backfill. */
-export async function loadSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:string;requirePaid:boolean;now:Date;maxAgeMs:number;purpose?:'READ_ONLY_LIFECYCLE';skipOrderLock?:boolean}){
- // skipOrderLock is only for read-only authority-record derivation by the
- // controlled operator writer, whose role holds no UPDATE grant and so cannot
- // take row locks; execution paths always lock. Skipping is safe there
- // because execution re-derives the same binding WITH the lock and refuses on
- // any digest drift.
- const orders=input.skipOrderLock?await tx.$queryRaw<OrderRow[]>`SELECT id,"userId","shippingAddress","totalPrice"::text,"itemsPrice"::text,"shippingPrice"::text,"taxPrice"::text,"isPaid","paymentMethod" FROM "Order" WHERE id=${input.orderId}::uuid`:await tx.$queryRaw<OrderRow[]>`SELECT id,"userId","shippingAddress","totalPrice"::text,"itemsPrice"::text,"shippingPrice"::text,"taxPrice"::text,"isPaid","paymentMethod" FROM "Order" WHERE id=${input.orderId}::uuid FOR UPDATE`;
+export async function loadSupplierOrderPlanTx(tx:RetailRawTx,input:{orderId:string;requirePaid:boolean;now:Date;maxAgeMs:number;purpose?:'READ_ONLY_LIFECYCLE'}){
+ const orders=await tx.$queryRaw<OrderRow[]>`SELECT id,"userId","shippingAddress","totalPrice"::text,"itemsPrice"::text,"shippingPrice"::text,"taxPrice"::text,"isPaid","paymentMethod" FROM "Order" WHERE id=${input.orderId}::uuid FOR UPDATE`;
  const o=orders[0];if(orders.length!==1||o.paymentMethod==='TestPayment'||(input.requirePaid&&!o.isPaid))throw Error('Real order state requires review');
  const rows=await tx.$queryRaw<{digest:string;plan:SupplierOrderPlan}[]>`SELECT digest,plan FROM "OrderSupplierPlan" WHERE "orderId"=${o.id}::uuid`;
  if(rows.length!==1||supplierPlanDigest(rows[0].plan)!==rows[0].digest)throw Error('Persisted supplier binding required');

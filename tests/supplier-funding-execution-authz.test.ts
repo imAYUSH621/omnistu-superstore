@@ -29,20 +29,18 @@ it('database privileges enforce the split: the app runtime role cannot INSERT ap
  expect(sql).not.toContain('GRANT SELECT,INSERT,UPDATE ON "SupplierFundingApproval" TO omnistu_app');
  expect(sql).not.toContain('GRANT INSERT ON "SupplierFundingApproval" TO omnistu_app');
  expect(sql).not.toContain('GRANT ALL ON "SupplierFundingApproval" TO omnistu_app');
- // The only INSERT-capable role is the separate controlled operator role.
- expect(sql).toContain('GRANT SELECT,INSERT ON "SupplierFundingApproval" TO omnistu_funding_operator');
- expect(sql).toContain("CREATE ROLE omnistu_funding_operator NOLOGIN");
+ // No new principal is created: INSERT stays with the existing database
+ // owner alone, reached only through the existing owner-only operator path.
+ expect(sql).not.toContain('omnistu_funding_operator');
+ expect(sql).not.toMatch(/CREATE ROLE/i);
+ expect(sql).not.toMatch(/GRANT SELECT,INSERT ON "SupplierFundingApproval" TO/i);
  // No default-privileges backdoor could re-grant the runtime role INSERT later.
  expect(sql).not.toMatch(/ALTER DEFAULT PRIVILEGES[^;]*omnistu_app[^;]*INSERT/i);
- // Least exact binding reads: no broad schema-level SELECT for the operator
- // role, and the operator role is never granted to another role (the app
- // role must not reach it by SET ROLE or inheritance).
+ // No ACL on any pre-existing table is changed: grants touch only the two
+ // new journal tables.
+ expect(sql).not.toMatch(/GRANT[^;]*ON "Order"/i);
+ expect(sql).not.toMatch(/GRANT[^;]*ON "OrderItem"/i);
  expect(sql).not.toContain('GRANT SELECT ON ALL TABLES');
- expect(sql).not.toMatch(/GRANT omnistu_funding_operator TO/i);
- expect(sql).toContain('GRANT SELECT ON "Order","OrderSupplierPlan","OrderItem","OrderSupplierAllocation","OrderSupplierAttempt","SupplierLifecycleObservation","SupplierFundingPreparation" TO omnistu_funding_operator');
- // The read-only operator holds no UPDATE/DELETE on any existing table.
- expect(sql).not.toMatch(/GRANT[^;]*UPDATE[^;]*TO omnistu_funding_operator/i);
- expect(sql).not.toMatch(/GRANT[^;]*DELETE[^;]*TO omnistu_funding_operator/i);
 });
 it('requires a real order identifier on every path',async()=>{
  mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});
