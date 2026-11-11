@@ -21,6 +21,20 @@ it('no web-reachable path can mint spend authority: the approval journal has no 
  expect(readFileSync('components/shared/order/supplier-funding-review.tsx','utf8')).not.toContain('Record owner approval');
  expect(readFileSync('scripts/record-supplier-funding-approval.ts','utf8')).toContain('operator');
 });
+it('database privileges enforce the split: the app runtime role cannot INSERT approvals; only the separate operator role can',()=>{
+ const sql=readFileSync('prisma/migrations/20261111100000_supplier_funding_execution/migration.sql','utf8');
+ // The runtime role keeps read/consume only; no INSERT grant, so no app code
+ // path or injection through omnistu_app can mint spend authority.
+ expect(sql).toContain('GRANT SELECT,UPDATE ON "SupplierFundingApproval" TO omnistu_app');
+ expect(sql).not.toContain('GRANT SELECT,INSERT,UPDATE ON "SupplierFundingApproval" TO omnistu_app');
+ expect(sql).not.toContain('GRANT INSERT ON "SupplierFundingApproval" TO omnistu_app');
+ expect(sql).not.toContain('GRANT ALL ON "SupplierFundingApproval" TO omnistu_app');
+ // The only INSERT-capable role is the separate controlled operator role.
+ expect(sql).toContain('GRANT SELECT,INSERT ON "SupplierFundingApproval" TO omnistu_funding_operator');
+ expect(sql).toContain("CREATE ROLE omnistu_funding_operator NOLOGIN");
+ // No default-privileges backdoor could re-grant the runtime role INSERT later.
+ expect(sql).not.toMatch(/ALTER DEFAULT PRIVILEGES[^;]*omnistu_app[^;]*INSERT/i);
+});
 it('requires a real order identifier on every path',async()=>{
  mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});
  expect((await executeSupplierFundingAction('wrong')).success).toBe(false);

@@ -5,7 +5,9 @@
 -- verified authorization storage: its only writer is the operator-controlled
 -- script path, never an HTTP route, server action or admin UI, so no web
 -- caller can self-mint authority. An admin click or a typed amount is never
--- spend authority. SupplierFundingExecution records at most one
+-- spend authority. The split is database-enforced: the app runtime role holds
+-- SELECT,UPDATE (consume) only, while INSERT belongs solely to the separate
+-- omnistu_funding_operator role. SupplierFundingExecution records at most one
 -- claimed payment execution per order and consumes exactly one approval.
 -- Vendor contract (support reply 2026-11-11): payBalanceV2 takes no amount and
 -- debits what saveGenerateParentOrder generated for that payId; repeating the
@@ -32,7 +34,19 @@ DO $$DECLARE r text;BEGIN
  FOREACH r IN ARRAY ARRAY['anon','authenticated','omnistu_app'] LOOP
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname=r) THEN EXECUTE format('REVOKE ALL ON "SupplierFundingApproval" FROM %I',r);END IF;
  END LOOP;
- IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app') THEN GRANT SELECT,INSERT,UPDATE ON "SupplierFundingApproval" TO omnistu_app;END IF;
+ IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app') THEN GRANT SELECT,UPDATE ON "SupplierFundingApproval" TO omnistu_app;END IF;
+ -- Privilege split: the app runtime role (omnistu_app) can read and consume
+ -- approvals but can NEVER insert one, so no app code path, admin session or
+ -- SQL-injection write through the runtime role can self-mint spend
+ -- authority. The only INSERT-capable role is omnistu_funding_operator, a
+ -- separate NOLOGIN role used solely by the operator-controlled writer
+ -- (scripts/record-supplier-funding-approval.ts) with production database
+ -- access outside the app. Read-only SELECT covers the writer's binding
+ -- re-derivation (preparation, plan, attempt, allocation, lifecycle reads).
+ IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_funding_operator') THEN CREATE ROLE omnistu_funding_operator NOLOGIN NOSUPERUSER NOBYPASSRLS;END IF;
+ REVOKE ALL ON "SupplierFundingApproval" FROM omnistu_funding_operator;
+ GRANT SELECT,INSERT ON "SupplierFundingApproval" TO omnistu_funding_operator;
+ GRANT SELECT ON ALL TABLES IN SCHEMA public TO omnistu_funding_operator;
 END$$;
 CREATE FUNCTION guard_supplier_funding_approval() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -71,6 +85,7 @@ DO $$DECLARE r text;BEGIN
   IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname=r) THEN EXECUTE format('REVOKE ALL ON "SupplierFundingExecution" FROM %I',r);END IF;
  END LOOP;
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_app') THEN GRANT SELECT,INSERT,UPDATE ON "SupplierFundingExecution" TO omnistu_app;END IF;
+ IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_funding_operator') THEN GRANT SELECT ON "SupplierFundingExecution" TO omnistu_funding_operator;END IF;
 END$$;
 CREATE FUNCTION guard_supplier_funding_execution() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
