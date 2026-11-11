@@ -1,5 +1,5 @@
 import type {SupplierPaymentObservation} from '@/lib/supplier-payment-reconciliation';
-import type {SupplierFundingView,SupplierFundingExecutionView} from '@/components/shared/order/supplier-funding-review';
+import type {SupplierFundingView,SupplierFundingExecutionView,SupplierFundingApprovalView} from '@/components/shared/order/supplier-funding-review';
 import {prisma} from '@/db/prisma';
 import {inspectBoundPaymentRecoveryTx,type BoundPaymentRecovery} from '@/lib/bound-payment-recovery';
 import {orderDetailMetadata} from '@/lib/order-detail-metadata';
@@ -43,6 +43,11 @@ const OrderDetailsPage = async (props: {
     try{const records=await prisma.$queryRaw<NonNullable<SupplierFundingExecutionView>[]>`SELECT state,attempts,"holdReason" FROM "SupplierFundingExecution" WHERE "orderId"=${order.id}::uuid`;supplierFundingExecutionInitial=records[0]??null;}
     catch{/* Execution journal may not be migrated yet; never infer payment. */}
   }
+  let supplierFundingApprovalInitial:SupplierFundingApprovalView=null;
+  if(session?.user?.role==='admin'&&order.isPaid&&order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){
+    try{const records=await prisma.$queryRaw<NonNullable<SupplierFundingApprovalView>[]>`SELECT "approvedAmountUsd","evidenceRef","createdAt" FROM "SupplierFundingApproval" WHERE "orderId"=${order.id}::uuid AND "consumedAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1`;supplierFundingApprovalInitial=records[0]??null;}
+    catch{/* Approval journal may not be migrated yet; never infer approval. */}
+  }
   let supplierCreationState:string|null=null;
   if(session?.user?.role==='admin'&&order.isPaid&&order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')){
     try{const rows=await prisma.$queryRaw<{state:string}[]>`SELECT state FROM "OrderSupplierAttempt" WHERE "orderId"=${order.id}::uuid`;supplierCreationState=rows[0]?.state??null;}catch{supplierCreationState='UNAVAILABLE';}
@@ -66,6 +71,7 @@ const OrderDetailsPage = async (props: {
       supplierFundingEnabled={process.env.CJ_FUNDING_PREPARATION_ENABLED==='true'}
       supplierFundingExecutionEnabled={process.env.CJ_FUNDING_EXECUTION_ENABLED==='true'}
       supplierFundingExecutionInitial={supplierFundingExecutionInitial}
+      supplierFundingApprovalInitial={supplierFundingApprovalInitial}
       stripeClientSecret={client_secret}
       paypalClientId={process.env.PAYPAL_CLIENT_ID || 'sb'}
       cancellationOffered={!!order.paymentNote?.includes('SUPPLIER_BOUND_PREPARATION')&&!order.paymentNote?.includes('SUPPLIER_ORDER_CANCELLED')&&!order.isPaid&&order.paymentResult===null}
