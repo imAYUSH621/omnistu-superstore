@@ -1,8 +1,11 @@
 -- Default-OFF supplier funding execution journals. SupplierFundingApproval is
 -- the only wallet-spend authority: an append-only record that binds one exact
 -- reviewed quote (order, plan, supplier order, parent shipment, exact amount)
--- to an external owner-approval evidence reference. An admin click or a typed
--- amount is never spend authority. SupplierFundingExecution records at most one
+-- to an external owner-approval evidence reference. The journal is externally
+-- verified authorization storage: its only writer is the operator-controlled
+-- script path, never an HTTP route, server action or admin UI, so no web
+-- caller can self-mint authority. An admin click or a typed amount is never
+-- spend authority. SupplierFundingExecution records at most one
 -- claimed payment execution per order and consumes exactly one approval.
 -- Vendor contract (support reply 2026-11-11): payBalanceV2 takes no amount and
 -- debits what saveGenerateParentOrder generated for that payId; repeating the

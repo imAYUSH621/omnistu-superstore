@@ -5,9 +5,9 @@ import {localDatabaseTestEnabled} from './helpers/local-database';
 import {bindRetailLine,type RetailSnapshot} from '@/lib/retail/snapshot';
 import {supplierPlanDigest,type SupplierOrderPlan} from '@/lib/supplier-order-plan';
 import {supplierFundingQuote} from '@/lib/cj-funding-evidence';
-import {executeSupplierFunding} from '@/lib/supplier-funding-execution';
+import {executeSupplierFunding,recordSupplierFundingApproval} from '@/lib/supplier-funding-execution';
 const mockAuth=jest.fn();jest.mock('@/auth',()=>({auth:()=>mockAuth()}));
-import {executeSupplierFundingAction,reviewSupplierFundingExecutionAction,recordSupplierFundingApprovalAction} from '@/lib/actions/supplier-funding.actions';
+import {executeSupplierFundingAction,reviewSupplierFundingExecutionAction} from '@/lib/actions/supplier-funding.actions';
 const suite=localDatabaseTestEnabled()?describe:describe.skip;
 const j=(v:unknown,status=200)=>new Response(JSON.stringify(v),{status});
 suite('supplier funding execution on disposable real PostgreSQL; mocked provider, no live spend',()=>{
@@ -64,16 +64,16 @@ suite('supplier funding execution on disposable real PostgreSQL; mocked provider
  const payError=(message:string):Pay=>async()=>j({result:false,code:1610001,message});
  const payReject:Pay=async()=>{throw new Error('socket reset');};
  function enable(){process.env.CJ_FUNDING_EXECUTION_ENABLED='true';process.env.CJ_API_KEY='LOCAL_NOT_A_KEY';mockAuth.mockResolvedValue({user:{id:userId,role:'admin'}});}
- const approve=(id:string,ref='wamid.TEST_'+randomUUID())=>recordSupplierFundingApprovalAction(id,ref);
+ // Approvals enter only through the controlled operator writer seam; tests use clearly synthetic references.
+ const approve=async(id:string,ref='wamid.SYNTHETIC_LOCAL_'+randomUUID())=>{try{const r=await recordSupplierFundingApproval(id,ref,'SYNTHETIC_OPERATOR');return{success:true as const,approval:r};}catch(e){return{success:false as const,message:e instanceof Error?e.message:String(e)};}};
  const row=(id:string)=>prisma.$queryRaw<{state:string;attempts:number;payId:string;shipmentOrderId:string;holdReason:string|null;confirmationDigest:string|null;approvalEvidenceRef:string;approvedAmountUsd:string}[]>`SELECT state,attempts,"payId","shipmentOrderId","holdReason","confirmationDigest","approvalEvidenceRef","approvedAmountUsd" FROM "SupplierFundingExecution" WHERE "orderId"=${id}::uuid`;
  it('OFF and unauthorized callers make no provider call and record no approval',async()=>{
   const f=await fixture(),m=fetcher(f,{detail:f.unpaid,pays:[paySuccess(f)]});
   delete process.env.CJ_FUNDING_EXECUTION_ENABLED;
   await expect(executeSupplierFunding(f.id)).rejects.toThrow('OFF');
-  expect((await approve(f.id)).success).toBe(false);
+  await expect(recordSupplierFundingApproval(f.id,'wamid.SYNTHETIC_LOCAL_OFF','SYNTHETIC_OPERATOR')).rejects.toThrow('OFF');
   enable();mockAuth.mockResolvedValue({user:{id:userId,role:'user'}});
   expect((await executeSupplierFundingAction(f.id)).success).toBe(false);
-  expect((await approve(f.id)).success).toBe(false);
   expect(m.spy).not.toHaveBeenCalled();expect(await row(f.id)).toEqual([]);
   expect(await prisma.$queryRaw`SELECT "orderId" FROM "SupplierFundingApproval" WHERE "orderId"=${f.id}::uuid`).toEqual([]);
  });
@@ -85,19 +85,19 @@ suite('supplier funding execution on disposable real PostgreSQL; mocked provider
  });
  it('approval recording binds the server-side exact quote and amount; the caller cannot choose them',async()=>{
   const f=await fixture();enable();
-  const r=await approve(f.id,'wamid.OWNER_SAID_YES_EXACT_300');
-  expect(r).toMatchObject({success:true,approval:{approvedAmountUsd:'3.00',evidenceRef:'wamid.OWNER_SAID_YES_EXACT_300'}});
+  const r=await approve(f.id,'wamid.SYNTHETIC_LOCAL_YES_300');
+  expect(r).toMatchObject({success:true,approval:{approvedAmountUsd:'3.00',evidenceRef:'wamid.SYNTHETIC_LOCAL_YES_300'}});
   const rows=await prisma.$queryRaw<{approvedAmountUsd:string;shipmentOrderId:string;consumedAt:Date|null}[]>`SELECT "approvedAmountUsd","shipmentOrderId","consumedAt" FROM "SupplierFundingApproval" WHERE "orderId"=${f.id}::uuid`;
   expect(rows).toMatchObject([{approvedAmountUsd:'3.00',shipmentOrderId:'SHIP_LOCAL',consumedAt:null}]);
-  expect((await approve(f.id,'short')).success).toBe(false); // evidence reference too weak
+  await expect(recordSupplierFundingApproval(f.id,'short','SYNTHETIC_OPERATOR')).rejects.toThrow(); // evidence reference too weak
  });
  it('confirmed success consumes the approval once, records the exact pair, PAID evidence and funded lifecycle',async()=>{
   const f=await fixture(),m=fetcher(f,{detail:f.unpaid,pays:[paySuccess(f)]});enable();
-  expect((await approve(f.id,'wamid.OWNER_YES_1')).success).toBe(true);
+  expect((await approve(f.id,'wamid.SYNTHETIC_LOCAL_1')).success).toBe(true);
   const r=await executeSupplierFundingAction(f.id);
   expect(r).toMatchObject({success:true,state:'PAID'});
   expect(m.payBodies).toEqual([{shipmentOrderId:'SHIP_LOCAL',payId:'PAY_LOCAL_1'}]);
-  expect(await row(f.id)).toMatchObject([{state:'PAID',attempts:1,payId:'PAY_LOCAL_1',shipmentOrderId:'SHIP_LOCAL',holdReason:null,approvalEvidenceRef:'wamid.OWNER_YES_1',approvedAmountUsd:'3.00'}]);
+  expect(await row(f.id)).toMatchObject([{state:'PAID',attempts:1,payId:'PAY_LOCAL_1',shipmentOrderId:'SHIP_LOCAL',holdReason:null,approvalEvidenceRef:'wamid.SYNTHETIC_LOCAL_1',approvedAmountUsd:'3.00'}]);
   expect((await row(f.id))[0].confirmationDigest).toBeTruthy();
   const consumed=await prisma.$queryRaw<{consumedAt:Date|null}[]>`SELECT "consumedAt" FROM "SupplierFundingApproval" WHERE "orderId"=${f.id}::uuid`;
   expect(consumed[0].consumedAt).not.toBeNull();
@@ -105,7 +105,7 @@ suite('supplier funding execution on disposable real PostgreSQL; mocked provider
   expect(lc).toEqual([{state:'FUNDED_AWAITING_SHIPMENT'}]);
   expect((await prisma.order.findUniqueOrThrow({where:{id:f.id}})).dispatchStatus).toBe('FUNDED_AWAITING_SHIPMENT');
   // After funding, the progressed lifecycle refuses even recording a new approval, and the recorded execution blocks any second payment.
-  expect((await approve(f.id,'wamid.OWNER_YES_AGAIN')).success).toBe(false);
+  expect((await approve(f.id,'wamid.SYNTHETIC_LOCAL_AGAIN')).success).toBe(false);
   const again=await executeSupplierFundingAction(f.id);
   expect(again.success).toBe(false);
   expect(m.payBodies).toHaveLength(1);
@@ -193,18 +193,18 @@ suite('supplier funding execution on disposable real PostgreSQL; mocked provider
  });
  it('database guards enforce append-only approvals, one-way states, immutable pair and no erasure',async()=>{
   const f=await fixture();
-  await prisma.$executeRaw`INSERT INTO "SupplierFundingApproval"("orderId","planDigest","supplierOrderId","shipmentOrderId","quoteDigest","approvedAmountUsd","evidenceRef","recordedBy") VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','QD','3.00','wamid.GUARD_TEST','LOCAL_ADMIN')`;
-  await expect(prisma.$executeRaw`INSERT INTO "SupplierFundingApproval"("orderId","planDigest","supplierOrderId","shipmentOrderId","quoteDigest","approvedAmountUsd","evidenceRef","recordedBy","consumedAt") VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','QD2','3.00','wamid.GUARD_TEST_2','LOCAL_ADMIN',now())`).rejects.toThrow(/unconsumed/);
+  await prisma.$executeRaw`INSERT INTO "SupplierFundingApproval"("orderId","planDigest","supplierOrderId","shipmentOrderId","quoteDigest","approvedAmountUsd","evidenceRef","recordedBy") VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','QD','3.00','wamid.SYNTHETIC_GUARD','LOCAL_ADMIN')`;
+  await expect(prisma.$executeRaw`INSERT INTO "SupplierFundingApproval"("orderId","planDigest","supplierOrderId","shipmentOrderId","quoteDigest","approvedAmountUsd","evidenceRef","recordedBy","consumedAt") VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','QD2','3.00','wamid.SYNTHETIC_GUARD_2','LOCAL_ADMIN',now())`).rejects.toThrow(/unconsumed/);
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "approvedAmountUsd"='9.99' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
-  await expect(prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "evidenceRef"='wamid.REWRITTEN' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
+  await expect(prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "evidenceRef"='wamid.SYNTHETIC_REWRITE' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
   await prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "consumedAt"=now() WHERE "orderId"=${f.id}::uuid AND "consumedAt" IS NULL`;
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingApproval" SET "consumedAt"=now() WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/exactly once/);
   await expect(prisma.$executeRaw`DELETE FROM "SupplierFundingApproval" WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/erased/);
   const acl=await prisma.$queryRaw`SELECT has_table_privilege('omnistu_app','"SupplierFundingApproval"','SELECT') canread,has_table_privilege('omnistu_app','"SupplierFundingApproval"','INSERT') canappend,has_table_privilege('omnistu_app','"SupplierFundingApproval"','DELETE') canrewrite`;
   expect(acl).toEqual([{canread:true,canappend:true,canrewrite:false}]);
-  await prisma.$executeRaw`INSERT INTO "SupplierFundingExecution"("orderId","planDigest","supplierOrderId","shipmentOrderId","payId","approvedAmountUsd","approvalEvidenceRef","approvedBy","quoteDigest",state,attempts) VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','PAY_LOCAL_1','3.00','wamid.GUARD_TEST','LOCAL_ADMIN','LOCAL','PAY_REQUESTED',1)`;
+  await prisma.$executeRaw`INSERT INTO "SupplierFundingExecution"("orderId","planDigest","supplierOrderId","shipmentOrderId","payId","approvedAmountUsd","approvalEvidenceRef","approvedBy","quoteDigest",state,attempts) VALUES (${f.id}::uuid,'LOCAL','SD_LOCAL','SHIP_LOCAL','PAY_LOCAL_1','3.00','wamid.SYNTHETIC_GUARD','LOCAL_ADMIN','LOCAL','PAY_REQUESTED',1)`;
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET "payId"='OTHER' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
-  await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET "approvalEvidenceRef"='wamid.REWRITTEN' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
+  await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET "approvalEvidenceRef"='wamid.SYNTHETIC_REWRITE' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/immutable/);
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET state='PAID' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/confirmation evidence/);
   await prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET state='PAY_UNKNOWN' WHERE "orderId"=${f.id}::uuid`;
   await expect(prisma.$executeRaw`UPDATE "SupplierFundingExecution" SET state='PAY_REQUESTED' WHERE "orderId"=${f.id}::uuid`).rejects.toThrow(/transition/);

@@ -25,7 +25,6 @@ import {persistSupplierLifecycleTx} from './supplier-lifecycle';
  * append-only and consumed exactly once. An admin session, an admin id, or a
  * typed amount is not spend authority and cannot create or widen one. */
 const BASE='https://developers.cjdropshipping.com/api2.0/v1/';
-const cents=(v:string)=>Math.round(Number(v)*100);
 const MONEY_FIELDS=['actualPayment','payableAmount','balanceDeduction','billAmount','commodityDiscount','commodityTotalAmount','couponAmount','freight','iossAmount','iossTaxHandlingFee','iossTaxes','orderOriginalAmount','orderProductAmount','postageDiscount','serviceFee'] as const;
 /** Key-order-independent digest of the exact reviewed obligation: parent
  * identity plus every money field. This is an integrity binding, not spend
@@ -83,15 +82,26 @@ async function reviewedQuoteTx(tx:RetailRawTx,orderId:string){
  return{...b,quote:prep[0].quote as SupplierFundingQuote,quoteDigest:quoteApprovalDigest(prep[0].quote as SupplierFundingQuote)};
 }
 
-/** Records the bound owner approval for one exact reviewed quote. The amount,
- * parent and plan all come from server-side evidence; the caller supplies only
- * the external owner-approval evidence reference. Append-only, single-use. */
+/** Controlled writer seam for the approval journal, reachable ONLY from
+ * scripts/record-supplier-funding-approval.ts — an operator-side path with
+ * production database access, never from any HTTP route, server action or
+ * admin UI. The journal is externally verified authorization storage: the
+ * operator must have verified the owner's authenticated approval (bound to
+ * this order, this exact amount and this purpose, within the owner's retry
+ * limits) BEFORE writing. This function re-derives the binding from
+ * server-side evidence and cannot verify the channel itself; a message-like
+ * string is not proof and must never be treated as one. Append-only,
+ * single-use. */
 export async function recordSupplierFundingApproval(orderId:string,evidenceRef:string,recordedBy:string):Promise<FundingApprovalRecord>{
  if(process.env.CJ_FUNDING_EXECUTION_ENABLED!=='true')throw Error('Supplier funding execution is OFF');
  const evidence=z.string().trim().min(8).max(200).parse(evidenceRef);
  const admin=z.string().trim().min(1).max(100).parse(recordedBy);
  return prisma.$transaction(async tx=>{
   const b=await reviewedQuoteTx(tx,orderId);
+  const dup=await tx.$queryRaw<{evidenceRef:string}[]>`SELECT "evidenceRef" FROM "SupplierFundingApproval" WHERE "orderId"=${orderId}::uuid AND "quoteDigest"=${b.quoteDigest} AND "consumedAt" IS NULL`;
+  if(dup.length)throw Error('An unconsumed approval already exists for this exact quote; stacking approvals is not allowed');
+  const running=await tx.$queryRaw<{state:string}[]>`SELECT state FROM "SupplierFundingExecution" WHERE "orderId"=${orderId}::uuid`;
+  if(running.length)throw Error('Supplier funding execution already recorded; review its exact state before any new approval');
   await tx.$executeRaw`INSERT INTO "SupplierFundingApproval"("orderId","planDigest","supplierOrderId","shipmentOrderId","quoteDigest","approvedAmountUsd","evidenceRef","recordedBy") VALUES (${orderId}::uuid,${b.digest},${b.supplierOrderId},${b.quote.shipmentOrderId},${b.quoteDigest},${b.quote.paymentInformation.payableAmount},${evidence},${admin})`;
   return{quoteDigest:b.quoteDigest,approvedAmountUsd:b.quote.paymentInformation.payableAmount,evidenceRef:evidence,createdAt:new Date().toISOString()};
  });

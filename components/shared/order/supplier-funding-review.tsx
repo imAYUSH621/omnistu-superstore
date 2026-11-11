@@ -1,7 +1,7 @@
 'use client';
 import {useState,useTransition} from 'react';
 import {Button} from '@/components/ui/button';
-import {prepareSupplierFundingReviewAction,executeSupplierFundingAction,reviewSupplierFundingExecutionAction,recordSupplierFundingApprovalAction} from '@/lib/actions/supplier-funding.actions';
+import {prepareSupplierFundingReviewAction,executeSupplierFundingAction,reviewSupplierFundingExecutionAction} from '@/lib/actions/supplier-funding.actions';
 import type {SupplierFundingQuote} from '@/lib/cj-funding-evidence';
 export type SupplierFundingView={state:string;quote:SupplierFundingQuote|null}|null;
 export type SupplierFundingExecutionView={state:string;attempts:number;holdReason:string|null}|null;
@@ -14,10 +14,9 @@ const executionLabel=(v:SupplierFundingExecutionView)=>{
  if(v.state==='RETRY_REQUESTED')return {tone:'warn' as const,text:'One grounded retry with the identical recorded pair was submitted after a confirmed-unpaid read. Its outcome is unconfirmed. Re-check the provider state.'};
  return {tone:'warn' as const,text:'Supplier funding is held for review ('+(v.holdReason??'check required')+'). No further payment attempt will run automatically.'};
 };
-export function SupplierFundingReviewPanel({enabled,state,quote,pending=false,message,prepare,executionEnabled=false,execution=null,approval=null,execPending=false,execMessage,execute,recordApproval,reviewExecution}:{enabled:boolean;state:string|null;quote:SupplierFundingQuote|null;pending?:boolean;message?:string;prepare?:()=>void;executionEnabled?:boolean;execution?:SupplierFundingExecutionView;approval?:SupplierFundingApprovalView;execPending?:boolean;execMessage?:string;execute?:()=>void;recordApproval?:(evidenceRef:string)=>void;reviewExecution?:()=>void}){
+export function SupplierFundingReviewPanel({enabled,state,quote,pending=false,message,prepare,executionEnabled=false,execution=null,approval=null,execPending=false,execMessage,execute,reviewExecution}:{enabled:boolean;state:string|null;quote:SupplierFundingQuote|null;pending?:boolean;message?:string;prepare?:()=>void;executionEnabled?:boolean;execution?:SupplierFundingExecutionView;approval?:SupplierFundingApprovalView;execPending?:boolean;execMessage?:string;execute?:()=>void;reviewExecution?:()=>void}){
  const unknown=state!==null&&state!=='REVIEW_ONLY';
  const label=state===null?'':({CART_UNKNOWN:'cart response uncertain',CONFIRM_UNKNOWN:'confirmation response uncertain',PARENT_UNKNOWN:'final quote response uncertain',CHECK_REQUIRED:'check required',UNAVAILABLE:'saved status unavailable',SUPPLIER_PROGRESSED:'supplier order already progressed'}as Record<string,string>)[state]??'check required';
- const [evidenceRef,setEvidenceRef]=useState('');
  const exec=executionLabel(execution);
  return <section className='mt-4 space-y-3 rounded-md border p-3 text-sm' aria-label='Supplier funding review'>
   <h3 className='font-semibold'>Supplier funding review</h3>
@@ -36,12 +35,8 @@ export function SupplierFundingReviewPanel({enabled,state,quote,pending=false,me
   {message?<p role='status' className='break-words'>{message}</p>:null}
   {exec?<p role={exec.tone==='warn'?'alert':'status'} className={exec.tone==='warn'?'break-words text-amber-800 dark:text-amber-300':'break-words'}>{exec.text}</p>:null}
   {executionEnabled&&quote&&!execution&&!approval?<div className='space-y-2 border-t pt-3'>
-   <p className='font-medium'>Owner payment approval required</p>
-   <p className='text-xs text-muted-foreground'>Paying spends the supplier balance for exactly USD {quote.paymentInformation.payableAmount}. An admin click alone cannot spend: first record the owner&apos;s explicit approval reference (the exact owner message that approved this payment). The approval binds this exact quote and can be consumed once.</p>
-   <label className='block text-xs'>Owner approval reference
-    <input value={evidenceRef} onChange={e=>setEvidenceRef(e.target.value)} placeholder='Owner approval message reference' className='mt-1 w-full rounded-md border bg-transparent px-2 py-1 font-mono'/>
-   </label>
-   <Button type='button' onClick={()=>recordApproval?.(evidenceRef)} disabled={execPending||evidenceRef.trim().length<8} className='h-auto min-h-10 w-full whitespace-normal'>{execPending?'Recording owner approval...':'Record owner approval'}</Button>
+   <p className='font-medium'>Supplier payment unavailable</p>
+   <p className='text-xs text-muted-foreground'>Paying spends the supplier balance for exactly USD {quote.paymentInformation.payableAmount}. No externally verified owner approval is recorded for this exact quote, so no payment control is available here. Approvals are written only through the operator-controlled path after the owner&apos;s authenticated approval is verified; this page cannot create one.</p>
   </div>:null}
   {executionEnabled&&quote&&!execution&&approval?<div className='space-y-2 border-t pt-3'>
    <p className='text-xs text-muted-foreground'>Owner approval recorded ({approval.evidenceRef}) for exactly USD {approval.approvedAmountUsd}. A fresh quote is generated and checked against the reviewed one; payment then runs immediately. At most one retry is allowed, only with the identical recorded pair after a confirmed-unpaid provider read.</p>
@@ -58,10 +53,6 @@ export default function SupplierFundingReview({orderId,enabled,initial=null,exec
  return <SupplierFundingReviewPanel enabled={enabled} state={record?.state??null} quote={record?.quote??null} pending={pending} message={message} executionEnabled={executionEnabled} execution={execution} approval={approval} execPending={execPending} execMessage={execMessage}
   prepare={()=>start(async()=>{
    const result=await prepareSupplierFundingReviewAction(orderId);setMessage(result.message);if(result.success)setRecord({state:'REVIEW_ONLY',quote:result.quote});else setRecord({state:'CHECK_REQUIRED',quote:null});
-  })}
-  recordApproval={evidenceRef=>startExec(async()=>{
-   const result=await recordSupplierFundingApprovalAction(orderId,evidenceRef);setExecMessage(result.message);
-   if(result.success)setApproval({approvedAmountUsd:result.approval.approvedAmountUsd,evidenceRef:result.approval.evidenceRef,createdAt:result.approval.createdAt});
   })}
   execute={()=>startExec(async()=>{
    const result=await executeSupplierFundingAction(orderId);setExecMessage(result.message);
