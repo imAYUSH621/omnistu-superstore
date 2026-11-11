@@ -39,7 +39,10 @@ it('database privileges enforce the split: the app runtime role cannot INSERT ap
  // role must not reach it by SET ROLE or inheritance).
  expect(sql).not.toContain('GRANT SELECT ON ALL TABLES');
  expect(sql).not.toMatch(/GRANT omnistu_funding_operator TO/i);
- expect(sql).toContain('GRANT SELECT ON "OrderSupplierPlan","OrderItem","OrderSupplierAttempt","SupplierLifecycleObservation","SupplierFundingPreparation" TO omnistu_funding_operator');
+ expect(sql).toContain('GRANT SELECT ON "Order","OrderSupplierPlan","OrderItem","OrderSupplierAllocation","OrderSupplierAttempt","SupplierLifecycleObservation","SupplierFundingPreparation" TO omnistu_funding_operator');
+ // The read-only operator holds no UPDATE/DELETE on any existing table.
+ expect(sql).not.toMatch(/GRANT[^;]*UPDATE[^;]*TO omnistu_funding_operator/i);
+ expect(sql).not.toMatch(/GRANT[^;]*DELETE[^;]*TO omnistu_funding_operator/i);
 });
 it('requires a real order identifier on every path',async()=>{
  mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});
