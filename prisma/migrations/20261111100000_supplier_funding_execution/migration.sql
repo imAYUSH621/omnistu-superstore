@@ -44,9 +44,17 @@ DO $$DECLARE r text;BEGIN
  -- access outside the app. Read-only SELECT covers the writer's binding
  -- re-derivation (preparation, plan, attempt, allocation, lifecycle reads).
  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='omnistu_funding_operator') THEN CREATE ROLE omnistu_funding_operator NOLOGIN NOSUPERUSER NOBYPASSRLS;END IF;
+ -- Least exact binding reads only (no broad schema SELECT): exactly the
+ -- tables the writer's binding re-derivation reads. UPDATE on "Order" and
+ -- "OrderSupplierAllocation" is lock-only: the shared derivation takes FOR
+ -- UPDATE row locks through them; this role runs no write statement.
+ -- The role is granted to NO other role, so the app runtime role cannot
+ -- reach it by SET ROLE or inheritance.
  REVOKE ALL ON "SupplierFundingApproval" FROM omnistu_funding_operator;
  GRANT SELECT,INSERT ON "SupplierFundingApproval" TO omnistu_funding_operator;
- GRANT SELECT ON ALL TABLES IN SCHEMA public TO omnistu_funding_operator;
+ GRANT SELECT ON "OrderSupplierPlan","OrderItem","OrderSupplierAttempt","SupplierLifecycleObservation","SupplierFundingPreparation" TO omnistu_funding_operator;
+ GRANT SELECT,UPDATE ON "Order" TO omnistu_funding_operator;
+ GRANT SELECT,UPDATE ON "OrderSupplierAllocation" TO omnistu_funding_operator;
 END$$;
 CREATE FUNCTION guard_supplier_funding_approval() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

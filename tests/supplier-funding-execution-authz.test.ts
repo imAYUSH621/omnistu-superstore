@@ -34,6 +34,12 @@ it('database privileges enforce the split: the app runtime role cannot INSERT ap
  expect(sql).toContain("CREATE ROLE omnistu_funding_operator NOLOGIN");
  // No default-privileges backdoor could re-grant the runtime role INSERT later.
  expect(sql).not.toMatch(/ALTER DEFAULT PRIVILEGES[^;]*omnistu_app[^;]*INSERT/i);
+ // Least exact binding reads: no broad schema-level SELECT for the operator
+ // role, and the operator role is never granted to another role (the app
+ // role must not reach it by SET ROLE or inheritance).
+ expect(sql).not.toContain('GRANT SELECT ON ALL TABLES');
+ expect(sql).not.toMatch(/GRANT omnistu_funding_operator TO/i);
+ expect(sql).toContain('GRANT SELECT ON "OrderSupplierPlan","OrderItem","OrderSupplierAttempt","SupplierLifecycleObservation","SupplierFundingPreparation" TO omnistu_funding_operator');
 });
 it('requires a real order identifier on every path',async()=>{
  mockAuth.mockResolvedValue({user:{id:'admin-1',role:'admin'}});
