@@ -45,6 +45,15 @@ npx tsc --noEmit && npx jest && npm run build
 vercel deploy --prebuilt --prod --token "$VERCEL_SUPER_STORE_TOKEN"
 ```
 
+- Prebuilt deploys bundle the Prisma query engine of the BUILD machine. The
+  Vercel runtime is Amazon Linux (`rhel-openssl-3.0.x`), so building on any
+  other platform without the rhel engine produces a deployment whose every
+  database call fails at runtime. `binaryTargets` in `prisma/schema.prisma`
+  pins both engines; after any Prisma upgrade, confirm the generated client
+  still contains `libquery_engine-rhel-openssl-3.0.x.so.node` before
+  deploying. (2026-11-11: a deploy without it took omnistu.com database
+  reads down for ~9 minutes until redeployed with the engine.)
+
 - Commerce stays in test mode until the owner supplies live payment keys
   and approves going live.
 

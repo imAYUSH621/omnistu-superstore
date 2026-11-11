@@ -1,6 +1,12 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
+  // Prebuilt production deploys (`vercel deploy --prebuilt`) are built off
+  // Vercel's Amazon Linux builders, so the generated client must bundle the
+  // rhel engine or every runtime query fails with
+  // PrismaClientInitializationError (could not locate Query Engine for
+  // runtime "rhel-openssl-3.0.x"). "native" keeps local dev/CI working.
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
